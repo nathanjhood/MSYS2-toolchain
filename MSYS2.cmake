@@ -22,6 +22,7 @@ set(MSYS2_TMP_DIR "${MSYS_ROOT}/tmp" CACHE PATH "")
 set(MSYS2_USR_DIR "${MSYS_ROOT}/usr" CACHE PATH "")
 set(MSYS2_VAR_DIR "${MSYS_ROOT}/var" CACHE PATH "")
 
+# Could keep these all exposed for potential cross-compiling...?
 set(MINGW32_ROOT "${MSYS_ROOT}/mingw32" CACHE PATH "")
 set(MINGW64_ROOT "${MSYS_ROOT}/mingw64" CACHE PATH "")
 set(CLANG32_ROOT "${MSYS_ROOT}/clang32" CACHE PATH "")
@@ -29,144 +30,224 @@ set(CLANG64_ROOT "${MSYS_ROOT}/clang64" CACHE PATH "")
 set(CLANGARM64_ROOT "${MSYS_ROOT}/clangarm64" CACHE PATH "")
 set(UCRT64_ROOT "${MSYS_ROOT}/ucrt64" CACHE PATH "")
 
+# # Pick up the relevant root-level files for just-in-case purposes...
+# string(TOLOWER ${MSYSTEM} MSYSTEM_NAME)
+# set(MSYSTEM_CONFIG_FILE "${MSYS_ROOT}/${MSYSTEM_NAME}.ini")
+# set(MSYSTEM_LAUNCH_FILE "${MSYS_ROOT}/${MSYSTEM_NAME}.exe")
+# set(MSYSTEM_ICON_FILE "${MSYS_ROOT}/${MSYSTEM_NAME}.ico")
 
-# The below is the equivalent to /etc/msystem but for cmake...
-if(MSYSTEM STREQUAL MINGW32)
-    set(MSYSTEM_PREFIX          "/mingw32"                            CACHE PATH      "")
-    set(MSYSTEM_CARCH           "i686"                                CACHE STRING    "")
-    set(MSYSTEM_CHOST           "i686-w64-mingw32"                    CACHE STRING    "")
-    set(MINGW_CHOST             "${MSYSTEM_CHOST}"                    CACHE STRING    "")
-    set(MINGW_PREFIX            "${MSYSTEM_PREFIX}"                   CACHE PATH      "")
-    set(MINGW_PACKAGE_PREFIX    "mingw-w64-${MSYSTEM_CARCH}"          CACHE STRING    "")
-elseif(MSYSTEM STREQUAL MINGW64)
+#########################################################################
+# ARCHITECTURE, COMPILE FLAGS
+#########################################################################
+
+if(${MSYSTEM} STREQUAL MINGW64)
+
+    set(BUILDSYSTEM "MinGW x64")
+
+    set(TOOLCHAIN_VARIANT gcc)
+    set(CRT_LIBRARY msvcrt)
+    set(CXX_STD_LIBRARY libstdc++)
+
+    #
+    set(__USE_MINGW_ANSI_STDIO "1" CACHE STRING "" FORCE)
+    set(_FORTIFY_SOURCE "2" CACHE STRING "" FORCE)
+
+    set(CC "gcc")
+    set(CXX "g++")
+
+    set(CPPFLAGS "-D__USE_MINGW_ANSI_STDIO=1")
+    set(CFLAGS "-march=nocona -msahf -mtune=generic -O2 -pipe -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong")
+    set(CXXFLAGS "-march=nocona -msahf -mtune=generic -O2 -pipe")
+    set(LDFLAGS "-pipe")
+
+    set(PREFIX                  "/mingw64"                            CACHE PATH      "")
+    set(CARCH                   "x86_64"                              CACHE STRING    "")
+    set(CHOST                   "x86_64-w64-mingw32"                  CACHE STRING    "")
+
     set(MSYSTEM_PREFIX          "/mingw64"                            CACHE PATH      "")
     set(MSYSTEM_CARCH           "x86_64"                              CACHE STRING    "")
     set(MSYSTEM_CHOST           "x86_64-w64-mingw32"                  CACHE STRING    "")
+
     set(MINGW_CHOST             "${MSYSTEM_CHOST}"                    CACHE STRING    "")
     set(MINGW_PREFIX            "${MSYSTEM_PREFIX}"                   CACHE PATH      "")
     set(MINGW_PACKAGE_PREFIX    "mingw-w64-${MSYSTEM_CARCH}"          CACHE STRING    "")
-elseif(MSYSTEM STREQUAL CLANG32)
-    set(MSYSTEM_PREFIX          "/clang32"                            CACHE PATH      "")
+
+elseif(${MSYSTEM} STREQUAL MINGW32)
+
+    set(BUILDSYSTEM "MinGW x32")
+
+    set(TOOLCHAIN_VARIANT gcc)
+    set(CRT_LIBRARY msvcrt)
+    set(CXX_STD_LIBRARY libstdc++)
+
+    set(__USE_MINGW_ANSI_STDIO "1" CACHE STRING "" FORCE)
+    set(_FORTIFY_SOURCE "2" CACHE STRING "" FORCE)
+
+    set(CC "gcc")
+    set(CXX "g++")
+
+    set(CPPFLAGS "-D__USE_MINGW_ANSI_STDIO=1")
+    set(CFLAGS "-march=pentium4 -mtune=generic -O2 -pipe -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong")
+    set(CXXFLAGS "-march=pentium4 -mtune=generic -O2 -pipe")
+    set(LDFLAGS "-pipe -Wl,--no-seh -Wl,--large-address-aware")
+
+    set(PREFIX                  "/mingw32"                            CACHE PATH      "")
+    set(CARCH                   "i686"                                CACHE STRING    "")
+    set(CHOST                   "i686-w64-mingw32"                    CACHE STRING    "")
+
+    set(MSYSTEM_PREFIX          "/mingw32"                            CACHE PATH      "")
     set(MSYSTEM_CARCH           "i686"                                CACHE STRING    "")
     set(MSYSTEM_CHOST           "i686-w64-mingw32"                    CACHE STRING    "")
+
     set(MINGW_CHOST             "${MSYSTEM_CHOST}"                    CACHE STRING    "")
     set(MINGW_PREFIX            "${MSYSTEM_PREFIX}"                   CACHE PATH      "")
-    set(MINGW_PACKAGE_PREFIX    "mingw-w64-clang-${MSYSTEM_CARCH}"    CACHE STRING    "")
-elseif(MSYSTEM STREQUAL CLANG64)
+    set(MINGW_PACKAGE_PREFIX    "mingw-w64-${MSYSTEM_CARCH}"          CACHE STRING    "")
+
+elseif(${MSYSTEM} STREQUAL CLANG64)
+
+    set(BUILDSYSTEM "MinGW Clang x64")
+
+    set(TOOLCHAIN_VARIANT llvm)
+    set(CRT_LIBRARY ucrt)
+    set(CXX_STD_LIBRARY libc++)
+
+    set(__USE_MINGW_ANSI_STDIO "1" CACHE STRING "" FORCE)
+    set(_FORTIFY_SOURCE "2" CACHE STRING "" FORCE)
+
+    set(CC "clang")
+    set(CXX "clang++")
+
+    set(CPPFLAGS "-D__USE_MINGW_ANSI_STDIO=1")
+    set(CFLAGS "-march=nocona -msahf -mtune=generic -O2 -pipe -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong")
+    set(CXXFLAGS "-march=nocona -msahf -mtune=generic -O2 -pipe")
+    set(LDFLAGS "-pipe")
+
+    set(PREFIX                  "/clang64"                            CACHE PATH      "")
+    set(CARCH                   "x86_64"                              CACHE STRING    "")
+    set(CHOST                   "x86_64-w64-mingw32"                  CACHE STRING    "")
+
     set(MSYSTEM_PREFIX          "/clang64"                            CACHE PATH      "")
     set(MSYSTEM_CARCH           "x86_64"                              CACHE STRING    "")
     set(MSYSTEM_CHOST           "x86_64-w64-mingw32"                  CACHE STRING    "")
+
     set(MINGW_CHOST             "${MSYSTEM_CHOST}"                    CACHE STRING    "")
     set(MINGW_PREFIX            "${MSYSTEM_PREFIX}"                   CACHE PATH      "")
     set(MINGW_PACKAGE_PREFIX    "mingw-w64-clang-${MSYSTEM_CARCH}"    CACHE STRING    "")
-elseif(MSYSTEM STREQUAL CLANGARM64)
-    set(MSYSTEM_PREFIX          "/clangarm64"                         CACHE PATH      "")
-    set(MSYSTEM_CARCH           "aarch64"                             CACHE STRING    "")
-    set(MSYSTEM_CHOST           "aarch64-w64-mingw32"                 CACHE STRING    "")
+
+elseif(${MSYSTEM} STREQUAL CLANG32)
+
+    set(BUILDSYSTEM "MinGW Clang x32")
+
+    set(TOOLCHAIN_VARIANT llvm)
+    set(CRT_LIBRARY ucrt)
+    set(CXX_STD_LIBRARY libc++)
+
+    set(__USE_MINGW_ANSI_STDIO "1" CACHE STRING "" FORCE)
+    set(_FORTIFY_SOURCE "2" CACHE STRING "" FORCE)
+
+    set(CC "clang")
+    set(CXX "clang++")
+
+    set(CPPFLAGS "-D__USE_MINGW_ANSI_STDIO=1")
+    set(CFLAGS "-march=pentium4 -mtune=generic -O2 -pipe -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong")
+    set(CXXFLAGS "-march=pentium4 -mtune=generic -O2 -pipe")
+    set(LDFLAGS "-pipe -Wl,--no-seh -Wl,--large-address-aware")
+
+    set(PREFIX                  "/clang32"                            CACHE PATH      "")
+    set(CARCH                   "i686"                                CACHE STRING    "")
+    set(CHOST                   "i686-w64-mingw32"                    CACHE STRING    "")
+
+    set(MSYSTEM_PREFIX          "/clang32"                            CACHE PATH      "")
+    set(MSYSTEM_CARCH           "i686"                                CACHE STRING    "")
+    set(MSYSTEM_CHOST           "i686-w64-mingw32"                    CACHE STRING    "")
+
     set(MINGW_CHOST             "${MSYSTEM_CHOST}"                    CACHE STRING    "")
     set(MINGW_PREFIX            "${MSYSTEM_PREFIX}"                   CACHE PATH      "")
     set(MINGW_PACKAGE_PREFIX    "mingw-w64-clang-${MSYSTEM_CARCH}"    CACHE STRING    "")
-elseif(MSYSTEM STREQUAL UCRT64)
+
+elseif(${MSYSTEM} STREQUAL CLANGARM64)
+
+    set(BUILDSYSTEM "MinGW Clang ARM64")
+
+    set(TOOLCHAIN_VARIANT llvm)
+    set(CRT_LIBRARY ucrt)
+    set(CXX_STD_LIBRARY libc++)
+
+    set(__USE_MINGW_ANSI_STDIO "1" CACHE STRING "" FORCE)
+    set(_FORTIFY_SOURCE "2" CACHE STRING "" FORCE)
+
+    set(CC "clang")
+    set(CXX "clang++")
+
+    set(CPPFLAGS "-D__USE_MINGW_ANSI_STDIO=1")
+    set(CFLAGS "-O2 -pipe -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong")
+    set(CXXFLAGS "-O2 -pipe")
+    set(LDFLAGS "-pipe")
+
+    set(PREFIX                  "/clangarm64"                         CACHE PATH      "")
+    set(CARCH                   "aarch64"                             CACHE STRING    "")
+    set(CHOST                   "aarch64-w64-mingw32"                 CACHE STRING    "")
+
+    set(MSYSTEM_PREFIX          "/clangarm64"                            CACHE PATH      "")
+    set(MSYSTEM_CARCH           "aarch64"                              CACHE STRING    "")
+    set(MSYSTEM_CHOST           "aarch64-w64-mingw32"                  CACHE STRING    "")
+
+    set(MINGW_CHOST             "${MSYSTEM_CHOST}"                    CACHE STRING    "")
+    set(MINGW_PREFIX            "${MSYSTEM_PREFIX}"                   CACHE PATH      "")
+    set(MINGW_PACKAGE_PREFIX    "mingw-w64-clang-${MSYSTEM_CARCH}"    CACHE STRING    "")
+
+elseif(${MSYSTEM} STREQUAL UCRT64)
+
+    set(BUILDSYSTEM "MinGW UCRT x64")
+
+    set(TOOLCHAIN_VARIANT gcc)
+    set(CRT_LIBRARY ucrt)
+    set(CXX_STD_LIBRARY libstdc++)
+
+    set(__USE_MINGW_ANSI_STDIO "1" CACHE STRING "" FORCE)
+    set(_FORTIFY_SOURCE "2" CACHE STRING "" FORCE)
+
+    set(CC "gcc")
+    set(CXX "g++")
+
+    set(CPPFLAGS "-D__USE_MINGW_ANSI_STDIO=1")
+    set(CFLAGS "-march=nocona -msahf -mtune=generic -O2 -pipe -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong")
+    set(CXXFLAGS "-march=nocona -msahf -mtune=generic -O2 -pipe")
+    set(LDFLAGS "-pipe")
+
+    set(PREFIX                  "/ucrt64"                             CACHE PATH     "")
+    set(CARCH                   "x86_64"                              CACHE STRING    "")
+    set(CHOST                   "x86_64-w64-mingw32"                  CACHE STRING    "")
+
     set(MSYSTEM_PREFIX          "/ucrt64"                             CACHE PATH      "")
     set(MSYSTEM_CARCH           "x86_64"                              CACHE STRING    "")
     set(MSYSTEM_CHOST           "x86_64-w64-mingw32"                  CACHE STRING    "")
+
     set(MINGW_CHOST             "${MSYSTEM_CHOST}"                    CACHE STRING    "")
     set(MINGW_PREFIX            "${MSYSTEM_PREFIX}"                   CACHE PATH      "")
     set(MINGW_PACKAGE_PREFIX    "mingw-w64-ucrt-${MSYSTEM_CARCH}"     CACHE STRING    "")
-else()
+elseif(${MSYSTEM} STREQUAL MSYS)
+
+    set(BUILDSYSTEM "MSYS2 MSYS")
+
+    set(TOOLCHAIN_VARIANT gcc)
+    set(CRT_LIBRARY cygwin)
+    set(CXX_STD_LIBRARY libstdc++)
+
     execute_process(
         COMMAND /usr/bin/uname -m
         WORKING_DIRECTORY "."
-        OUTPUT_VARIABLE MSYSTEM_CARCH
+        OUTPUT_VARIABLE DETECTED_MSYSTEM_CARCH
     )
+
     set(MSYSTEM_PREFIX          "/usr"                                CACHE PATH      "")
-    set(MSYSTEM_CARCH           "${MSYSTEM_CARCH}"                    CACHE STRING    "")
-    set(MSYSTEM_CHOST           "${MSYSTEM_CARCH}-pc-msys"            CACHE STRING    "")
-    set(MSYSTEM "MSYS")
+    set(MSYSTEM_CARCH           "${DETECTED_MSYSTEM_CARCH}"           CACHE STRING    "")
+    set(MSYSTEM_CHOST           "${DETECTED_MSYSTEM_CARCH}-pc-msys"   CACHE STRING    "")
+
+else()
+    message(FATAL_ERROR "Unsupported MSYSTEM: ${MSYSTEM}")
+    return()
 endif()
-
-
-# A round of custom vars...
-if(MSYSTEM STREQUAL "MSYS")
-    set(MSYSTEM_TITLE "MSYS2 MSYS")
-    set(MSYSTEM_TOOLCHAIN_VARIANT gcc)
-    set(MSYSTEM_C_LIBRARY cygwin)
-    set(MSYSTEM_CXX_LIBRARY libstdc++)
-elseif(MSYSTEM STREQUAL UCRT64)
-    set(MSYSTEM_TITLE "MinGW UCRT x64")
-    set(MSYSTEM_TOOLCHAIN_VARIANT gcc)
-    set(MSYSTEM_C_LIBRARY ucrt)
-    set(MSYSTEM_CXX_LIBRARY libstdc++)
-elseif(MSYSTEM STREQUAL CLANG64)
-    set(MSYSTEM_TITLE "MinGW Clang x64")
-    set(MSYSTEM_TOOLCHAIN_VARIANT llvm)
-    set(MSYSTEM_C_LIBRARY ucrt)
-    set(MSYSTEM_CXX_LIBRARY libc++)
-elseif(MSYSTEM STREQUAL CLANGARM64)
-    set(MSYSTEM_TITLE "MinGW Clang ARM64")
-    set(MSYSTEM_TOOLCHAIN_VARIANT llvm)
-    set(MSYSTEM_C_LIBRARY ucrt)
-    set(MSYSTEM_CXX_LIBRARY libc++)
-elseif(MSYSTEM STREQUAL CLANG32)
-    set(MSYSTEM_TITLE "MinGW Clang x32")
-    set(MSYSTEM_TOOLCHAIN_VARIANT llvm)
-    set(MSYSTEM_C_LIBRARY ucrt)
-    set(MSYSTEM_CXX_LIBRARY libc++)
-elseif(MSYSTEM STREQUAL MINGW64)
-    set(MSYSTEM_TITLE "MinGW x64")
-    set(MSYSTEM_TOOLCHAIN_VARIANT gcc)
-    set(MSYSTEM_C_LIBRARY msvcrt)
-    set(MSYSTEM_CXX_LIBRARY libstdc++)
-elseif(MSYSTEM STREQUAL MINGW32)
-    set(MSYSTEM_TITLE "MinGW x32")
-    set(MSYSTEM_TOOLCHAIN_VARIANT gcc)
-    set(MSYSTEM_C_LIBRARY msvcrt)
-    set(MSYSTEM_CXX_LIBRARY libstdc++)
-endif()
-
-
-
-# Pick up the relevant root-level files for just-in-case purposes...
-string(TOLOWER ${MSYSTEM} MSYSTEM_NAME)
-set(MSYSTEM_CONFIG_FILE "${MSYS_ROOT}/${MSYSTEM_NAME}.ini")
-set(MSYSTEM_LAUNCH_FILE "${MSYS_ROOT}/${MSYSTEM_NAME}.exe")
-set(MSYSTEM_ICON_FILE "${MSYS_ROOT}/${MSYSTEM_NAME}.ico")
-
-
-
-set(MSYS_TOOLCHAINS "" CACHE STRING "")
-list(APPEND MSYS_TOOLCHAINS
-    mingw-w64-clang-aarch64-arm-none-eabi-toolchain
-    mingw-w64-clang-aarch64-avr-toolchain
-    mingw-w64-clang-aarch64-riscv64-unknown-elf-toolchain
-    mingw-w64-clang-aarch64-toolchain
-
-    mingw-w64-clang-i686-arm-none-eabi-toolchain
-    mingw-w64-clang-i686-avr-toolchain
-    mingw-w64-clang-i686-riscv64-unknown-elf-toolchain
-    mingw-w64-clang-i686-toolchain
-
-    mingw-w64-clang-x86_64-arm-none-eabi-toolchain
-    mingw-w64-clang-x86_64-avr-toolchain
-    mingw-w64-clang-x86_64-riscv64-unknown-elf-toolchain
-    mingw-w64-clang-x86_64-toolchain
-
-    mingw-w64-i686-arm-none-eabi-toolchain
-    mingw-w64-i686-avr-toolchain
-    mingw-w64-i686-riscv64-unknown-elf-toolchain
-    mingw-w64-i686-toolchain
-
-    mingw-w64-x86_64-arm-none-eabi-toolchain
-    mingw-w64-x86_64-avr-toolchain
-    mingw-w64-x86_64-riscv64-unknown-elf-toolchain
-    mingw-w64-x86_64-toolchain
-
-    mingw-w64-ucrt-x86_64-arm-none-eabi-toolchain
-    mingw-w64-ucrt-x86_64-avr-toolchain
-    mingw-w64-ucrt-x86_64-riscv64-unknown-elf-toolchain
-    mingw-w64-ucrt-x86_64-toolchain
-
-)
 
 set(MSYS_CROSS_TOOLCHAINS "" CACHE STRING "")
 list(APPEND MSYS_CROSS_TOOLCHAINS
@@ -231,128 +312,14 @@ set(VCSCLIENTS
     svn::subversion
 )
 
-#########################################################################
-# ARCHITECTURE, COMPILE FLAGS
-#########################################################################
-
-if(${MSYSTEM} STREQUAL MINGW64)
-
-    set(BUILDSYSTEM "MinGW x64")
-
-    set(TOOLCHAIN_VARIANT gcc)
-    set(CRT_LIBRARY msvcrt)
-    set(CXX_STD_LIBRARY libstdc++)
-
-    set(__USE_MINGW_ANSI_STDIO "1" CACHE STRING "" FORCE)
-    set(_FORTIFY_SOURCE "2" CACHE STRING "" FORCE)
-
-    set(CC "gcc")
-    set(CXX "g++")
-
-    set(CPPFLAGS "-D__USE_MINGW_ANSI_STDIO=1")
-    set(CFLAGS "-march=nocona -msahf -mtune=generic -O2 -pipe -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong")
-    set(CXXFLAGS "-march=nocona -msahf -mtune=generic -O2 -pipe")
-    set(LDFLAGS "-pipe")
-
-    set(CARCH                   "x86_64"                              CACHE STRING    "")
-    set(CHOST                   "x86_64-w64-mingw32"                  CACHE STRING    "")
-
-    set(MSYSTEM_PREFIX          "/mingw64"                            CACHE PATH      "")
-    set(MSYSTEM_CARCH           "x86_64"                              CACHE STRING    "")
-    set(MSYSTEM_CHOST           "x86_64-w64-mingw32"                  CACHE STRING    "")
-
-    set(MINGW_CHOST             "${MSYSTEM_CHOST}"                    CACHE STRING    "")
-    set(MINGW_PREFIX            "${MSYSTEM_PREFIX}"                   CACHE PATH      "")
-    set(MINGW_PACKAGE_PREFIX    "mingw-w64-${MSYSTEM_CARCH}"          CACHE STRING    "")
-
-elseif(${MSYSTEM} STREQUAL MINGW32)
-
-    set(BUILDSYSTEM "MinGW x32")
-
-    set(TOOLCHAIN_VARIANT gcc)
-    set(CRT_LIBRARY msvcrt)
-    set(CXX_STD_LIBRARY libstdc++)
-
-    set(__USE_MINGW_ANSI_STDIO "1" CACHE STRING "" FORCE)
-    set(_FORTIFY_SOURCE "2" CACHE STRING "" FORCE)
-
-    set(CC "gcc")
-    set(CXX "g++")
-
-    set(CPPFLAGS "-D__USE_MINGW_ANSI_STDIO=1")
-    set(CFLAGS "-march=pentium4 -mtune=generic -O2 -pipe -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong")
-    set(CXXFLAGS "-march=pentium4 -mtune=generic -O2 -pipe")
-    set(LDFLAGS "-pipe -Wl,--no-seh -Wl,--large-address-aware")
-
-    set(CARCH "i686"                                                  CACHE STRING    "")
-    set(CHOST "i686-w64-mingw32"                                      CACHE STRING    "")
-
-    set(MSYSTEM_PREFIX          "/mingw32"                            CACHE PATH      "")
-    set(MSYSTEM_CARCH           "i686"                                CACHE STRING    "")
-    set(MSYSTEM_CHOST           "i686-w64-mingw32"                    CACHE STRING    "")
-
-    set(MINGW_CHOST             "${MSYSTEM_CHOST}"                    CACHE STRING    "")
-    set(MINGW_PREFIX            "${MSYSTEM_PREFIX}"                   CACHE PATH      "")
-    set(MINGW_PACKAGE_PREFIX    "mingw-w64-${MSYSTEM_CARCH}"          CACHE STRING    "")
-
-    set(TOOLCHAIN_NATIVE_ARM_NONE_EABI "mingw-w64-i686-arm-none-eabi-toolchain" CACHE STRING "" FORCE)
-    set(TOOLCHAIN_NATIVE_AVR "mingw-w64-i686-avr-toolchain" CACHE STRING "" FORCE)
-    set(TOOLCHAIN_NATIVE_RISCV64_UNKOWN_ELF "mingw-w64-i686-riscv64-unknown-elf-toolchain" CACHE STRING "" FORCE)
-    set(TOOLCHAIN_NATIVE "mingw-w64-i686-toolchain" CACHE STRING "" FORCE)
-
-elseif(${MSYSTEM} STREQUAL CLANG64)
-    set(CARCH "x86_64")
-    set(CHOST "x86_64-w64-mingw32")
-    set(MINGW_CHOST "x86_64-w64-mingw32")
-    set(MINGW_PREFIX "/clang64")
-    set(MINGW_PACKAGE_PREFIX "mingw-w64-clang-x86_64")
-    set(CC "clang")
-    set(CXX "clang++")
-    set(CPPFLAGS "-D__USE_MINGW_ANSI_STDIO=1")
-    set(CFLAGS "-march=nocona -msahf -mtune=generic -O2 -pipe -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong")
-    set(CXXFLAGS "-march=nocona -msahf -mtune=generic -O2 -pipe")
-    set(LDFLAGS "-pipe")
-elseif(${MSYSTEM} STREQUAL CLANG32)
-    set(CARCH "i686")
-    set(CHOST "i686-w64-mingw32")
-    set(MINGW_CHOST "i686-w64-mingw32")
-    set(MINGW_PREFIX "/clang32")
-    set(MINGW_PACKAGE_PREFIX="mingw-w64-clang-i686")
-    set(CC "clang")
-    set(CXX "clang++")
-    set(CPPFLAGS "-D__USE_MINGW_ANSI_STDIO=1")
-    set(CFLAGS "-march=pentium4 -mtune=generic -O2 -pipe -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong")
-    set(CXXFLAGS "-march=pentium4 -mtune=generic -O2 -pipe")
-    set(LDFLAGS "-pipe -Wl,--no-seh -Wl,--large-address-aware")
-elseif(${MSYSTEM} STREQUAL CLANGARM64)
-    set(CARCH "aarch64")
-    set(CHOST "aarch64-w64-mingw32")
-    set(MINGW_CHOST "aarch64-w64-mingw32")
-    set(MINGW_PREFIX "/clangarm64")
-    set(MINGW_PACKAGE_PREFIX "mingw-w64-clang-aarch64")
-    set(CC "clang")
-    set(CXX "clang++")
-    set(CPPFLAGS "-D__USE_MINGW_ANSI_STDIO=1")
-    set(CFLAGS "-O2 -pipe -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong")
-    set(CXXFLAGS "-O2 -pipe")
-    set(LDFLAGS "-pipe")
-elseif(${MSYSTEM} STREQUAL UCRT64)
-    set(CARCH "x86_64")
-    set(CHOST "x86_64-w64-mingw32")
-    set(MINGW_CHOST "x86_64-w64-mingw32")
-    set(MINGW_PREFIX "/ucrt64")
-    set(MINGW_PACKAGE_PREFIX="mingw-w64-ucrt-x86_64")
-    set(CC "gcc")
-    set(CXX "g++")
-    set(CPPFLAGS "-D__USE_MINGW_ANSI_STDIO=1")
-    set(CFLAGS "-march=nocona -msahf -mtune=generic -O2 -pipe -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong")
-    set(CXXFLAGS "-march=nocona -msahf -mtune=generic -O2 -pipe")
-    set(LDFLAGS "-pipe")
-else()
-    message("Unsupported MSYSTEM: ${MSYSTEM}")
-endif()
-
 if(DEFINED MSYSTEM)
+
+    # Set toolchain package suffixes (i.e., '{mingw-w64-clang-x86_64}-avr-toolchain')...
+    set(TOOLCHAIN_NATIVE_ARM_NONE_EABI "${MINGW_PACKAGE_PREFIX}-arm-none-eabi-toolchain" CACHE STRING "" FORCE)
+    set(TOOLCHAIN_NATIVE_AVR "${MINGW_PACKAGE_PREFIX}-avr-toolchain" CACHE STRING "" FORCE)
+    set(TOOLCHAIN_NATIVE_RISCV64_UNKOWN_ELF "${MINGW_PACKAGE_PREFIX}-riscv64-unknown-elf-toolchain" CACHE STRING "" FORCE)
+    set(TOOLCHAIN_NATIVE "${MINGW_PACKAGE_PREFIX}-toolchain" CACHE STRING "" FORCE)
+
     # DirectX compatibility environment variable
     set(DXSDK_DIR "${MINGW_PREFIX}/${MINGW_CHOST}" CACHE PATH "DirectX compatibility environment variable" FORCE)
 
@@ -367,6 +334,7 @@ if(DEFINED MSYSTEM)
 
     set(ACLOCAL_PATH "${MINGW_PREFIX}/share/aclocal" "/usr/share/aclocal" CACHE PATH "" FORCE)
     set(PKG_CONFIG_PATH "${MINGW_PREFIX}/lib/pkgconfig" "${MINGW_PREFIX}/share/pkgconfig" CACHE PATH "" FORCE)
+
 endif()
 
 #########################################################################
@@ -434,28 +402,32 @@ else()
     set(OPTION_STRIP_FLAG !strip CACHE STRING "A negated option will do the opposite of the comments below." FORCE)
 endif()
 
-
+# And so forth, or nah...?
 
 if(OPTION_DOCS)
     set(OPTION_DOCS_FLAG docs CACHE STRING "A negated option will do the opposite of the comments below." FORCE)
 else()
     set(OPTION_DOCS_FLAG !docs CACHE STRING "A negated option will do the opposite of the comments below." FORCE)
 endif()
+
 if(OPTION_LIBTOOL)
     set(OPTION_LIBTOOL_FLAG libtool CACHE STRING "A negated option will do the opposite of the comments below." FORCE)
 else()
     set(OPTION_LIBTOOL_FLAG !libtool CACHE STRING "A negated option will do the opposite of the comments below." FORCE)
 endif()
+
 if(OPTION_STATIC_LIBS)
     set(OPTION_STATIC_LIBS_FLAG staticlibs CACHE STRING "A negated option will do the opposite of the comments below." FORCE)
 else()
     set(OPTION_STATIC_LIBS_FLAG !staticlibs CACHE STRING "A negated option will do the opposite of the comments below." FORCE)
 endif()
+
 if(OPTION_EMPTY_DIRS)
     set(OPTION_EMPTY_DIRS_FLAG emptydirs CACHE STRING "A negated option will do the opposite of the comments below." FORCE)
 else()
     set(OPTION_EMPTY_DIRS_FLAG !emptydirs CACHE STRING "A negated option will do the opposite of the comments below." FORCE)
 endif()
+
 if(OPTION_ZIPMAN)
     set(OPTION_ZIPMAN_FLAG zipman CACHE STRING "A negated option will do the opposite of the comments below." FORCE)
 else()
@@ -484,6 +456,7 @@ if(NOT DEFINED OPTIONS)
     set(OPTIONS "${OPTION_STRIP_FLAG} ${OPTION_DOCS_FLAG} ${OPTION_LIBTOOL_FLAG} ${OPTION_STATIC_LIBS_FLAG} ${OPTION_EMPTY_DIRS_FLAG} ${OPTION_ZIPMAN_FLAG} ${OPTION_PURGE_FLAG} ${OPTION_DEBUG_FLAG} ${OPTION_LTO_FLAG}")
 endif()
 set(OPTIONS "${OPTIONS}" CACHE STRING "These are the values for the CMake 'option()' settings." FORCE)
+
 # if(NOT DEFINED OPTIONS)
 #     set(OPTIONS "" CACHE STRING "")
 #     list(APPEND OPTIONS strip docs !libtool staticlibs emptydirs zipman purge !debug !lto)
@@ -494,7 +467,6 @@ if(NOT DEFINED INTEGRITY_CHECK OR (INTEGRITY_CHECK STREQUAL ""))
     set(INTEGRITY_CHECK sha256)
 endif()
 set(INTEGRITY_CHECK "${INTEGRITY_CHECK}" CACHE STRING "File integrity checks to use. Valid: md5, sha1, sha256, sha384, sha512" FORCE)
-
 
 #-- Options to be used when stripping shared libraries. See `man strip' for details.
 set(STRIP_SHARED --strip-unneeded CACHE STRING "Options to be used when stripping shared libraries. See `man strip' for details." FORCE)
@@ -601,14 +573,112 @@ set(COMPRESSLZ "lzip ${COMPRESSLZ_FLAGS}" CACHE STRING "The lzip compression uti
 #########################################################################
 # EXTENSION DEFAULTS
 #########################################################################
-#
+
 set(PKGEXT ".pkg.tar.zst" CACHE STRING "File extension to use for packages." FORCE)
 set(SRCEXT ".src.tar.zst" CACHE STRING "File extension to use for packages containing source code." FORCE)
 
 #########################################################################
 # OTHER
 #########################################################################
-#
+
 #-- Command used to run pacman as root, instead of trying sudo and su
 # PACMAN_AUTH=()
 set(PACMAN_AUTH "()" CACHE STRING "Command used to run pacman as root, instead of trying sudo and su" FORCE)
+
+#########################################################################
+# NOTES
+#########################################################################
+
+# # The below is the equivalent to /etc/msystem but for cmake...
+# if(MSYSTEM STREQUAL MINGW32)
+#     set(MSYSTEM_PREFIX          "/mingw32"                            CACHE PATH      "")
+#     set(MSYSTEM_CARCH           "i686"                                CACHE STRING    "")
+#     set(MSYSTEM_CHOST           "i686-w64-mingw32"                    CACHE STRING    "")
+#     set(MINGW_CHOST             "${MSYSTEM_CHOST}"                    CACHE STRING    "")
+#     set(MINGW_PREFIX            "${MSYSTEM_PREFIX}"                   CACHE PATH      "")
+#     set(MINGW_PACKAGE_PREFIX    "mingw-w64-${MSYSTEM_CARCH}"          CACHE STRING    "")
+# elseif(MSYSTEM STREQUAL MINGW64)
+#     set(MSYSTEM_PREFIX          "/mingw64"                            CACHE PATH      "")
+#     set(MSYSTEM_CARCH           "x86_64"                              CACHE STRING    "")
+#     set(MSYSTEM_CHOST           "x86_64-w64-mingw32"                  CACHE STRING    "")
+#     set(MINGW_CHOST             "${MSYSTEM_CHOST}"                    CACHE STRING    "")
+#     set(MINGW_PREFIX            "${MSYSTEM_PREFIX}"                   CACHE PATH      "")
+#     set(MINGW_PACKAGE_PREFIX    "mingw-w64-${MSYSTEM_CARCH}"          CACHE STRING    "")
+# elseif(MSYSTEM STREQUAL CLANG32)
+#     set(MSYSTEM_PREFIX          "/clang32"                            CACHE PATH      "")
+#     set(MSYSTEM_CARCH           "i686"                                CACHE STRING    "")
+#     set(MSYSTEM_CHOST           "i686-w64-mingw32"                    CACHE STRING    "")
+#     set(MINGW_CHOST             "${MSYSTEM_CHOST}"                    CACHE STRING    "")
+#     set(MINGW_PREFIX            "${MSYSTEM_PREFIX}"                   CACHE PATH      "")
+#     set(MINGW_PACKAGE_PREFIX    "mingw-w64-clang-${MSYSTEM_CARCH}"    CACHE STRING    "")
+# elseif(MSYSTEM STREQUAL CLANG64)
+#     set(MSYSTEM_PREFIX          "/clang64"                            CACHE PATH      "")
+#     set(MSYSTEM_CARCH           "x86_64"                              CACHE STRING    "")
+#     set(MSYSTEM_CHOST           "x86_64-w64-mingw32"                  CACHE STRING    "")
+#     set(MINGW_CHOST             "${MSYSTEM_CHOST}"                    CACHE STRING    "")
+#     set(MINGW_PREFIX            "${MSYSTEM_PREFIX}"                   CACHE PATH      "")
+#     set(MINGW_PACKAGE_PREFIX    "mingw-w64-clang-${MSYSTEM_CARCH}"    CACHE STRING    "")
+# elseif(MSYSTEM STREQUAL CLANGARM64)
+#     set(MSYSTEM_PREFIX          "/clangarm64"                         CACHE PATH      "")
+#     set(MSYSTEM_CARCH           "aarch64"                             CACHE STRING    "")
+#     set(MSYSTEM_CHOST           "aarch64-w64-mingw32"                 CACHE STRING    "")
+#     set(MINGW_CHOST             "${MSYSTEM_CHOST}"                    CACHE STRING    "")
+#     set(MINGW_PREFIX            "${MSYSTEM_PREFIX}"                   CACHE PATH      "")
+#     set(MINGW_PACKAGE_PREFIX    "mingw-w64-clang-${MSYSTEM_CARCH}"    CACHE STRING    "")
+# elseif(MSYSTEM STREQUAL UCRT64)
+#     set(MSYSTEM_PREFIX          "/ucrt64"                             CACHE PATH      "")
+#     set(MSYSTEM_CARCH           "x86_64"                              CACHE STRING    "")
+#     set(MSYSTEM_CHOST           "x86_64-w64-mingw32"                  CACHE STRING    "")
+#     set(MINGW_CHOST             "${MSYSTEM_CHOST}"                    CACHE STRING    "")
+#     set(MINGW_PREFIX            "${MSYSTEM_PREFIX}"                   CACHE PATH      "")
+#     set(MINGW_PACKAGE_PREFIX    "mingw-w64-ucrt-${MSYSTEM_CARCH}"     CACHE STRING    "")
+# else()
+#     execute_process(
+#         COMMAND /usr/bin/uname -m
+#         WORKING_DIRECTORY "."
+#         OUTPUT_VARIABLE MSYSTEM_CARCH
+#     )
+#     set(MSYSTEM_PREFIX          "/usr"                                CACHE PATH      "")
+#     set(MSYSTEM_CARCH           "${MSYSTEM_CARCH}"                    CACHE STRING    "")
+#     set(MSYSTEM_CHOST           "${MSYSTEM_CARCH}-pc-msys"            CACHE STRING    "")
+#     set(MSYSTEM "MSYS")
+# endif()
+
+
+# # A round of custom vars...
+# if(MSYSTEM STREQUAL "MSYS")
+#     set(MSYSTEM_TITLE "MSYS2 MSYS")
+#     set(MSYSTEM_TOOLCHAIN_VARIANT gcc)
+#     set(MSYSTEM_C_LIBRARY cygwin)
+#     set(MSYSTEM_CXX_LIBRARY libstdc++)
+# elseif(MSYSTEM STREQUAL UCRT64)
+#     set(MSYSTEM_TITLE "MinGW UCRT x64")
+#     set(MSYSTEM_TOOLCHAIN_VARIANT gcc)
+#     set(MSYSTEM_C_LIBRARY ucrt)
+#     set(MSYSTEM_CXX_LIBRARY libstdc++)
+# elseif(MSYSTEM STREQUAL CLANG64)
+#     set(MSYSTEM_TITLE "MinGW Clang x64")
+#     set(MSYSTEM_TOOLCHAIN_VARIANT llvm)
+#     set(MSYSTEM_C_LIBRARY ucrt)
+#     set(MSYSTEM_CXX_LIBRARY libc++)
+# elseif(MSYSTEM STREQUAL CLANGARM64)
+#     set(MSYSTEM_TITLE "MinGW Clang ARM64")
+#     set(MSYSTEM_TOOLCHAIN_VARIANT llvm)
+#     set(MSYSTEM_C_LIBRARY ucrt)
+#     set(MSYSTEM_CXX_LIBRARY libc++)
+# elseif(MSYSTEM STREQUAL CLANG32)
+#     set(MSYSTEM_TITLE "MinGW Clang x32")
+#     set(MSYSTEM_TOOLCHAIN_VARIANT llvm)
+#     set(MSYSTEM_C_LIBRARY ucrt)
+#     set(MSYSTEM_CXX_LIBRARY libc++)
+# elseif(MSYSTEM STREQUAL MINGW64)
+#     set(MSYSTEM_TITLE "MinGW x64")
+#     set(MSYSTEM_TOOLCHAIN_VARIANT gcc)
+#     set(MSYSTEM_C_LIBRARY msvcrt)
+#     set(MSYSTEM_CXX_LIBRARY libstdc++)
+# elseif(MSYSTEM STREQUAL MINGW32)
+#     set(MSYSTEM_TITLE "MinGW x32")
+#     set(MSYSTEM_TOOLCHAIN_VARIANT gcc)
+#     set(MSYSTEM_C_LIBRARY msvcrt)
+#     set(MSYSTEM_CXX_LIBRARY libstdc++)
+# endif()
