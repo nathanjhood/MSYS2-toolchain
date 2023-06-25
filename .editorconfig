@@ -1,0 +1,92 @@
+# editorconfig.org
+
+# top-most EditorConfig file
+root = true
+
+# Default settings:
+# A newline ending every file
+# Use 4 spaces as indentation
+[*]
+indent_style = space
+indent_size = 4
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+# License header
+file_header_template = Copyright (c) StoneyDSP.\nLicensed under the MIT License.
+
+# Xml project files
+[*.{csproj,vbproj,vcxproj,vcxproj.filters,vcxitems,vcxitems.filters,proj,nativeproj,locproj,njsproj}]
+indent_size = 2
+end_of_line = crlf
+
+[*.{csproj,vbproj,proj,nativeproj,locproj}]
+charset = utf-8
+
+# Xml build files
+[*.builds]
+indent_size = 2
+
+# Xml files
+[*.{xml,stylecop,resx,ruleset}]
+indent_size = 2
+
+# Xml config files
+[*.{msbuild,props,targets,config,nuspec}]
+indent_size = 2
+end_of_line = crlf
+
+[*.{md,rmd,mkd,mkdn,mdwn,mdown,markdown,litcoffee}]
+tab_width = 4
+
+[*.{yml,yaml}]
+indent_style = space
+indent_size = 2
+
+[{Makefile,*.mak}]
+indent_style = tab
+
+[*.py]
+indent_style = space
+indent_size = 4
+trim_trailing_whitespace = true
+max_line_length = 80
+
+[*.cs]
+indent_style = space
+indent_size = 4
+
+# Shell scripts
+[*.sh]
+end_of_line = lf
+
+# Windows specific files should retain windows line-endings
+[*.{sln,[sS][lL][nN]}]
+end_of_line = crlf
+[*.{cmd,[cC][mM][dD]}]
+end_of_line = crlf
+[*.{bat,[bB][aA][tT]}]
+end_of_line = crlf
+[*.{ps1,psm1}]
+end_of_line = crlf
+
+[*.{js,jsx,ts,tsx}]
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
+end_of_line = lf
+max_line_length = 80
+
+[*.{json}]
+indent_size = 4
+
+[jquery]
+indent_style = tab
+indent_size = 4
+trim_trailing_whitespace = true
+max_line_length = 100
+
+# C++ Files
+[*.{c++,cc,cpp,cppm,cxx,h,h++,hh,hpp,hxx,inl,ipp,ixx,tlh,tli}]
