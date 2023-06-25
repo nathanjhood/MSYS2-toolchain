@@ -1,0 +1,21 @@
+{
+    "cmake.sourceDirectory": "${workspaceFolder}",
+    "cmake.buildDirectory": "${workspaceFolder}/build",
+    "cmake.installPrefix": "${workspaceFolder}/installed",
+    "cmake.generator": "Ninja Multi-Config",
+    "cmake.preferredGenerators": [
+        "Unix Makefiles",
+        "MinGW Makefiles",
+        "MSYS Makefiles"
+    ],
+    "cmake.configureSettings": {
+        // "MSYSTEM": "MINGW64",
+        "CMAKE_TOOLCHAIN_FILE": "${workspaceFolder}/scripts/toolchains/MSYS2.cmake"
+    },
+    "cmake.environment": {
+        "MSYSTEM": "MINGW64"
+    },
+    "cmake.configureOnEdit": false,
+    "cmake.configureOnOpen": false,
+    "cmake.automaticReconfigure": false
+}
