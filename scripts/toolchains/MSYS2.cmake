@@ -1,4 +1,41 @@
-# packages.msys2.org/groups/
+# Mark variables as used so cmake doesn't complain about them
+mark_as_advanced(CMAKE_TOOLCHAIN_FILE)
+
+set(CMAKE_REQUIRED_MINIMUM_VERSION "3.7.2")
+if(CMAKE_VERSION VERSION_LESS CMAKE_REQUIRED_MINIMUM_VERSION)
+    message(FATAL_ERROR "Toolchain requires at least CMake ${CMAKE_REQUIRED_MINIMUM_VERSION}.")
+endif()
+cmake_policy(PUSH)
+cmake_policy(VERSION 3.7.2)
+
+# Info: packages.msys2.org/groups/
+#
+# Toolchain programs:
+#
+# CMAKE_AR
+# CMAKE_<LANG>_COMPILER_AR (Wrapper)
+# CMAKE_RANLIB
+# CMAKE_<LANG>_COMPILER_RANLIB
+# CMAKE_STRIP
+# CMAKE_NM
+# CMAKE_OBJDUMP
+# CMAKE_DLLTOOL
+# CMAKE_MT
+# CMAKE_LINKER
+# CMAKE_C_COMPILER
+# CMAKE_CXX_COMPILER
+# CMAKE_RC_COMPILER
+#
+# Flags:
+#
+# CMAKE_<LANG>_FLAGS
+# CMAKE_<LANG>_FLAGS_<CONFIG>
+# CMAKE_RC_FLAGS
+# CMAKE_SHARED_LINKER_FLAGS
+# CMAKE_STATIC_LINKER_FLAGS
+# CMAKE_STATIC_LINKER_FLAGS_<CONFIG>
+# CMAKE_EXE_LINKER_FLAGS
+# CMAKE_EXE_LINKER_FLAGS_<CONFIG>
 
 set(MSYSTEM "$ENV{MSYSTEM}" CACHE STRING "The detected MSYS sub-system in use." FORCE)
 
@@ -44,9 +81,10 @@ set(MSYS2_OPT_DIR "${MSYS_ROOT}/opt" CACHE PATH "")
 # -march (or -mcpu) builds exclusively for an architecture
 # -mtune optimizes for an architecture, but builds for whole processor family
 
-if(${MSYSTEM} STREQUAL MINGW64)
+if(MSYSTEM STREQUAL MINGW64)
 
     set(BUILDSYSTEM             "MinGW x64"                           CACHE STRING "Name of the build system." FORCE)
+    set(BUILDSYSTEM_ROOT        "${MSYS_ROOT}/mingw64"                CACHE PATH   "Root of the build system.")
 
     set(TOOLCHAIN_VARIANT       gcc                                   CACHE STRING "Identification string of the compiler toolchain variant." FORCE)
     set(CRT_LIBRARY             msvcrt                                CACHE STRING "Identification string of the C Runtime variant. Can be 'ucrt' (modern, 64-bit only) or 'msvcrt' (compatibilty for legacy builds)." FORCE)
@@ -83,9 +121,10 @@ if(${MSYSTEM} STREQUAL MINGW64)
     set(ACLOCAL_PATH            "${MINGW_PREFIX}/share/aclocal" "/usr/share/aclocal"              CACHE PATH "By default, aclocal searches for .m4 files in the following directories." FORCE)
     set(PKG_CONFIG_PATH         "${MINGW_PREFIX}/lib/pkgconfig" "${MINGW_PREFIX}/share/pkgconfig" CACHE PATH "A colon-separated (on Windows, semicolon-separated) list of directories to search for .pc files. The default directory will always be searched after searching the path." FORCE)
 
-elseif(${MSYSTEM} STREQUAL MINGW32)
+elseif(MSYSTEM STREQUAL MINGW32)
 
     set(BUILDSYSTEM             "MinGW x32"                           CACHE STRING    "Name of the build system." FORCE)
+    set(BUILDSYSTEM_ROOT        "${MSYS_ROOT}/mingw32"                CACHE PATH      "Root of the build system.")
 
     set(TOOLCHAIN_VARIANT       gcc                                   CACHE STRING    "Identification string of the compiler toolchain variant." FORCE)
     set(CRT_LIBRARY             msvcrt                                CACHE STRING    "Identification string of the C Runtime variant. Can be 'ucrt' (modern, 64-bit only) or 'msvcrt' (compatibilty for legacy builds)." FORCE)
@@ -119,9 +158,10 @@ elseif(${MSYSTEM} STREQUAL MINGW32)
     set(MINGW_PREFIX            "${MSYSTEM_PREFIX}"                   CACHE PATH      "")
     set(MINGW_PACKAGE_PREFIX    "mingw-w64-${MSYSTEM_CARCH}"          CACHE STRING    "")
 
-elseif(${MSYSTEM} STREQUAL CLANG64)
+elseif(MSYSTEM STREQUAL CLANG64)
 
     set(BUILDSYSTEM             "MinGW Clang x64"                     CACHE STRING    "Name of the build system." FORCE)
+    set(BUILDSYSTEM_ROOT        "${MSYS_ROOT}/clang64"                CACHE PATH      "Root of the build system.")
 
     set(TOOLCHAIN_VARIANT       llvm                                  CACHE STRING    "Identification string of the compiler toolchain variant." FORCE)
     set(CRT_LIBRARY             ucrt                                  CACHE STRING    "Identification string of the C Runtime variant. Can be 'ucrt' (modern, 64-bit only) or 'msvcrt' (compatibilty for legacy builds)." FORCE)
@@ -155,9 +195,10 @@ elseif(${MSYSTEM} STREQUAL CLANG64)
     set(MINGW_PREFIX            "${MSYSTEM_PREFIX}"                   CACHE PATH      "")
     set(MINGW_PACKAGE_PREFIX    "mingw-w64-clang-${MSYSTEM_CARCH}"    CACHE STRING    "")
 
-elseif(${MSYSTEM} STREQUAL CLANG32)
+elseif(MSYSTEM STREQUAL CLANG32)
 
     set(BUILDSYSTEM             "MinGW Clang x32"                     CACHE STRING    "Name of the build system." FORCE)
+    set(BUILDSYSTEM_ROOT        "${MSYS_ROOT}/clang32"                CACHE PATH      "Root of the build system." FORCE)
 
     set(TOOLCHAIN_VARIANT       llvm                                  CACHE STRING    "Identification string of the compiler toolchain variant." FORCE)
     set(CRT_LIBRARY             ucrt                                  CACHE STRING    "Identification string of the C Runtime variant. Can be 'ucrt' (modern, 64-bit only) or 'msvcrt' (compatibilty for legacy builds)." FORCE)
@@ -187,9 +228,10 @@ elseif(${MSYSTEM} STREQUAL CLANG32)
     set(MINGW_PREFIX            "${MSYSTEM_PREFIX}"                   CACHE PATH      "")
     set(MINGW_PACKAGE_PREFIX    "mingw-w64-clang-${MSYSTEM_CARCH}"    CACHE STRING    "")
 
-elseif(${MSYSTEM} STREQUAL CLANGARM64)
+elseif(MSYSTEM STREQUAL CLANGARM64)
 
     set(BUILDSYSTEM             "MinGW Clang ARM64"                   CACHE STRING    "Name of the build system." FORCE)
+    set(BUILDSYSTEM_ROOT        "${MSYS_ROOT}/clangarm64"             CACHE PATH      "Root of the build system." FORCE)
 
     set(TOOLCHAIN_VARIANT       llvm                                  CACHE STRING    "Identification string of the compiler toolchain variant." FORCE)
     set(CRT_LIBRARY             ucrt                                  CACHE STRING    "Identification string of the C Runtime variant. Can be 'ucrt' (modern, 64-bit only) or 'msvcrt' (compatibilty for legacy builds)." FORCE)
@@ -219,9 +261,10 @@ elseif(${MSYSTEM} STREQUAL CLANGARM64)
     set(MINGW_PREFIX            "${MSYSTEM_PREFIX}"                   CACHE PATH      "")
     set(MINGW_PACKAGE_PREFIX    "mingw-w64-clang-${MSYSTEM_CARCH}"    CACHE STRING    "")
 
-elseif(${MSYSTEM} STREQUAL UCRT64)
+elseif(MSYSTEM STREQUAL UCRT64)
 
     set(BUILDSYSTEM             "MinGW UCRT x64"                      CACHE STRING    "Name of the build system." FORCE)
+    set(BUILDSYSTEM_ROOT        "${MSYS_ROOT}/ucrt64"                 CACHE PATH      "Root of the build system." FORCE)
 
     set(TOOLCHAIN_VARIANT       gcc                                   CACHE STRING    "Identification string of the compiler toolchain variant." FORCE)
     set(CRT_LIBRARY             ucrt                                  CACHE STRING    "Identification string of the C Runtime variant. Can be 'ucrt' (modern, 64-bit only) or 'msvcrt' (compatibilty for legacy builds)." FORCE)
@@ -254,6 +297,7 @@ elseif(${MSYSTEM} STREQUAL UCRT64)
 elseif(MSYSTEM STREQUAL "MSYS")
 
     set(BUILDSYSTEM             "MSYS2 MSYS"                          CACHE STRING    "Name of the build system." FORCE)
+    set(BUILDSYSTEM_ROOT        "${MSYS_ROOT}"                        CACHE PATH      "Root of the build system." FORCE)
 
     set(TOOLCHAIN_VARIANT       gcc                                   CACHE STRING    "Identification string of the compiler toolchain variant." FORCE)
     set(CRT_LIBRARY             cygwin                                CACHE STRING    "Identification string of the C Runtime variant. Can be 'ucrt' (modern, 64-bit only) or 'msvcrt' (compatibilty for legacy builds)." FORCE)
@@ -292,6 +336,7 @@ elseif(MSYSTEM STREQUAL "MSYS")
 
 else()
     message(FATAL_ERROR "Unsupported MSYSTEM: ${MSYSTEM}")
+    cmake_policy(POP)
     return()
 endif()
 
@@ -331,7 +376,7 @@ set(MINGW_W64_CROSS_PACKAGES
     mingw-w64-cross-winstorecompat
     mingw-w64-cross-zlib
     CACHE STRING "Packages from command: 'pacman -S mingw-w64-cross'."
-)
+) # Actually identical to the previous var...
 
 if(DEFINED MSYSTEM AND (NOT MSYSTEM STREQUAL "MSYS"))
 
@@ -357,10 +402,10 @@ if(DEFINED MSYSTEM AND (NOT MSYSTEM STREQUAL "MSYS"))
     set(RCFLAGS_RELWITHDEBINFO    "${RELWITHDEBINFO_RCFLAGS}"        CACHE STRING "Default <CFLAGS_RELWITHDEBINFO> flags." FORCE)
 
     # Set toolchain package suffixes (i.e., '{mingw-w64-clang-x86_64}-avr-toolchain')...
-    set(TOOLCHAIN_NATIVE_ARM_NONE_EABI "${MINGW_PACKAGE_PREFIX}-arm-none-eabi-toolchain" CACHE STRING "" FORCE)
-    set(TOOLCHAIN_NATIVE_AVR "${MINGW_PACKAGE_PREFIX}-avr-toolchain" CACHE STRING "" FORCE)
-    set(TOOLCHAIN_NATIVE_RISCV64_UNKOWN_ELF "${MINGW_PACKAGE_PREFIX}-riscv64-unknown-elf-toolchain" CACHE STRING "" FORCE)
-    set(TOOLCHAIN_NATIVE "${MINGW_PACKAGE_PREFIX}-toolchain" CACHE STRING "" FORCE)
+    set(TOOLCHAIN_NATIVE_ARM_NONE_EABI          "${MINGW_PACKAGE_PREFIX}-arm-none-eabi-toolchain" CACHE STRING "" FORCE)
+    set(TOOLCHAIN_NATIVE_AVR                    "${MINGW_PACKAGE_PREFIX}-avr-toolchain" CACHE STRING "" FORCE)
+    set(TOOLCHAIN_NATIVE_RISCV64_UNKOWN_ELF     "${MINGW_PACKAGE_PREFIX}-riscv64-unknown-elf-toolchain" CACHE STRING "The 'unknown elf' toolchain! Careful with this elf, it is not known." FORCE)
+    set(TOOLCHAIN_NATIVE                        "${MINGW_PACKAGE_PREFIX}-toolchain" CACHE STRING "" FORCE)
 
     # DirectX compatibility environment variable
     set(DXSDK_DIR "${MINGW_PREFIX}/${MINGW_CHOST}" CACHE PATH "DirectX compatibility environment variable" FORCE)
@@ -680,9 +725,37 @@ set(SRCEXT ".src.tar.zst" CACHE STRING "File extension to use for packages conta
 # PACMAN_AUTH=()
 set(PACMAN_AUTH "()" CACHE STRING "Command used to run pacman as root, instead of trying sudo and su" FORCE)
 
+cmake_policy(POP)
+
+set(ENV_VARS_FILE_PATH "${CMAKE_CURRENT_BINARY_DIR}/.${TARGET_TRIPLET}.env")
+# file(WRITE ${ENV_VARS_FILE_PATH} "Generator: Toolchain file.\n")
+
+execute_process(COMMAND "${CMAKE_COMMAND}" -E environment
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    OUTPUT_VARIABLE ENV_VARS_FILE
+)
+
+file(APPEND ${ENV_VARS_FILE_PATH} "${ENV_VARS_FILE}")
+
 #########################################################################
 # NOTES
 #########################################################################
+
+# These vars (examples) can be detected in Windows system environments...
+# UCRTVersion := 10.0.22621.0
+# UniversalCRTSdkDir := C:\Program Files (x86)\Windows Kits\10\
+# VCIDEInstallDir := C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\Common7\IDE\VC\
+# VCINSTALLDIR := C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\
+# VCToolsRedistDir := C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Redist\MSVC\14.36.32532\
+# VisualStudioVersion := 17.0
+# VSINSTALLDIR := C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\
+# WindowsLibPath := C:\Program Files (x86)\Windows Kits\10\UnionMetadata\10.0.22621.0;C:\Program Files (x86)\Windows Kits\10\References\10.0.22621.0
+# WindowsSdkBinPath := C:\Program Files (x86)\Windows Kits\10\bin\
+# WindowsSdkDir := C:\Program Files (x86)\Windows Kits\10\
+# WindowsSDKLibVersion := 10.0.22621.0\
+# WindowsSDKVersion := 10.0.22621.0\
+# TMP := C:\Users\natha\AppData\Local\Temp
+
 
 # # The below is the equivalent to /etc/msystem but for cmake...
 # if(MSYSTEM STREQUAL MINGW32)
