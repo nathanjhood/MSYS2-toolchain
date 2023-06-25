@@ -1,0 +1,3 @@
+[submodule "clang-format-presets"]
+	path = clang-format-presets
+	url = ../../cmodules/clang-format-presets.git
