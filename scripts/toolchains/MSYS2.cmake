@@ -37,8 +37,26 @@ cmake_policy(VERSION 3.7.2)
 # CMAKE_EXE_LINKER_FLAGS
 # CMAKE_EXE_LINKER_FLAGS_<CONFIG>
 
-set(MSYSTEM "$ENV{MSYSTEM}" CACHE STRING "The detected MSYS sub-system in use." FORCE)
+# # Pick up the relevant root-level files for just-in-case purposes...?
+# string(TOLOWER ${MSYSTEM} MSYSTEM_NAME)
+# set(MSYSTEM_CONFIG_FILE "${MSYS_ROOT}/${MSYSTEM_NAME}.ini")
+# set(MSYSTEM_LAUNCH_FILE "${MSYS_ROOT}/${MSYSTEM_NAME}.exe")
+# set(MSYSTEM_ICON_FILE "${MSYS_ROOT}/${MSYSTEM_NAME}.ico")
 
+if(NOT DEFINED MSYSTEM)
+    if(DEFINED ENV{MSYSTEM})
+        set(MSYSTEM "$ENV{MSYSTEM}" CACHE STRING "The detected MSYS sub-system in use." FORCE)
+    else()
+        message(WARNING "Cannot find any valid msys2 subsystem specification..."
+        "please try passing '-DMSYSTEM:STRING=UCRT64' on the CMake invocation."
+        "Attempting to use MSYS as a fallback."
+        )
+        set(MSYSTEM "MSYS" CACHE STRING "The detected MSYS sub-system in use." FORCE)
+    endif()
+endif()
+# set(MSYSTEM "${MSYSTEM}" CACHE STRING "The detected MSYS sub-system in use." FORCE)
+
+# Find your msys64 installation root '<MSYS_ROOT>'...
 if(NOT DEFINED MSYS_ROOT)
     if(EXISTS "$ENV{HOMEDRIVE}/msys64")
         set(MSYS_ROOT "$ENV{HOMEDRIVE}/msys64" CACHE PATH "Msys2 installation root directory." FORCE)
@@ -46,6 +64,8 @@ if(NOT DEFINED MSYS_ROOT)
         message(FATAL_ERROR "Cannot find any valid msys2 installation..."
         "please try passing '-DMSYS_ROOT:PATH=<path/to/msys64>' on the CMake invocation."
         )
+        cmake_policy(POP)
+        return()
     endif()
 endif()
 
@@ -56,6 +76,13 @@ set(CLANG32_ROOT "${MSYS_ROOT}/clang32" CACHE PATH "")
 set(MINGW32_ROOT "${MSYS_ROOT}/mingw32" CACHE PATH "")
 set(MINGW64_ROOT "${MSYS_ROOT}/mingw64" CACHE PATH "")
 set(UCRT64_ROOT "${MSYS_ROOT}/ucrt64" CACHE PATH "")
+
+if(EXISTS "$ENV{HOMEDRIVE}/cygwin64")
+    set(CYGWIN64_ROOT "$ENV{HOMEDRIVE}/cygwin64" CACHE PATH "Path to cygwin installation (64-bit)." FORCE)
+endif()
+if(EXISTS "$ENV{HOMEDRIVE}/cygwin32")
+    set(CYGWIN32_ROOT "$ENV{HOMEDRIVE}/cygwin32" CACHE PATH "Path to cygwin installation (32-bit)." FORCE)
+endif()
 
 # Create the standard MSYS2 filepath...
 set(MSYS2_DEV_DIR "${MSYS_ROOT}/dev" CACHE PATH "")
@@ -68,11 +95,47 @@ set(MSYS2_VAR_DIR "${MSYS_ROOT}/var" CACHE PATH "")
 # Additional cross-compiler toolchains are in here...
 set(MSYS2_OPT_DIR "${MSYS_ROOT}/opt" CACHE PATH "")
 
-# # Pick up the relevant root-level files for just-in-case purposes...
-# string(TOLOWER ${MSYSTEM} MSYSTEM_NAME)
-# set(MSYSTEM_CONFIG_FILE "${MSYS_ROOT}/${MSYSTEM_NAME}.ini")
-# set(MSYSTEM_LAUNCH_FILE "${MSYS_ROOT}/${MSYSTEM_NAME}.exe")
-# set(MSYSTEM_ICON_FILE "${MSYS_ROOT}/${MSYSTEM_NAME}.ico")
+# /etc/profile.sh...
+
+# need prefixing...
+set(MSYS2_PATH
+    "/usr/local/bin"
+    "/usr/bin"
+    "/bin"
+)
+set(MANPATH
+    "/usr/local/man"
+    "/usr/share/man"
+    "/usr/man"
+    "/share/man"
+)
+set(INFOPATH
+    "/usr/local/info"
+    "/usr/share/info"
+    "/usr/info"
+    "/share/info"
+)
+
+if(MSYS2_PATH_TYPE STREQUAL "strict")
+    # Do not inherit any path configuration, and allow for full customization
+    # of external path. This is supposed to be used in special cases such as
+    # debugging without need to change this file, but not daily usage.
+    unset (ORIGINAL_PATH)
+
+elseif(MSYS2_PATH_TYPE STREQUAL "inherit")
+    # Inherit previous path. Note that this will make all of the Windows path
+    # available in current shell, with possible interference in project builds.
+    set(ORIGINAL_PATH "${ORIGINAL_PATH}" "${PATH}")
+
+elseif(NOT DEFINED MSYS2_PATH_TYPE OR (MSYS2_PATH_TYPE STREQUAL "minimal"))
+    # Do not inherit any path configuration but configure a default Windows path
+    # suitable for normal usage with minimal external interference.
+    set(WIN_ROOT "$(PATH=${MSYS2_PATH} exec cygpath -Wu)") # Using cygpath to turn Window's PATH to unix vals... needs CMake-ifying.
+    set(ORIGINAL_PATH "${WIN_ROOT}/System32:${WIN_ROOT}:${WIN_ROOT}/System32/Wbem:${WIN_ROOT}/System32/WindowsPowerShell/v1.0/") # can use 'get_powershell_path()' here....
+
+endif()
+
+unset(MINGW_MOUNT_POINT)
 
 #########################################################################
 # ARCHITECTURE, COMPILE FLAGS
@@ -317,10 +380,10 @@ elseif(MSYSTEM STREQUAL "MSYS")
     set(DEBUG_CXXFLAGS "-ggdb -Og" CACHE STRING "" FORCE)
 
     execute_process(
-        COMMAND /usr/bin/uname -m
+        COMMAND "${MSYS_ROOT}/usr/bin/uname -m"
         WORKING_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}"
         OUTPUT_VARIABLE DETECTED_CARCH
-        COMMAND_ERROR_IS_FATAL
+        # COMMAND_ERROR_IS_FATAL ANY
     )
 
     set(PREFIX                  "/msys64"                     CACHE PATH      "")
@@ -375,10 +438,13 @@ set(MINGW_W64_CROSS_PACKAGES
     CACHE STRING "Packages from command: 'pacman -S mingw-w64-cross'."
 ) # Actually identical to the previous var...
 
-if(DEFINED MSYSTEM AND (NOT MSYSTEM STREQUAL "MSYS"))
-
-    set(ACLOCAL_PATH              "${BUILDSYSTEM_ROOT}/share/aclocal" "${BUILDSYSTEM_ROOT}/usr/share/aclocal"              CACHE PATH "By default, aclocal searches for .m4 files in the following directories." FORCE)
-    set(PKG_CONFIG_PATH           "${BUILDSYSTEM_ROOT}/lib/pkgconfig" "${BUILDSYSTEM_ROOT}/share/pkgconfig" CACHE PATH "A colon-separated (on Windows, semicolon-separated) list of directories to search for .pc files. The default directory will always be searched after searching the path." FORCE)
+if ((MSYSTEM STREQUAL MINGW64) OR
+    (MSYSTEM STREQUAL MINGW32) OR
+    (MSYSTEM STREQUAL CLANG64) OR
+    (MSYSTEM STREQUAL CLANG32) OR
+    (MSYSTEM STREQUAL CLANGARM64) OR
+    (MSYSTEM STREQUAL UCRT64)
+    )
 
     # Flag config name fixup...
     set(CFLAGS_DEBUG              "${DEBUG_CFLAGS}"                  CACHE STRING "Default <CFLAGS_DEBUG> flags." FORCE)
@@ -408,20 +474,20 @@ if(DEFINED MSYSTEM AND (NOT MSYSTEM STREQUAL "MSYS"))
     set(TOOLCHAIN_NATIVE                        "${MINGW_PACKAGE_PREFIX}-toolchain" CACHE STRING "" FORCE)
 
     # DirectX compatibility environment variable
-    set(DXSDK_DIR "${MINGW_PREFIX}/${MINGW_CHOST}" CACHE PATH "DirectX compatibility environment variable" FORCE)
+    set(DXSDK_DIR "${MINGW_PREFIX}/${MINGW_CHOST}" CACHE PATH "DirectX compatibility environment variable." FORCE)
 
     #-- Make Flags: change this for DistCC/SMP systems
+    # This var is attempting to pass '-j' to the underlying buildtool - this flag controls the number of processors to build with.
+    # A trypical logical default (as expressed here) is 'number of logical cores' + 1.
+    # The var is currently attempting to call 'nproc' from the PATH - CMake has its own vars that are probably better suited for this...
     if(NOT DEFINED MAKEFLAGS)
         set(MAKEFLAGS "-j$(($(nproc)+1))" CACHE STRING "Make Flags: change this for DistCC/SMP systems")
     endif()
 
-    set(ACLOCAL_PATH "${MINGW_PREFIX}/share/aclocal" "/usr/share/aclocal" CACHE PATH "" FORCE)
-    set(PKG_CONFIG_PATH "${MINGW_PREFIX}/lib/pkgconfig" "${MINGW_PREFIX}/share/pkgconfig" CACHE PATH "" FORCE)
+    set(ACLOCAL_PATH          "${MINGW_PREFIX}/share/aclocal" "${MSYS_ROOT}/usr/share" CACHE PATH "By default, aclocal searches for .m4 files in the following directories." FORCE)
+    set(PKG_CONFIG_PATH       "${MINGW_PREFIX}/lib/pkgconfig" "${MINGW_PREFIX}/share/pkgconfig" CACHE PATH "A colon-separated (on Windows, semicolon-separated) list of directories to search for .pc files. The default directory will always be searched after searching the path." FORCE)
 
 endif()
-
-
-# Adapted from: /etc/makepkg_mingw.conf
 
 #########################################################################
 # SOURCE ACQUISITION
@@ -429,6 +495,8 @@ endif()
 #
 #-- The download utilities that makepkg should use to acquire sources
 #
+#########################################################################
+
 set(DLAGENT_FILE_AGENT "/usr/bin/curl")
 set(DLAGENT_FTP_AGENT "/usr/bin/curl")
 set(DLAGENT_HTTP_AGENT "/usr/bin/curl")
