@@ -2,6 +2,8 @@
 
 For CMake/vcpkg integration.
 
+NOTE: Until further notice, you should treat this repo 'not working, but interesting to study' and consider helping out/contributing if you can :) I may become too busy to finish this beyond a basic implementation for my own needs, for the time being, without a little help.
+
 ## Example usage:
 
 ```
