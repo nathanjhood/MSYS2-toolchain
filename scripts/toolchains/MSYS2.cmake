@@ -1,12 +1,12 @@
-# Mark variables as used so cmake doesn't complain about them
-mark_as_advanced(CMAKE_TOOLCHAIN_FILE)
+# # Mark variables as used so cmake doesn't complain about them
+# mark_as_advanced(CMAKE_TOOLCHAIN_FILE)
 
-set(CMAKE_REQUIRED_MINIMUM_VERSION "3.7.2")
-if(CMAKE_VERSION VERSION_LESS CMAKE_REQUIRED_MINIMUM_VERSION)
-    message(FATAL_ERROR "Toolchain requires at least CMake ${CMAKE_REQUIRED_MINIMUM_VERSION}.")
-endif()
-cmake_policy(PUSH)
-cmake_policy(VERSION 3.7.2)
+# set(CMAKE_REQUIRED_MINIMUM_VERSION "3.7.2")
+# if(CMAKE_VERSION VERSION_LESS CMAKE_REQUIRED_MINIMUM_VERSION)
+#     message(FATAL_ERROR "Toolchain requires at least CMake ${CMAKE_REQUIRED_MINIMUM_VERSION}.")
+# endif()
+# cmake_policy(PUSH)
+# cmake_policy(VERSION 3.7.2)
 
 # Info: packages.msys2.org/groups/
 #
@@ -43,18 +43,18 @@ cmake_policy(VERSION 3.7.2)
 # set(MSYSTEM_LAUNCH_FILE "${MSYS_ROOT}/${MSYSTEM_NAME}.exe")
 # set(MSYSTEM_ICON_FILE "${MSYS_ROOT}/${MSYSTEM_NAME}.ico")
 
-if(NOT DEFINED MSYSTEM)
-    if(DEFINED ENV{MSYSTEM})
-        set(MSYSTEM "$ENV{MSYSTEM}" CACHE STRING "The detected MSYS sub-system in use." FORCE)
-    else()
-        message(WARNING "Cannot find any valid msys2 subsystem specification..."
-        "please try passing '-DMSYSTEM:STRING=UCRT64' on the CMake invocation."
-        "Attempting to use MSYS as a fallback."
-        )
-        set(MSYSTEM "MSYS" CACHE STRING "The detected MSYS sub-system in use." FORCE)
-    endif()
-endif()
-# set(MSYSTEM "${MSYSTEM}" CACHE STRING "The detected MSYS sub-system in use." FORCE)
+# if(DEFINED ENV{MSYSTEM})
+#     set(MSYSTEM "$ENV{MSYSTEM}" CACHE STRING "The detected MSYS sub-system in use." FORCE)
+# elseif(DEFINED MSYSTEM)
+#     set(MSYSTEM "${MSYSTEM}" CACHE STRING "The detected MSYS sub-system in use." FORCE)
+# else()
+#     set(MSYSTEM "MSYS" CACHE STRING "The detected MSYS sub-system in use." FORCE)
+#     message(WARNING "Cannot find any valid msys2 subsystem specification...")
+#     message(WARNING "please try passing '-DMSYSTEM:STRING=UCRT64' on the CMake invocation.")
+#     message(WARNING "Attempting to use MSYS as a fallback.")
+# endif()
+
+set(MSYSTEM "MINGW64" CACHE STRING "The detected MSYS sub-system in use." FORCE)
 
 # Find your msys64 installation root '<MSYS_ROOT>'...
 if(NOT DEFINED MSYS_ROOT)
@@ -64,7 +64,7 @@ if(NOT DEFINED MSYS_ROOT)
         message(FATAL_ERROR "Cannot find any valid msys2 installation..."
         "please try passing '-DMSYS_ROOT:PATH=<path/to/msys64>' on the CMake invocation."
         )
-        cmake_policy(POP)
+        # cmake_policy(POP)
         return()
     endif()
 endif()
@@ -135,7 +135,7 @@ elseif(NOT DEFINED MSYS2_PATH_TYPE OR (MSYS2_PATH_TYPE STREQUAL "minimal"))
 
 endif()
 
-unset(MINGW_MOUNT_POINT)
+# unset(MINGW_MOUNT_POINT)
 
 #########################################################################
 # ARCHITECTURE, COMPILE FLAGS
@@ -146,19 +146,29 @@ unset(MINGW_MOUNT_POINT)
 
 if(MSYSTEM STREQUAL MINGW64)
 
+    if(NOT _VCPKG_MSYS_MINGW64_TOOLCHAIN)
+    set(_VCPKG_MSYS_MINGW64_TOOLCHAIN 1)
+
     set(BUILDSYSTEM             "MinGW x64"                           CACHE STRING   "Name of the build system." FORCE)
     set(BUILDSYSTEM_ROOT        "${MSYS_ROOT}/mingw64"                CACHE PATH     "Root of the build system." FORCE)
+
+    if(NOT DEFINED CRT_LINKAGE)
+        set(CRT_LINKAGE "static" CACHE STRING "" FORCE)
+    endif()
 
     set(TOOLCHAIN_VARIANT       gcc                                   CACHE STRING   "Identification string of the compiler toolchain variant." FORCE)
     set(CRT_LIBRARY             msvcrt                                CACHE STRING   "Identification string of the C Runtime variant. Can be 'ucrt' (modern, 64-bit only) or 'msvcrt' (compatibilty for legacy builds)." FORCE)
     set(CXX_STD_LIBRARY         libstdc++                             CACHE STRING   "Identification string of the C++ Standard Library variant. Can be 'libstdc++' (GNU implementation) or 'libc++' (LLVM implementation)." FORCE)
-    #
+    set(CRT_LINKAGE             "${CRT_LINKAGE}"                      CACHE STRING   "" FORCE)
+    set(MINGW64_ROOT            "${MSYS_ROOT}/mingw64"                CACHE PATH     "")
+
     set(__USE_MINGW_ANSI_STDIO  "1"                                   CACHE STRING   "Use the MinGW ANSI definition for 'stdio.h'." FORCE)
     set(_FORTIFY_SOURCE         "2"                                   CACHE STRING   "Fortify source definition." FORCE)
 
-    set(CC                      "gcc"                                 CACHE FILEPATH "The full path to the compiler for <CC>." FORCE)
-    set(CXX                     "g++"                                 CACHE FILEPATH "The full path to the compiler for <CXX>." FORCE)
-    set(LD                      "ld"                                  CACHE FILEPATH "The full path to the linker <LD>." FORCE)
+    set(CC                      "${MINGW64_ROOT}/bin/gcc"             CACHE FILEPATH "The full path to the compiler for <CC>." FORCE)
+    set(CXX                     "${MINGW64_ROOT}/bin/g++"             CACHE FILEPATH "The full path to the compiler for <CXX>." FORCE)
+    set(LD                      "${MINGW64_ROOT}/bin/ld"              CACHE FILEPATH "The full path to the linker <LD>." FORCE)
+    set(RC                      "${MINGW64_ROOT}/bin/windres"         CACHE FILEPATH "" FORCE)
 
     set(CFLAGS                  "-march=nocona -msahf -mtune=generic -O2 -pipe -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong" CACHE STRING "Default <CFLAGS> flags for all build types." FORCE)
     set(CXXFLAGS                "-march=nocona -msahf -mtune=generic -O2 -pipe" CACHE STRING "Default <CXXFLAGS> flags for all build types." FORCE)
@@ -180,6 +190,46 @@ if(MSYSTEM STREQUAL MINGW64)
     set(MINGW_CHOST             "${MSYSTEM_CHOST}"                    CACHE STRING    "Sub-system prefix." FORCE)
     set(MINGW_PREFIX            "${MSYSTEM_PREFIX}"                   CACHE PATH      "Sub-system prefix." FORCE)
     set(MINGW_PACKAGE_PREFIX    "mingw-w64-${MSYSTEM_CARCH}"          CACHE STRING    "Sub-system prefix." FORCE)
+
+    if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
+        set(CMAKE_CROSSCOMPILING OFF CACHE BOOL "")
+    endif()
+
+    set(CMAKE_SYSTEM_PROCESSOR x86_64 CACHE STRING "")
+
+    foreach(lang C CXX)
+        set(CMAKE_${lang}_COMPILER_TARGET "${CMAKE_SYSTEM_PROCESSOR}-windows-gnu" CACHE STRING "")
+    endforeach()
+
+    find_program(CMAKE_C_COMPILER "${CMAKE_SYSTEM_PROCESSOR}-w64-mingw32-gcc")
+    find_program(CMAKE_CXX_COMPILER "${CMAKE_SYSTEM_PROCESSOR}-w64-mingw32-g++")
+    find_program(CMAKE_RC_COMPILER "${CMAKE_SYSTEM_PROCESSOR}-w64-mingw32-windres")
+
+    if(NOT CMAKE_RC_COMPILER)
+        find_program(CMAKE_RC_COMPILER "windres")
+    endif()
+
+    get_property( _CMAKE_IN_TRY_COMPILE GLOBAL PROPERTY IN_TRY_COMPILE )
+    if(NOT _CMAKE_IN_TRY_COMPILE)
+        string(APPEND CMAKE_C_FLAGS_INIT " ${CFLAGS} ")
+        string(APPEND CMAKE_CXX_FLAGS_INIT " ${CXXFLAGS} ")
+        string(APPEND CMAKE_C_FLAGS_DEBUG_INIT " ${DEBUG_CFLAGS} ")
+        string(APPEND CMAKE_CXX_FLAGS_DEBUG_INIT " ${DEBUG_CXXFLAGS} ")
+        string(APPEND CMAKE_C_FLAGS_RELEASE_INIT " ${RELEASE_CFLAGS} ")
+        string(APPEND CMAKE_CXX_FLAGS_RELEASE_INIT " ${RELEASE_CXXFLAGS} ")
+
+        string(APPEND CMAKE_SHARED_LINKER_FLAGS_INIT " ${LDFLAGS} ${STRIP_SHARED} ")
+        string(APPEND CMAKE_EXE_LINKER_FLAGS_INIT " ${LDFLAGS} ${STRIP_BINARIES} ")
+        if(CRT_LINKAGE STREQUAL "static")
+            string(APPEND CMAKE_SHARED_LINKER_FLAGS_INIT "-static ")
+            string(APPEND CMAKE_EXE_LINKER_FLAGS_INIT "-static ")
+        endif()
+        string(APPEND CMAKE_SHARED_LINKER_FLAGS_DEBUG_INIT " ${LDFLAGS_DEBUG} ")
+        string(APPEND CMAKE_EXE_LINKER_FLAGS_DEBUG_INIT " ${LDFLAGS_DEBUG} ")
+        string(APPEND CMAKE_SHARED_LINKER_FLAGS_RELEASE_INIT " ${LDFLAGS_RELEASE} ")
+        string(APPEND CMAKE_EXE_LINKER_FLAGS_RELEASE_INIT " ${LDFLAGS_RELEASE} ")
+    endif()
+    endif()
 
 elseif(MSYSTEM STREQUAL MINGW32)
 
@@ -396,9 +446,10 @@ elseif(MSYSTEM STREQUAL "MSYS")
 
 else()
     message(FATAL_ERROR "Unsupported MSYSTEM: ${MSYSTEM}")
-    cmake_policy(POP)
+    # cmake_policy(POP)
     return()
 endif()
+
 
 # Note that some packages cannot be mixed together, likely to prevent setting
 # linkage between mixed C runtimes (which is widely unsupported and not recommended).
@@ -488,6 +539,49 @@ if ((MSYSTEM STREQUAL MINGW64) OR
     set(PKG_CONFIG_PATH       "${MINGW_PREFIX}/lib/pkgconfig" "${MINGW_PREFIX}/share/pkgconfig" CACHE PATH "A colon-separated (on Windows, semicolon-separated) list of directories to search for .pc files. The default directory will always be searched after searching the path." FORCE)
 
 endif()
+
+
+unset(CC)
+unset(CXX)
+unset(LD)
+unset(RC)
+unset(LDFLAGS)
+unset(LDFLAGS_DEBUG)
+unset(LDFLAGS_MINSIZEREL)
+unset(LDFLAGS_RELEASE)
+unset(LDFLAGS_RELWITHDEBINFO)
+unset(RCFLAGS)
+unset(RCFLAGS_DEBUG)
+unset(RCFLAGS_MINSIZEREL)
+unset(RCFLAGS_RELEASE)
+unset(RCFLAGS_RELWITHDEBINFO)
+unset(CFLAGS)
+unset(CFLAGS_DEBUG)
+unset(CFLAGS_MINSIZEREL)
+unset(CFLAGS_RELEASE)
+unset(CFLAGS_RELWITHDEBINFO)
+unset(CXXFLAGS)
+unset(CXXFLAGS_DEBUG)
+unset(CXXFLAGS_MINSIZEREL)
+unset(CXXFLAGS_RELEASE)
+unset(CXXFLAGS_RELWITHDEBINFO)
+unset(CPPFLAGS)
+unset(CPPFLAGS_DEBUG)
+unset(CPPFLAGS_MINSIZEREL)
+unset(CPPFLAGS_RELEASE)
+unset(CPPFLAGS_RELWITHDEBINFO)
+unset(DEBUG_CFLAGS)
+unset(DEBUG_CPPFLAGS)
+unset(DEBUG_CXXFLAGS)
+unset(DEBUG_LDFLAGS)
+unset(DEBUG_RCFLAGS)
+unset(RELEASE_CFLAGS)
+unset(RELEASE_CPPFLAGS)
+unset(RELEASE_CXXFLAGS)
+unset(RELEASE_LDFLAGS)
+unset(RELEASE_RCFLAGS)
+unset(CARCH)
+unset(CHOST)
 
 #########################################################################
 # SOURCE ACQUISITION
@@ -778,6 +872,15 @@ set(COMPRESSZ "compress ${COMPRESSZ_FLAGS}" CACHE STRING "The compress compressi
 set(COMPRESSLZ4 "lz4 ${COMPRESSLZ4_FLAGS}" CACHE STRING "The lz4 compression utility command." FORCE)
 set(COMPRESSLZ "lzip ${COMPRESSLZ_FLAGS}" CACHE STRING "The lzip compression utility command." FORCE)
 
+unset(COMPRESSGZ_FLAGS)
+unset(COMPRESSBZ2_FLAGS)
+unset(COMPRESSXZ_FLAGS)
+unset(COMPRESSZST_FLAGS)
+unset(COMPRESSLRZ_FLAGS)
+unset(COMPRESSLZO_FLAGS)
+unset(COMPRESSZ_FLAGS)
+unset(COMPRESSLZ4_FLAGS)
+unset(COMPRESSLZ_FLAGS)
 #########################################################################
 # EXTENSION DEFAULTS
 #########################################################################
@@ -793,7 +896,7 @@ set(SRCEXT ".src.tar.zst" CACHE STRING "File extension to use for packages conta
 # PACMAN_AUTH=()
 set(PACMAN_AUTH "()" CACHE STRING "Command used to run pacman as root, instead of trying sudo and su" FORCE)
 
-cmake_policy(POP)
+# cmake_policy(POP)
 
 set(ENV_VARS_FILE_PATH "${CMAKE_CURRENT_BINARY_DIR}/.${TARGET_TRIPLET}.env")
 # file(WRITE ${ENV_VARS_FILE_PATH} "Generator: Toolchain file.\n")
@@ -918,3 +1021,53 @@ file(APPEND ${ENV_VARS_FILE_PATH} "${ENV_VARS_FILE}")
 #     set(MSYSTEM_C_LIBRARY msvcrt)
 #     set(MSYSTEM_CXX_LIBRARY libstdc++)
 # endif()
+
+# # Pass vars to CMake vars...
+# set(CMAKE_CPP_FLAGS_INIT "${CPPFLAGS}" CACHE STRING "Value used to initialize the ``CMAKE_<LANG>_FLAGS`` cache entry the first time a build tree is configured for language ``<LANG>``." FORCE)
+
+# set(CMAKE_C_FLAGS_INIT "${CFLAGS}" CACHE STRING "Value used to initialize the ``CMAKE_<LANG>_FLAGS`` cache entry the first time a build tree is configured for language ``<LANG>``." FORCE)
+# set(CMAKE_C_FLAGS_DEBUG_INIT "${CFLAGS_DEBUG}" CACHE STRING "Value used to initialize the ``CMAKE_<LANG>_FLAGS_<CONFIG>`` cache entry the first time a build tree is configured for language ``<LANG>``." FORCE)
+# set(CMAKE_C_FLAGS_MINSIZEREL_INIT "${CFLAGS_MINSIZEREL}" CACHE STRING "Value used to initialize the ``CMAKE_<LANG>_FLAGS`` cache entry the first time a build tree is configured for language ``<LANG>``." FORCE)
+# set(CMAKE_C_FLAGS_RELEASE_INIT "${CFLAGS_RELEASE}" CACHE STRING "Value used to initialize the ``CMAKE_<LANG>_FLAGS_<CONFIG>`` cache entry the first time a build tree is configured for language ``<LANG>``." FORCE)
+# set(CMAKE_C_FLAGS_RELWITHDEBINFO_INIT "${CFLAGS_RELWITHDEBINFO}" CACHE STRING "Value used to initialize the ``CMAKE_<LANG>_FLAGS_<CONFIG>`` cache entry the first time a build tree is configured for language ``<LANG>``." FORCE)
+
+# set(CMAKE_CXX_FLAGS_INIT "${CXXFLAGS}" CACHE STRING "Value used to initialize the ``CMAKE_<LANG>_FLAGS`` cache entry the first time a build tree is configured for language ``<LANG>``." FORCE)
+# set(CMAKE_CXX_FLAGS_DEBUG_INIT "${CXXFLAGS_DEBUG}" CACHE STRING "Value used to initialize the ``CMAKE_<LANG>_FLAGS_<CONFIG>`` cache entry the first time a build tree is configured for language ``<LANG>``." FORCE)
+# set(CMAKE_CXX_FLAGS_MINSIZEREL_INIT "${CXXFLAGS_MINSIZEREL}" CACHE STRING "Value used to initialize the ``CMAKE_<LANG>_FLAGS`` cache entry the first time a build tree is configured for language ``<LANG>``." FORCE)
+# set(CMAKE_CXX_FLAGS_RELEASE_INIT "${CXXFLAGS_RELEASE}" CACHE STRING "Value used to initialize the ``CMAKE_<LANG>_FLAGS_<CONFIG>`` cache entry the first time a build tree is configured for language ``<LANG>``." FORCE)
+# set(CMAKE_CXX_FLAGS_RELWITHDEBINFO_INIT "${CXXFLAGS_RELWITHDEBINFO}" CACHE STRING "Value used to initialize the ``CMAKE_<LANG>_FLAGS_<CONFIG>`` cache entry the first time a build tree is configured for language ``<LANG>``." FORCE)
+
+# set(CMAKE_RC_FLAGS_INIT "${RCFLAGS}" CACHE STRING "Value used to initialize the ``CMAKE_<LANG>_FLAGS`` cache entry the first time a build tree is configured for language ``<LANG>``." FORCE)
+# set(CMAKE_RC_FLAGS_DEBUG_INIT "${RCFLAGS_DEBUG}" CACHE STRING "Value used to initialize the ``CMAKE_<LANG>_FLAGS_<CONFIG>`` cache entry the first time a build tree is configured for language ``<LANG>``." FORCE)
+# set(CMAKE_RC_FLAGS_MINSIZEREL_INIT "${RCFLAGS_MINSIZEREL}" CACHE STRING "Value used to initialize the ``CMAKE_<LANG>_FLAGS`` cache entry the first time a build tree is configured for language ``<LANG>``." FORCE)
+# set(CMAKE_RC_FLAGS_RELEASE_INIT "${RCFLAGS_RELEASE}" CACHE STRING "Value used to initialize the ``CMAKE_<LANG>_FLAGS_<CONFIG>`` cache entry the first time a build tree is configured for language ``<LANG>``." FORCE)
+# set(CMAKE_RC_FLAGS_RELWITHDEBINFO_INIT "${RCFLAGS_RELWITHDEBINFO}" CACHE STRING "Value used to initialize the ``CMAKE_<LANG>_FLAGS_<CONFIG>`` cache entry the first time a build tree is configured for language ``<LANG>``." FORCE)
+
+# set(CMAKE_C_COMPILER "${CC}" CACHE FILEPATH "The full path to the compiler for ``LANG``." FORCE)
+# set(CMAKE_CXX_COMPILER "${CXX}" CACHE FILEPATH "The full path to the compiler for ``LANG``." FORCE)
+
+
+# set(CMAKE_LINK_LIBRARY_FLAG)
+# set(CMAKE_CXX_LINKER_WRAPPER_FLAG)
+# set(CMAKE_CXX_LINKER_WRAPPER_FLAG_SEP)
+
+# set(CMAKE_EXE_LINKER_FLAGS_INIT "${STRIP_BINARIES}" CACHE STRING "Value used to initialize the ``CMAKE_EXE_LINKER_FLAGS`` cache entry the first time a build tree is configured." FORCE)
+# set(CMAKE_EXE_LINKER_FLAGS_DEBUG_INIT "" CACHE STRING "Value used to initialize the ``CMAKE_EXE_LINKER_FLAGS_<CONFIG>`` cache entry the first time a build tree is configured." FORCE)
+# set(CMAKE_EXE_LINKER_FLAGS_MINSIZEREL_INIT "" CACHE STRING "Value used to initialize the ``CMAKE_EXE_LINKER_FLAGS_<CONFIG>`` cache entry the first time a build tree is configured." FORCE)
+# set(CMAKE_EXE_LINKER_FLAGS_RELEASE_INIT "" CACHE STRING "Value used to initialize the ``CMAKE_EXE_LINKER_FLAGS_<CONFIG>`` cache entry the first time a build tree is configured." FORCE)
+# set(CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO_INIT "" CACHE STRING "Value used to initialize the ``CMAKE_EXE_LINKER_FLAGS_<CONFIG>`` cache entry the first time a build tree is configured." FORCE)
+
+# set(CMAKE_STATIC_LINKER_FLAGS_INIT "${STRIP_STATIC}" CACHE STRING "Value used to initialize the ``CMAKE_STATIC_LINKER_FLAGS`` cache entry the first time a build tree is configured." FORCE)
+# set(CMAKE_STATIC_LINKER_FLAGS_DEBUG_INIT "" CACHE STRING "Value used to initialize the ``CMAKE_STATIC_LINKER_FLAGS_<CONFIG>`` cache entry the first time a build tree is configured." FORCE)
+# set(CMAKE_STATIC_LINKER_FLAGS_MINSIZEREL_INIT "" CACHE STRING "Value used to initialize the ``CMAKE_STATIC_LINKER_FLAGS_<CONFIG>`` cache entry the first time a build tree is configured." FORCE)
+# set(CMAKE_STATIC_LINKER_FLAGS_RELEASE_INIT "" CACHE STRING "Value used to initialize the ``CMAKE_STATIC_LINKER_FLAGS_<CONFIG>`` cache entry the first time a build tree is configured." FORCE)
+# set(CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO_INIT "" CACHE STRING "Value used to initialize the ``CMAKE_STATIC_LINKER_FLAGS_<CONFIG>`` cache entry the first time a build tree is configured." FORCE)
+
+# set(CMAKE_SHARED_LINKER_FLAGS_INIT "${STRIP_SHARED}" CACHE STRING "Value used to initialize the ``CMAKE_SHARED_LINKER_FLAGS_<CONFIG>`` cache entry the first time a build tree is configured." FORCE)
+# set(CMAKE_SHARED_LINKER_FLAGS_DEBUG_INIT "" CACHE STRING "Value used to initialize the ``CMAKE_SHARED_LINKER_FLAGS_<CONFIG>`` cache entry the first time a build tree is configured." FORCE)
+# set(CMAKE_SHARED_LINKER_FLAGS_MINSIZEREL_INIT "" CACHE STRING "Value used to initialize the ``CMAKE_SHARED_LINKER_FLAGS_<CONFIG>`` cache entry the first time a build tree is configured." FORCE)
+# set(CMAKE_SHARED_LINKER_FLAGS_RELEASE_INIT "" CACHE STRING "Value used to initialize the ``CMAKE_SHARED_LINKER_FLAGS_<CONFIG>`` cache entry the first time a build tree is configured." FORCE)
+# set(CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO_INIT "" CACHE STRING "Value used to initialize the ``CMAKE_SHARED_LINKER_FLAGS_<CONFIG>`` cache entry the first time a build tree is configured." FORCE)
+
+# # Requires C++ module support (C++20 etc)...
+# set(CMAKE_MODULE_LINKER_FLAGS_INIT "" CACHE STRING "Flags to be used to create static libraries." FORCE)
