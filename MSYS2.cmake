@@ -12,23 +12,24 @@ if(NOT DEFINED MSYS_ROOT)
     endif()
 endif()
 
+# Could keep these all exposed for potential cross-compiling...?
+set(CLANGARM64_ROOT "${MSYS_ROOT}/clangarm64" CACHE PATH "")
+set(CLANG64_ROOT "${MSYS_ROOT}/clang64" CACHE PATH "")
+set(CLANG32_ROOT "${MSYS_ROOT}/clang32" CACHE PATH "")
+set(MINGW32_ROOT "${MSYS_ROOT}/mingw32" CACHE PATH "")
+set(MINGW64_ROOT "${MSYS_ROOT}/mingw64" CACHE PATH "")
+set(UCRT64_ROOT "${MSYS_ROOT}/ucrt64" CACHE PATH "")
+
 # Create the standard MSYS2 filepath...
 set(MSYS2_DEV_DIR "${MSYS_ROOT}/dev" CACHE PATH "")
 set(MSYS2_ETC_DIR "${MSYS_ROOT}/etc" CACHE PATH "")
 set(MSYS2_HOME_DIR "${MSYS_ROOT}/home" CACHE PATH "")
-set(MSYS2_OPT_DIR "${MSYS_ROOT}/opt" CACHE PATH "")
 set(MSYS2_SHARE_DIR "${MSYS_ROOT}/share" CACHE PATH "")
 set(MSYS2_TMP_DIR "${MSYS_ROOT}/tmp" CACHE PATH "")
 set(MSYS2_USR_DIR "${MSYS_ROOT}/usr" CACHE PATH "")
 set(MSYS2_VAR_DIR "${MSYS_ROOT}/var" CACHE PATH "")
-
-# Could keep these all exposed for potential cross-compiling...?
-set(MINGW32_ROOT "${MSYS_ROOT}/mingw32" CACHE PATH "")
-set(MINGW64_ROOT "${MSYS_ROOT}/mingw64" CACHE PATH "")
-set(CLANG32_ROOT "${MSYS_ROOT}/clang32" CACHE PATH "")
-set(CLANG64_ROOT "${MSYS_ROOT}/clang64" CACHE PATH "")
-set(CLANGARM64_ROOT "${MSYS_ROOT}/clangarm64" CACHE PATH "")
-set(UCRT64_ROOT "${MSYS_ROOT}/ucrt64" CACHE PATH "")
+# Additional cross-compiler toolchains are in here...
+set(MSYS2_OPT_DIR "${MSYS_ROOT}/opt" CACHE PATH "")
 
 # # Pick up the relevant root-level files for just-in-case purposes...
 # string(TOLOWER ${MSYSTEM} MSYSTEM_NAME)
@@ -39,26 +40,33 @@ set(UCRT64_ROOT "${MSYS_ROOT}/ucrt64" CACHE PATH "")
 #########################################################################
 # ARCHITECTURE, COMPILE FLAGS
 #########################################################################
+#-- Compiler and Linker Flags
+# -march (or -mcpu) builds exclusively for an architecture
+# -mtune optimizes for an architecture, but builds for whole processor family
 
 if(${MSYSTEM} STREQUAL MINGW64)
 
-    set(BUILDSYSTEM "MinGW x64")
+    set(BUILDSYSTEM             "MinGW x64"                           CACHE STRING "Name of the build system." FORCE)
 
-    set(TOOLCHAIN_VARIANT gcc)
-    set(CRT_LIBRARY msvcrt)
-    set(CXX_STD_LIBRARY libstdc++)
-
+    set(TOOLCHAIN_VARIANT       gcc                                   CACHE STRING "Identification string of the compiler toolchain variant." FORCE)
+    set(CRT_LIBRARY             msvcrt                                CACHE STRING "Identification string of the C Runtime variant. Can be 'ucrt' (modern, 64-bit only) or 'msvcrt' (compatibilty for legacy builds)." FORCE)
+    set(CXX_STD_LIBRARY         libstdc++                             CACHE STRING "Identification string of the C++ Standard Library variant. Can be 'libstdc++' (GNU implementation) or 'libc++' (LLVM implementation)." FORCE)
     #
-    set(__USE_MINGW_ANSI_STDIO "1" CACHE STRING "" FORCE)
-    set(_FORTIFY_SOURCE "2" CACHE STRING "" FORCE)
+    set(__USE_MINGW_ANSI_STDIO  "1"                                   CACHE STRING "Use the MinGW ANSI definition for 'stdio.h'." FORCE)
+    set(_FORTIFY_SOURCE         "2"                                   CACHE STRING "Fortify source definition." FORCE)
 
-    set(CC "gcc")
-    set(CXX "g++")
+    set(CC                      "gcc"                                 CACHE FILEPATH "The full path to the compiler for <CC>." FORCE)
+    set(CXX                     "g++"                                 CACHE FILEPATH "The full path to the compiler for <CXX>." FORCE)
+    set(LD                      "ld"                                  CACHE FILEPATH "The full path to the linker <LD>." FORCE)
 
-    set(CPPFLAGS "-D__USE_MINGW_ANSI_STDIO=1")
-    set(CFLAGS "-march=nocona -msahf -mtune=generic -O2 -pipe -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong")
-    set(CXXFLAGS "-march=nocona -msahf -mtune=generic -O2 -pipe")
-    set(LDFLAGS "-pipe")
+    set(CFLAGS                  "-march=nocona -msahf -mtune=generic -O2 -pipe -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong"  CACHE STRING "Default <CFLAGS> flags for all build types." FORCE)
+    set(CXXFLAGS                "-march=nocona -msahf -mtune=generic -O2 -pipe" CACHE STRING "Default <CXXFLAGS> flags for all build types." FORCE)
+    set(CPPFLAGS                "-D__USE_MINGW_ANSI_STDIO=1" CACHE STRING "Default <CPPFLAGS> flags for all build types." FORCE)
+    set(LDFLAGS                 "-pipe" CACHE STRING "Default <LD> flags for linker for all build types." FORCE)
+
+    #-- Debugging flags
+    set(DEBUG_CFLAGS            "-ggdb -Og"                           CACHE STRING "Default <CFLAGS_DEBUG> flags." FORCE)
+    set(DEBUG_CXXFLAGS          "-ggdb -Og"                           CACHE STRING "Default <CXXFLAGS_DEBUG> flags." FORCE)
 
     set(PREFIX                  "/mingw64"                            CACHE PATH      "")
     set(CARCH                   "x86_64"                              CACHE STRING    "")
@@ -72,9 +80,12 @@ if(${MSYSTEM} STREQUAL MINGW64)
     set(MINGW_PREFIX            "${MSYSTEM_PREFIX}"                   CACHE PATH      "")
     set(MINGW_PACKAGE_PREFIX    "mingw-w64-${MSYSTEM_CARCH}"          CACHE STRING    "")
 
+    set(ACLOCAL_PATH            "${MINGW_PREFIX}/share/aclocal" "/usr/share/aclocal"              CACHE PATH "By default, aclocal searches for .m4 files in the following directories." FORCE)
+    set(PKG_CONFIG_PATH         "${MINGW_PREFIX}/lib/pkgconfig" "${MINGW_PREFIX}/share/pkgconfig" CACHE PATH "" FORCE)
+
 elseif(${MSYSTEM} STREQUAL MINGW32)
 
-    set(BUILDSYSTEM "MinGW x32")
+    set(BUILDSYSTEM "MinGW x32" CACHE STRING "Name of the build system." FORCE)
 
     set(TOOLCHAIN_VARIANT gcc)
     set(CRT_LIBRARY msvcrt)
@@ -83,13 +94,17 @@ elseif(${MSYSTEM} STREQUAL MINGW32)
     set(__USE_MINGW_ANSI_STDIO "1" CACHE STRING "" FORCE)
     set(_FORTIFY_SOURCE "2" CACHE STRING "" FORCE)
 
-    set(CC "gcc")
-    set(CXX "g++")
+    set(CC "gcc" CACHE FILEPATH "The full path to the compiler for <CC>." FORCE)
+    set(CXX "g++" CACHE FILEPATH "The full path to the compiler for <CXX>." FORCE)
 
     set(CPPFLAGS "-D__USE_MINGW_ANSI_STDIO=1")
     set(CFLAGS "-march=pentium4 -mtune=generic -O2 -pipe -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong")
     set(CXXFLAGS "-march=pentium4 -mtune=generic -O2 -pipe")
     set(LDFLAGS "-pipe -Wl,--no-seh -Wl,--large-address-aware")
+
+    #-- Debugging flags
+    set(DEBUG_CFLAGS            "-ggdb -Og"                           CACHE STRING "Default <CFLAGS_DEBUG> flags." FORCE)
+    set(DEBUG_CXXFLAGS          "-ggdb -Og"                           CACHE STRING "Default <CXXFLAGS_DEBUG> flags." FORCE)
 
     set(PREFIX                  "/mingw32"                            CACHE PATH      "")
     set(CARCH                   "i686"                                CACHE STRING    "")
@@ -105,7 +120,7 @@ elseif(${MSYSTEM} STREQUAL MINGW32)
 
 elseif(${MSYSTEM} STREQUAL CLANG64)
 
-    set(BUILDSYSTEM "MinGW Clang x64")
+    set(BUILDSYSTEM "MinGW Clang x64" CACHE STRING "Name of the build system." FORCE)
 
     set(TOOLCHAIN_VARIANT llvm)
     set(CRT_LIBRARY ucrt)
@@ -114,13 +129,18 @@ elseif(${MSYSTEM} STREQUAL CLANG64)
     set(__USE_MINGW_ANSI_STDIO "1" CACHE STRING "" FORCE)
     set(_FORTIFY_SOURCE "2" CACHE STRING "" FORCE)
 
-    set(CC "clang")
-    set(CXX "clang++")
+    set(CC                      "clang"                               CACHE FILEPATH "The full path to the compiler for <CC>." FORCE)
+    set(CXX                     "clang++"                             CACHE FILEPATH "The full path to the compiler for <CXX>." FORCE)
+    set(LD                      "lld"                                 CACHE FILEPATH "The full path to the linker <LD>." FORCE)
 
-    set(CPPFLAGS "-D__USE_MINGW_ANSI_STDIO=1")
-    set(CFLAGS "-march=nocona -msahf -mtune=generic -O2 -pipe -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong")
-    set(CXXFLAGS "-march=nocona -msahf -mtune=generic -O2 -pipe")
-    set(LDFLAGS "-pipe")
+    set(CFLAGS                  "-march=nocona -msahf -mtune=generic -O2 -pipe -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong" CACHE STRING "Default <CFLAGS> flags for all build types." FORCE)
+    set(CXXFLAGS                "-march=nocona -msahf -mtune=generic -O2 -pipe" CACHE STRING "Default <CXXFLAGS> flags for all build types." FORCE)
+    set(CPPFLAGS                "-D__USE_MINGW_ANSI_STDIO=1"          CACHE STRING "Default <CPPFLAGS> flags for pre-processor runs for all build types." FORCE)
+    set(LDFLAGS                 "-pipe"                               CACHE STRING "Default <LD> flags for linker for all build types." FORCE)
+
+    #-- Debugging flags
+    set(DEBUG_CFLAGS            "-ggdb -Og"                           CACHE STRING "Default <CFLAGS_DEBUG> flags." FORCE)
+    set(DEBUG_CXXFLAGS          "-ggdb -Og"                           CACHE STRING "Default <CXXFLAGS_DEBUG> flags." FORCE)
 
     set(PREFIX                  "/clang64"                            CACHE PATH      "")
     set(CARCH                   "x86_64"                              CACHE STRING    "")
@@ -136,7 +156,7 @@ elseif(${MSYSTEM} STREQUAL CLANG64)
 
 elseif(${MSYSTEM} STREQUAL CLANG32)
 
-    set(BUILDSYSTEM "MinGW Clang x32")
+    set(BUILDSYSTEM "MinGW Clang x32" CACHE STRING "Name of the build system." FORCE)
 
     set(TOOLCHAIN_VARIANT llvm)
     set(CRT_LIBRARY ucrt)
@@ -145,8 +165,8 @@ elseif(${MSYSTEM} STREQUAL CLANG32)
     set(__USE_MINGW_ANSI_STDIO "1" CACHE STRING "" FORCE)
     set(_FORTIFY_SOURCE "2" CACHE STRING "" FORCE)
 
-    set(CC "clang")
-    set(CXX "clang++")
+    set(CC "clang" CACHE FILEPATH "The full path to the compiler for <CC>." FORCE)
+    set(CXX "clang++" CACHE FILEPATH "The full path to the compiler for <CXX>." FORCE)
 
     set(CPPFLAGS "-D__USE_MINGW_ANSI_STDIO=1")
     set(CFLAGS "-march=pentium4 -mtune=generic -O2 -pipe -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong")
@@ -167,7 +187,7 @@ elseif(${MSYSTEM} STREQUAL CLANG32)
 
 elseif(${MSYSTEM} STREQUAL CLANGARM64)
 
-    set(BUILDSYSTEM "MinGW Clang ARM64")
+    set(BUILDSYSTEM "MinGW Clang ARM64" CACHE STRING "Name of the build system." FORCE)
 
     set(TOOLCHAIN_VARIANT llvm)
     set(CRT_LIBRARY ucrt)
@@ -176,8 +196,8 @@ elseif(${MSYSTEM} STREQUAL CLANGARM64)
     set(__USE_MINGW_ANSI_STDIO "1" CACHE STRING "" FORCE)
     set(_FORTIFY_SOURCE "2" CACHE STRING "" FORCE)
 
-    set(CC "clang")
-    set(CXX "clang++")
+    set(CC "clang" CACHE FILEPATH "The full path to the compiler for <CC>." FORCE)
+    set(CXX "clang++" CACHE FILEPATH "The full path to the compiler for <CXX>." FORCE)
 
     set(CPPFLAGS "-D__USE_MINGW_ANSI_STDIO=1")
     set(CFLAGS "-O2 -pipe -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong")
@@ -198,7 +218,7 @@ elseif(${MSYSTEM} STREQUAL CLANGARM64)
 
 elseif(${MSYSTEM} STREQUAL UCRT64)
 
-    set(BUILDSYSTEM "MinGW UCRT x64")
+    set(BUILDSYSTEM "MinGW UCRT x64" CACHE STRING "Name of the build system." FORCE)
 
     set(TOOLCHAIN_VARIANT gcc)
     set(CRT_LIBRARY ucrt)
@@ -207,15 +227,15 @@ elseif(${MSYSTEM} STREQUAL UCRT64)
     set(__USE_MINGW_ANSI_STDIO "1" CACHE STRING "" FORCE)
     set(_FORTIFY_SOURCE "2" CACHE STRING "" FORCE)
 
-    set(CC "gcc")
-    set(CXX "g++")
+    set(CC "gcc" CACHE FILEPATH "The full path to the compiler for <CC>." FORCE)
+    set(CXX "g++" CACHE FILEPATH "The full path to the compiler for <CXX>." FORCE)
 
     set(CPPFLAGS "-D__USE_MINGW_ANSI_STDIO=1")
     set(CFLAGS "-march=nocona -msahf -mtune=generic -O2 -pipe -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong")
     set(CXXFLAGS "-march=nocona -msahf -mtune=generic -O2 -pipe")
     set(LDFLAGS "-pipe")
 
-    set(PREFIX                  "/ucrt64"                             CACHE PATH     "")
+    set(PREFIX                  "/ucrt64"                             CACHE PATH      "")
     set(CARCH                   "x86_64"                              CACHE STRING    "")
     set(CHOST                   "x86_64-w64-mingw32"                  CACHE STRING    "")
 
@@ -226,35 +246,129 @@ elseif(${MSYSTEM} STREQUAL UCRT64)
     set(MINGW_CHOST             "${MSYSTEM_CHOST}"                    CACHE STRING    "")
     set(MINGW_PREFIX            "${MSYSTEM_PREFIX}"                   CACHE PATH      "")
     set(MINGW_PACKAGE_PREFIX    "mingw-w64-ucrt-${MSYSTEM_CARCH}"     CACHE STRING    "")
+
 elseif(${MSYSTEM} STREQUAL MSYS)
 
-    set(BUILDSYSTEM "MSYS2 MSYS")
+    set(BUILDSYSTEM "MSYS2 MSYS" CACHE STRING "Name of the build system." FORCE)
 
     set(TOOLCHAIN_VARIANT gcc)
     set(CRT_LIBRARY cygwin)
     set(CXX_STD_LIBRARY libstdc++)
 
+    set(CARCH "x86_64" CACHE STRING "" FORCE)
+    set(CHOST "x86_64-pc-msys" CACHE STRING "" FORCE)
+
+    set(CC "gcc" CACHE FILEPATH "The full path to the compiler for <CC>." FORCE)
+    set(CXX "g++" CACHE FILEPATH "The full path to the compiler for <CXX>." FORCE)
+    set(CPPFLAGS "")
+    set(CFLAGS="-march=nocona -msahf -mtune=generic -O2 -pipe" CACHE STRING "" FORCE)
+    set(CXXFLAGS="-march=nocona -msahf -mtune=generic -O2 -pipe" CACHE STRING "" FORCE)
+    set(LDFLAGS="-pipe" CACHE STRING "" FORCE)
+
+    #-- Debugging flags
+    set(DEBUG_CFLAGS="-ggdb -Og" CACHE STRING "" FORCE)
+    set(DEBUG_CXXFLAGS="-ggdb -Og" CACHE STRING "" FORCE)
+
     execute_process(
         COMMAND /usr/bin/uname -m
-        WORKING_DIRECTORY "."
-        OUTPUT_VARIABLE DETECTED_MSYSTEM_CARCH
+        WORKING_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}"
+        OUTPUT_VARIABLE DETECTED_CARCH
+        COMMAND_ERROR_IS_FATAL
     )
 
-    set(MSYSTEM_PREFIX          "/usr"                                CACHE PATH      "")
-    set(MSYSTEM_CARCH           "${DETECTED_MSYSTEM_CARCH}"           CACHE STRING    "")
-    set(MSYSTEM_CHOST           "${DETECTED_MSYSTEM_CARCH}-pc-msys"   CACHE STRING    "")
+    set(PREFIX                  "/msys64"                     CACHE PATH      "")
+    set(CARCH                   "${DETECTED_CARCH}"           CACHE STRING    "")
+    set(CHOST                   "${DETECTED_CARCH}-pc-msys"   CACHE STRING    "")
+
+    set(MSYSTEM_PREFIX          "/usr"                        CACHE PATH      "")
+    set(MSYSTEM_CARCH           "${DETECTED_CARCH}"           CACHE STRING    "")
+    set(MSYSTEM_CHOST           "${DETECTED_CARCH}-pc-msys"   CACHE STRING    "")
 
 else()
     message(FATAL_ERROR "Unsupported MSYSTEM: ${MSYSTEM}")
     return()
 endif()
 
-set(MSYS_CROSS_TOOLCHAINS "" CACHE STRING "")
-list(APPEND MSYS_CROSS_TOOLCHAINS
-    mingw-w64-cross-toolchain
-    mingw-w64-cross-clang-toolchain
-    mingw-w64-cross-ucrt-toolchain
+# Note that some packages cannot be mixed together, likely to prevent setting
+# linkage between mixed C runtimes (which is widely unsupported and not recommended).
+set(MINGW_W64_CROSS_CLANG_TOOLCHAIN_PACKAGES
+    mingw-w64-cross-clang
+    mingw-w64-cross-clang-crt
+    mingw-w64-cross-clang-headers
+    CACHE STRING "Packages from command: 'pacman -S mingw-w64-cross-clang-toolchain'."
 )
+set(MINGW_W64_CROSS_UCRT_TOOLCHAIN_PACKAGES
+    mingw-w64-cross-ucrt-ucrt
+    mingw-w64-cross-ucrt-headers
+    CACHE STRING "Packages from command: 'pacman -S mingw-w64-cross-ucrt-toolchain'."
+)
+set(MINGW_W64_CROSS_TOOLCHAIN_PACKAGES
+    mingw-w64-cross-binutils
+    mingw-w64-cross-crt
+    mingw-w64-cross-gcc
+    mingw-w64-cross-headers
+    mingw-w64-cross-tools
+    mingw-w64-cross-windows-default-manifest
+    mingw-w64-cross-winpthreads
+    mingw-w64-cross-winstorecompat
+    mingw-w64-cross-zlib
+    CACHE STRING "Packages from command: 'pacman -S mingw-w64-cross-toolchain'."
+)
+set(MINGW_W64_CROSS_PACKAGES
+    mingw-w64-cross-binutils
+    mingw-w64-cross-crt
+    mingw-w64-cross-gcc
+    mingw-w64-cross-headers
+    mingw-w64-cross-tools
+    mingw-w64-cross-windows-default-manifest
+    mingw-w64-cross-winpthreads
+    mingw-w64-cross-winstorecompat
+    mingw-w64-cross-zlib
+    CACHE STRING "Packages from command: 'pacman -S mingw-w64-cross'."
+)
+
+if(DEFINED MSYSTEM AND (NOT MSYSTEM STREQUAL "MSYS"))
+
+    # Flag config name fixup...
+    set(CFLAGS_DEBUG              "${DEBUG_CFLAGS}"                  CACHE STRING "Default <CFLAGS_DEBUG> flags." FORCE)
+    set(CFLAGS_RELEASE            "${RELEASE_CFLAGS}"                CACHE STRING "Default <CFLAGS_RELEASE> flags." FORCE)
+    set(CFLAGS_MINSIZEREL         "${MINSIZEREL_CFLAGS}"             CACHE STRING "Default <CFLAGS_MINSIZEREL> flags." FORCE)
+    set(CFLAGS_RELWITHDEBINFO     "${RELWITHDEBINFO_CFLAGS}"         CACHE STRING "Default <CFLAGS_RELWITHDEBINFO> flags." FORCE)
+
+    set(CXXFLAGS_DEBUG            "${DEBUG_CXXFLAGS}"                CACHE STRING "Default <CXXFLAGS_DEBUG> flags." FORCE)
+    set(CXXFLAGS_RELEASE          "${RELEASE_CXXFLAGS}"              CACHE STRING "Default <CXXFLAGS_RELEASE> flags." FORCE)
+    set(CXXFLAGS_MINSIZEREL       "${MINSIZEREL_CXXFLAGS}"           CACHE STRING "Default <CXXFLAGS_MINSIZEREL> flags." FORCE)
+    set(CXXFLAGS_RELWITHDEBINFO   "${RELWITHDEBINFO_CXXFLAGS}"       CACHE STRING "Default <CXXFLAGS_RELWITHDEBINFO> flags." FORCE)
+
+    set(CPPFLAGS_DEBUG            "${DEBUG_CPPFLAGS}"                CACHE STRING "Default <CPPFLAGS_DEBUG> flags." FORCE)
+    set(CPPFLAGS_RELEASE          "${RELEASE_CPPFLAGS}"              CACHE STRING "Default <CPPFLAGS_RELEASE> flags." FORCE)
+    set(CPPFLAGS_MINSIZEREL       "${MINSIZEREL_CPPFLAGS}"           CACHE STRING "Default <CPPFLAGS_MINSIZEREL> flags." FORCE)
+    set(CPPFLAGS_RELWITHDEBINFO   "${RELWITHDEBINFO_CPPFLAGS}"       CACHE STRING "Default <CPPFLAGS_RELWITHDEBINFO> flags." FORCE)
+
+    set(RCFLAGS_DEBUG             "${DEBUG_RCFLAGS}"                 CACHE STRING "Default <CFLAGS_DEBUG> flags." FORCE)
+    set(RCFLAGS_RELEASE           "${RELEASE_RCFLAGS}"               CACHE STRING "Default <CFLAGS_RELEASE> flags." FORCE)
+    set(RCFLAGS_MINSIZEREL        "${MINSIZEREL_RCFLAGS}"            CACHE STRING "Default <CFLAGS_MINSIZEREL> flags." FORCE)
+    set(RCFLAGS_RELWITHDEBINFO    "${RELWITHDEBINFO_RCFLAGS}"        CACHE STRING "Default <CFLAGS_RELWITHDEBINFO> flags." FORCE)
+
+    # Set toolchain package suffixes (i.e., '{mingw-w64-clang-x86_64}-avr-toolchain')...
+    set(TOOLCHAIN_NATIVE_ARM_NONE_EABI "${MINGW_PACKAGE_PREFIX}-arm-none-eabi-toolchain" CACHE STRING "" FORCE)
+    set(TOOLCHAIN_NATIVE_AVR "${MINGW_PACKAGE_PREFIX}-avr-toolchain" CACHE STRING "" FORCE)
+    set(TOOLCHAIN_NATIVE_RISCV64_UNKOWN_ELF "${MINGW_PACKAGE_PREFIX}-riscv64-unknown-elf-toolchain" CACHE STRING "" FORCE)
+    set(TOOLCHAIN_NATIVE "${MINGW_PACKAGE_PREFIX}-toolchain" CACHE STRING "" FORCE)
+
+    # DirectX compatibility environment variable
+    set(DXSDK_DIR "${MINGW_PREFIX}/${MINGW_CHOST}" CACHE PATH "DirectX compatibility environment variable" FORCE)
+
+    #-- Make Flags: change this for DistCC/SMP systems
+    if(NOT DEFINED MAKEFLAGS)
+        set(MAKEFLAGS "-j$(($(nproc)+1))" CACHE STRING "Make Flags: change this for DistCC/SMP systems")
+    endif()
+
+    set(ACLOCAL_PATH "${MINGW_PREFIX}/share/aclocal" "/usr/share/aclocal" CACHE PATH "" FORCE)
+    set(PKG_CONFIG_PATH "${MINGW_PREFIX}/lib/pkgconfig" "${MINGW_PREFIX}/share/pkgconfig" CACHE PATH "" FORCE)
+
+endif()
+
 
 # Adapted from: /etc/makepkg_mingw.conf
 
@@ -311,31 +425,6 @@ set(VCSCLIENTS
     hg::mercurial
     svn::subversion
 )
-
-if(DEFINED MSYSTEM)
-
-    # Set toolchain package suffixes (i.e., '{mingw-w64-clang-x86_64}-avr-toolchain')...
-    set(TOOLCHAIN_NATIVE_ARM_NONE_EABI "${MINGW_PACKAGE_PREFIX}-arm-none-eabi-toolchain" CACHE STRING "" FORCE)
-    set(TOOLCHAIN_NATIVE_AVR "${MINGW_PACKAGE_PREFIX}-avr-toolchain" CACHE STRING "" FORCE)
-    set(TOOLCHAIN_NATIVE_RISCV64_UNKOWN_ELF "${MINGW_PACKAGE_PREFIX}-riscv64-unknown-elf-toolchain" CACHE STRING "" FORCE)
-    set(TOOLCHAIN_NATIVE "${MINGW_PACKAGE_PREFIX}-toolchain" CACHE STRING "" FORCE)
-
-    # DirectX compatibility environment variable
-    set(DXSDK_DIR "${MINGW_PREFIX}/${MINGW_CHOST}" CACHE PATH "DirectX compatibility environment variable" FORCE)
-
-    #-- Make Flags: change this for DistCC/SMP systems
-    if(NOT DEFINED MAKEFLAGS)
-        set(MAKEFLAGS "-j$(($(nproc)+1))" CACHE STRING "Make Flags: change this for DistCC/SMP systems")
-    endif()
-
-    #-- Debugging flags
-    set(DEBUG_CFLAGS "-ggdb -Og" CACHE STRING "C debugging flags." FORCE)
-    set(DEBUG_CXXFLAGS "-ggdb -Og" CACHE STRING "C++ debugging flags." FORCE)
-
-    set(ACLOCAL_PATH "${MINGW_PREFIX}/share/aclocal" "/usr/share/aclocal" CACHE PATH "" FORCE)
-    set(PKG_CONFIG_PATH "${MINGW_PREFIX}/lib/pkgconfig" "${MINGW_PREFIX}/share/pkgconfig" CACHE PATH "" FORCE)
-
-endif()
 
 #########################################################################
 # BUILD ENVIRONMENT
