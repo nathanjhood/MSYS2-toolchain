@@ -70,18 +70,18 @@ if(NOT DEFINED MSYS_ROOT)
 endif()
 
 # Could keep these all exposed for potential cross-compiling...?
-set(CLANGARM64_ROOT "${MSYS_ROOT}/clangarm64" CACHE PATH "")
-set(CLANG64_ROOT "${MSYS_ROOT}/clang64" CACHE PATH "")
-set(CLANG32_ROOT "${MSYS_ROOT}/clang32" CACHE PATH "")
-set(MINGW32_ROOT "${MSYS_ROOT}/mingw32" CACHE PATH "")
-set(MINGW64_ROOT "${MSYS_ROOT}/mingw64" CACHE PATH "")
-set(UCRT64_ROOT "${MSYS_ROOT}/ucrt64" CACHE PATH "")
+set(CLANGARM64_ROOT "${MSYS_ROOT}/clangarm64") #CACHE PATH "")
+set(CLANG64_ROOT "${MSYS_ROOT}/clang64") #CACHE PATH "")
+set(CLANG32_ROOT "${MSYS_ROOT}/clang32") #CACHE PATH "")
+set(MINGW32_ROOT "${MSYS_ROOT}/mingw32") #CACHE PATH "")
+set(MINGW64_ROOT "${MSYS_ROOT}/mingw64") #CACHE PATH "")
+set(UCRT64_ROOT "${MSYS_ROOT}/ucrt64")  #CACHE PATH "")
 
 if(EXISTS "$ENV{HOMEDRIVE}/cygwin64")
-    set(CYGWIN64_ROOT "$ENV{HOMEDRIVE}/cygwin64" CACHE PATH "Path to cygwin installation (64-bit)." FORCE)
+    set(CYGWIN64_ROOT "$ENV{HOMEDRIVE}/cygwin64") #CACHE PATH "Path to cygwin installation (64-bit)." FORCE)
 endif()
 if(EXISTS "$ENV{HOMEDRIVE}/cygwin32")
-    set(CYGWIN32_ROOT "$ENV{HOMEDRIVE}/cygwin32" CACHE PATH "Path to cygwin installation (32-bit)." FORCE)
+    set(CYGWIN32_ROOT "$ENV{HOMEDRIVE}/cygwin32") #CACHE PATH "Path to cygwin installation (32-bit)." FORCE)
 endif()
 
 # Create the standard MSYS2 filepath...
@@ -116,24 +116,24 @@ set(INFOPATH
     "/share/info"
 )
 
-if(MSYS2_PATH_TYPE STREQUAL "strict")
-    # Do not inherit any path configuration, and allow for full customization
-    # of external path. This is supposed to be used in special cases such as
-    # debugging without need to change this file, but not daily usage.
-    unset (ORIGINAL_PATH)
+# if(MSYS2_PATH_TYPE STREQUAL "strict")
+#     # Do not inherit any path configuration, and allow for full customization
+#     # of external path. This is supposed to be used in special cases such as
+#     # debugging without need to change this file, but not daily usage.
+#     unset (ORIGINAL_PATH)
 
-elseif(MSYS2_PATH_TYPE STREQUAL "inherit")
-    # Inherit previous path. Note that this will make all of the Windows path
-    # available in current shell, with possible interference in project builds.
-    set(ORIGINAL_PATH "${ORIGINAL_PATH}" "${PATH}")
+# elseif(MSYS2_PATH_TYPE STREQUAL "inherit")
+#     # Inherit previous path. Note that this will make all of the Windows path
+#     # available in current shell, with possible interference in project builds.
+#     set(ORIGINAL_PATH "${ORIGINAL_PATH}" "${PATH}")
 
-elseif(NOT DEFINED MSYS2_PATH_TYPE OR (MSYS2_PATH_TYPE STREQUAL "minimal"))
-    # Do not inherit any path configuration but configure a default Windows path
-    # suitable for normal usage with minimal external interference.
-    set(WIN_ROOT "$(PATH=${MSYS2_PATH} exec cygpath -Wu)") # Using cygpath to turn Window's PATH to unix vals... needs CMake-ifying.
-    set(ORIGINAL_PATH "${WIN_ROOT}/System32:${WIN_ROOT}:${WIN_ROOT}/System32/Wbem:${WIN_ROOT}/System32/WindowsPowerShell/v1.0/") # can use 'get_powershell_path()' here....
+# elseif(NOT DEFINED MSYS2_PATH_TYPE OR (MSYS2_PATH_TYPE STREQUAL "minimal"))
+#     # Do not inherit any path configuration but configure a default Windows path
+#     # suitable for normal usage with minimal external interference.
+#     set(WIN_ROOT "$(PATH=${MSYS2_PATH} exec cygpath -Wu)") # Using cygpath to turn Window's PATH to unix vals... needs CMake-ifying.
+#     set(ORIGINAL_PATH "${WIN_ROOT}/System32:${WIN_ROOT}:${WIN_ROOT}/System32/Wbem:${WIN_ROOT}/System32/WindowsPowerShell/v1.0/") # can use 'get_powershell_path()' here....
 
-endif()
+# endif()
 
 # unset(MINGW_MOUNT_POINT)
 
@@ -149,11 +149,11 @@ if(MSYSTEM STREQUAL MINGW64)
     if(NOT _VCPKG_MSYS_MINGW64_TOOLCHAIN)
     set(_VCPKG_MSYS_MINGW64_TOOLCHAIN 1)
 
-    set(BUILDSYSTEM             "MinGW x64"                           CACHE STRING   "Name of the build system." FORCE)
-    set(BUILDSYSTEM_ROOT        "${MSYS_ROOT}/mingw64"                CACHE PATH     "Root of the build system." FORCE)
+    set(BUILDSYSTEM             "MinGW x64")                           #CACHE STRING   "Name of the build system." FORCE)
+    set(BUILDSYSTEM_ROOT        "${MSYS_ROOT}/mingw64")                #CACHE PATH     "Root of the build system." FORCE)
 
     if(NOT DEFINED CRT_LINKAGE)
-        set(CRT_LINKAGE "static" CACHE STRING "" FORCE)
+        set(CRT_LINKAGE "static") # CACHE STRING "" FORCE)
     endif()
 
     set(TOOLCHAIN_VARIANT       gcc                                   CACHE STRING   "Identification string of the compiler toolchain variant." FORCE)
@@ -165,23 +165,27 @@ if(MSYSTEM STREQUAL MINGW64)
     set(__USE_MINGW_ANSI_STDIO  "1"                                   CACHE STRING   "Use the MinGW ANSI definition for 'stdio.h'." FORCE)
     set(_FORTIFY_SOURCE         "2"                                   CACHE STRING   "Fortify source definition." FORCE)
 
-    set(CC                      "${MINGW64_ROOT}/bin/gcc"             CACHE FILEPATH "The full path to the compiler for <CC>." FORCE)
-    set(CXX                     "${MINGW64_ROOT}/bin/g++"             CACHE FILEPATH "The full path to the compiler for <CXX>." FORCE)
-    set(LD                      "${MINGW64_ROOT}/bin/ld"              CACHE FILEPATH "The full path to the linker <LD>." FORCE)
-    set(RC                      "${MINGW64_ROOT}/bin/windres"         CACHE FILEPATH "" FORCE)
+    set(CC                      "${MINGW64_ROOT}/bin/gcc")             #CACHE FILEPATH "The full path to the compiler for <CC>." FORCE)
+    set(CXX                     "${MINGW64_ROOT}/bin/g++")             #CACHE FILEPATH "The full path to the compiler for <CXX>." FORCE)
+    set(LD                      "${MINGW64_ROOT}/bin/ld")              #CACHE FILEPATH "The full path to the linker <LD>." FORCE)
+    set(RC                      "${MINGW64_ROOT}/bin/windres")         #CACHE FILEPATH "" FORCE)
 
-    set(CFLAGS                  "-march=nocona -msahf -mtune=generic -O2 -pipe -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong" CACHE STRING "Default <CFLAGS> flags for all build types." FORCE)
-    set(CXXFLAGS                "-march=nocona -msahf -mtune=generic -O2 -pipe" CACHE STRING "Default <CXXFLAGS> flags for all build types." FORCE)
-    set(CPPFLAGS                "-D__USE_MINGW_ANSI_STDIO=1"          CACHE STRING    "Default <CPPFLAGS> flags for all build types." FORCE)
-    set(LDFLAGS                 "-pipe"                               CACHE STRING    "Default <LD> flags for linker for all build types." FORCE)
+    set(CFLAGS                  "-march=nocona -msahf -mtune=generic -O2 -pipe -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong") #CACHE STRING "Default <CFLAGS> flags for all build types." FORCE)
+    set(CXXFLAGS                "-march=nocona -msahf -mtune=generic -O2 -pipe") #CACHE STRING "Default <CXXFLAGS> flags for all build types." FORCE)
+    set(CPPFLAGS                "-D__USE_MINGW_ANSI_STDIO=1")          #CACHE STRING    "Default <CPPFLAGS> flags for all build types." FORCE)
+    set(LDFLAGS                 "-pipe")                               #CACHE STRING    "Default <LD> flags for linker for all build types." FORCE)
 
-    #-- Debugging flags
-    set(DEBUG_CFLAGS            "-ggdb -Og"                           CACHE STRING    "Default <CFLAGS_DEBUG> flags." FORCE)
-    set(DEBUG_CXXFLAGS          "-ggdb -Og"                           CACHE STRING    "Default <CXXFLAGS_DEBUG> flags." FORCE)
+    #-- Release build flags
+    # set(RELEASE_CFLAGS          "-O2")                                 #CACHE STRING    "Default <CFLAGS_RELEASE> flags." FORCE)
+    # set(RELEASE_CXXFLAGS        "-O2")                                 #CACHE STRING    "Default <CXXFLAGS_RELEASE> flags." FORCE)
 
-    set(PREFIX                  "/mingw64"                            CACHE PATH      "Sub-system prefix." FORCE)
-    set(CARCH                   "x86_64"                              CACHE STRING    "Sub-system architecture." FORCE)
-    set(CHOST                   "x86_64-w64-mingw32"                  CACHE STRING    "Sub-system name string." FORCE)
+    # #-- Debug build flags
+    # set(DEBUG_CFLAGS            "-ggdb -Og")                           #CACHE STRING    "Default <CFLAGS_DEBUG> flags." FORCE)
+    # set(DEBUG_CXXFLAGS          "-ggdb -Og")                           #CACHE STRING    "Default <CXXFLAGS_DEBUG> flags." FORCE)
+
+    set(PREFIX                  "/mingw64")                            #CACHE PATH      "Sub-system prefix." FORCE)
+    set(CARCH                   "x86_64")                              #CACHE STRING    "Sub-system architecture." FORCE)
+    set(CHOST                   "x86_64-w64-mingw32")                  #CACHE STRING    "Sub-system name string." FORCE)
 
     set(MSYSTEM_PREFIX          "/mingw64"                            CACHE PATH      "Msystem prefix." FORCE)
     set(MSYSTEM_CARCH           "x86_64"                              CACHE STRING    "Msystem architecture." FORCE)
@@ -190,6 +194,9 @@ if(MSYSTEM STREQUAL MINGW64)
     set(MINGW_CHOST             "${MSYSTEM_CHOST}"                    CACHE STRING    "Sub-system prefix." FORCE)
     set(MINGW_PREFIX            "${MSYSTEM_PREFIX}"                   CACHE PATH      "Sub-system prefix." FORCE)
     set(MINGW_PACKAGE_PREFIX    "mingw-w64-${MSYSTEM_CARCH}"          CACHE STRING    "Sub-system prefix." FORCE)
+
+    # Need to override MinGW from VCPKG_CMAKE_SYSTEM_NAME
+    set(CMAKE_SYSTEM_NAME Windows CACHE STRING "" FORCE)
 
     if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
         set(CMAKE_CROSSCOMPILING OFF CACHE BOOL "")
@@ -498,25 +505,25 @@ if ((MSYSTEM STREQUAL MINGW64) OR
     )
 
     # Flag config name fixup...
-    set(CFLAGS_DEBUG              "${DEBUG_CFLAGS}"                  CACHE STRING "Default <CFLAGS_DEBUG> flags." FORCE)
-    set(CFLAGS_RELEASE            "${RELEASE_CFLAGS}"                CACHE STRING "Default <CFLAGS_RELEASE> flags." FORCE)
-    set(CFLAGS_MINSIZEREL         "${MINSIZEREL_CFLAGS}"             CACHE STRING "Default <CFLAGS_MINSIZEREL> flags." FORCE)
-    set(CFLAGS_RELWITHDEBINFO     "${RELWITHDEBINFO_CFLAGS}"         CACHE STRING "Default <CFLAGS_RELWITHDEBINFO> flags." FORCE)
+    set(CFLAGS_DEBUG              "${DEBUG_CFLAGS}")                  #CACHE STRING "Default <CFLAGS_DEBUG> flags." FORCE)
+    set(CFLAGS_RELEASE            "${RELEASE_CFLAGS}")                #CACHE STRING "Default <CFLAGS_RELEASE> flags." FORCE)
+    set(CFLAGS_MINSIZEREL         "${MINSIZEREL_CFLAGS}")             #CACHE STRING "Default <CFLAGS_MINSIZEREL> flags." FORCE)
+    set(CFLAGS_RELWITHDEBINFO     "${RELWITHDEBINFO_CFLAGS}")         #CACHE STRING "Default <CFLAGS_RELWITHDEBINFO> flags." FORCE)
 
-    set(CXXFLAGS_DEBUG            "${DEBUG_CXXFLAGS}"                CACHE STRING "Default <CXXFLAGS_DEBUG> flags." FORCE)
-    set(CXXFLAGS_RELEASE          "${RELEASE_CXXFLAGS}"              CACHE STRING "Default <CXXFLAGS_RELEASE> flags." FORCE)
-    set(CXXFLAGS_MINSIZEREL       "${MINSIZEREL_CXXFLAGS}"           CACHE STRING "Default <CXXFLAGS_MINSIZEREL> flags." FORCE)
-    set(CXXFLAGS_RELWITHDEBINFO   "${RELWITHDEBINFO_CXXFLAGS}"       CACHE STRING "Default <CXXFLAGS_RELWITHDEBINFO> flags." FORCE)
+    set(CXXFLAGS_DEBUG            "${DEBUG_CXXFLAGS}")                #CACHE STRING "Default <CXXFLAGS_DEBUG> flags." FORCE)
+    set(CXXFLAGS_RELEASE          "${RELEASE_CXXFLAGS}")              #CACHE STRING "Default <CXXFLAGS_RELEASE> flags." FORCE)
+    set(CXXFLAGS_MINSIZEREL       "${MINSIZEREL_CXXFLAGS}")           #CACHE STRING "Default <CXXFLAGS_MINSIZEREL> flags." FORCE)
+    set(CXXFLAGS_RELWITHDEBINFO   "${RELWITHDEBINFO_CXXFLAGS}")       #CACHE STRING "Default <CXXFLAGS_RELWITHDEBINFO> flags." FORCE)
 
-    set(CPPFLAGS_DEBUG            "${DEBUG_CPPFLAGS}"                CACHE STRING "Default <CPPFLAGS_DEBUG> flags." FORCE)
-    set(CPPFLAGS_RELEASE          "${RELEASE_CPPFLAGS}"              CACHE STRING "Default <CPPFLAGS_RELEASE> flags." FORCE)
-    set(CPPFLAGS_MINSIZEREL       "${MINSIZEREL_CPPFLAGS}"           CACHE STRING "Default <CPPFLAGS_MINSIZEREL> flags." FORCE)
-    set(CPPFLAGS_RELWITHDEBINFO   "${RELWITHDEBINFO_CPPFLAGS}"       CACHE STRING "Default <CPPFLAGS_RELWITHDEBINFO> flags." FORCE)
+    set(CPPFLAGS_DEBUG            "${DEBUG_CPPFLAGS}")                #CACHE STRING "Default <CPPFLAGS_DEBUG> flags." FORCE)
+    set(CPPFLAGS_RELEASE          "${RELEASE_CPPFLAGS}")              #CACHE STRING "Default <CPPFLAGS_RELEASE> flags." FORCE)
+    set(CPPFLAGS_MINSIZEREL       "${MINSIZEREL_CPPFLAGS}")           #CACHE STRING "Default <CPPFLAGS_MINSIZEREL> flags." FORCE)
+    set(CPPFLAGS_RELWITHDEBINFO   "${RELWITHDEBINFO_CPPFLAGS}")       #CACHE STRING "Default <CPPFLAGS_RELWITHDEBINFO> flags." FORCE)
 
-    set(RCFLAGS_DEBUG             "${DEBUG_RCFLAGS}"                 CACHE STRING "Default <CFLAGS_DEBUG> flags." FORCE)
-    set(RCFLAGS_RELEASE           "${RELEASE_RCFLAGS}"               CACHE STRING "Default <CFLAGS_RELEASE> flags." FORCE)
-    set(RCFLAGS_MINSIZEREL        "${MINSIZEREL_RCFLAGS}"            CACHE STRING "Default <CFLAGS_MINSIZEREL> flags." FORCE)
-    set(RCFLAGS_RELWITHDEBINFO    "${RELWITHDEBINFO_RCFLAGS}"        CACHE STRING "Default <CFLAGS_RELWITHDEBINFO> flags." FORCE)
+    set(RCFLAGS_DEBUG             "${DEBUG_RCFLAGS}")                 #CACHE STRING "Default <CFLAGS_DEBUG> flags." FORCE)
+    set(RCFLAGS_RELEASE           "${RELEASE_RCFLAGS}")               #CACHE STRING "Default <CFLAGS_RELEASE> flags." FORCE)
+    set(RCFLAGS_MINSIZEREL        "${MINSIZEREL_RCFLAGS}")            #CACHE STRING "Default <CFLAGS_MINSIZEREL> flags." FORCE)
+    set(RCFLAGS_RELWITHDEBINFO    "${RELWITHDEBINFO_RCFLAGS}")        #CACHE STRING "Default <CFLAGS_RELWITHDEBINFO> flags." FORCE)
 
     # Set toolchain package suffixes (i.e., '{mingw-w64-clang-x86_64}-avr-toolchain')...
     set(TOOLCHAIN_NATIVE_ARM_NONE_EABI          "${MINGW_PACKAGE_PREFIX}-arm-none-eabi-toolchain" CACHE STRING "" FORCE)
@@ -525,7 +532,7 @@ if ((MSYSTEM STREQUAL MINGW64) OR
     set(TOOLCHAIN_NATIVE                        "${MINGW_PACKAGE_PREFIX}-toolchain" CACHE STRING "" FORCE)
 
     # DirectX compatibility environment variable
-    set(DXSDK_DIR "${MINGW_PREFIX}/${MINGW_CHOST}" CACHE PATH "DirectX compatibility environment variable." FORCE)
+    set(DXSDK_DIR "${MSYS_ROOT}/${MINGW_PREFIX}/${MINGW_CHOST}" CACHE PATH "DirectX compatibility environment variable." FORCE)
 
     #-- Make Flags: change this for DistCC/SMP systems
     # This var is attempting to pass '-j' to the underlying buildtool - this flag controls the number of processors to build with.
@@ -535,53 +542,10 @@ if ((MSYSTEM STREQUAL MINGW64) OR
         set(MAKEFLAGS "-j$(($(nproc)+1))" CACHE STRING "Make Flags: change this for DistCC/SMP systems")
     endif()
 
-    set(ACLOCAL_PATH          "${MINGW_PREFIX}/share/aclocal" "${MSYS_ROOT}/usr/share" CACHE PATH "By default, aclocal searches for .m4 files in the following directories." FORCE)
-    set(PKG_CONFIG_PATH       "${MINGW_PREFIX}/lib/pkgconfig" "${MINGW_PREFIX}/share/pkgconfig" CACHE PATH "A colon-separated (on Windows, semicolon-separated) list of directories to search for .pc files. The default directory will always be searched after searching the path." FORCE)
+    set(ACLOCAL_PATH          "${MSYS_ROOT}/${MINGW_PREFIX}/share/aclocal" "${MSYS_ROOT}/usr/share" CACHE PATH "By default, aclocal searches for .m4 files in the following directories." FORCE)
+    set(PKG_CONFIG_PATH       "${MSYS_ROOT}/${MINGW_PREFIX}/lib/pkgconfig" "${MSYS_ROOT}/${MINGW_PREFIX}/share/pkgconfig" CACHE PATH "A colon-separated (on Windows, semicolon-separated) list of directories to search for .pc files. The default directory will always be searched after searching the path." FORCE)
 
 endif()
-
-
-unset(CC)
-unset(CXX)
-unset(LD)
-unset(RC)
-unset(LDFLAGS)
-unset(LDFLAGS_DEBUG)
-unset(LDFLAGS_MINSIZEREL)
-unset(LDFLAGS_RELEASE)
-unset(LDFLAGS_RELWITHDEBINFO)
-unset(RCFLAGS)
-unset(RCFLAGS_DEBUG)
-unset(RCFLAGS_MINSIZEREL)
-unset(RCFLAGS_RELEASE)
-unset(RCFLAGS_RELWITHDEBINFO)
-unset(CFLAGS)
-unset(CFLAGS_DEBUG)
-unset(CFLAGS_MINSIZEREL)
-unset(CFLAGS_RELEASE)
-unset(CFLAGS_RELWITHDEBINFO)
-unset(CXXFLAGS)
-unset(CXXFLAGS_DEBUG)
-unset(CXXFLAGS_MINSIZEREL)
-unset(CXXFLAGS_RELEASE)
-unset(CXXFLAGS_RELWITHDEBINFO)
-unset(CPPFLAGS)
-unset(CPPFLAGS_DEBUG)
-unset(CPPFLAGS_MINSIZEREL)
-unset(CPPFLAGS_RELEASE)
-unset(CPPFLAGS_RELWITHDEBINFO)
-unset(DEBUG_CFLAGS)
-unset(DEBUG_CPPFLAGS)
-unset(DEBUG_CXXFLAGS)
-unset(DEBUG_LDFLAGS)
-unset(DEBUG_RCFLAGS)
-unset(RELEASE_CFLAGS)
-unset(RELEASE_CPPFLAGS)
-unset(RELEASE_CXXFLAGS)
-unset(RELEASE_LDFLAGS)
-unset(RELEASE_RCFLAGS)
-unset(CARCH)
-unset(CHOST)
 
 #########################################################################
 # SOURCE ACQUISITION
@@ -591,12 +555,12 @@ unset(CHOST)
 #
 #########################################################################
 
-set(DLAGENT_FILE_AGENT "/usr/bin/curl")
-set(DLAGENT_FTP_AGENT "/usr/bin/curl")
-set(DLAGENT_HTTP_AGENT "/usr/bin/curl")
-set(DLAGENT_HTTPS_AGENT "/usr/bin/curl")
-set(DLAGENT_RSYNC_AGENT "/usr/bin/rsync")
-set(DLAGENT_SCP_AGENT "/usr/bin/scp")
+set(DLAGENT_FILE "${MSYS_ROOT}/usr/bin/curl")
+set(DLAGENT_FTP "${MSYS_ROOT}/usr/bin/curl")
+set(DLAGENT_HTTP "${MSYS_ROOT}/usr/bin/curl")
+set(DLAGENT_HTTPS "${MSYS_ROOT}/usr/bin/curl")
+set(DLAGENT_RSYNC "${MSYS_ROOT}/usr/bin/rsync")
+set(DLAGENT_SCP "${MSYS_ROOT}/usr/bin/scp")
 # Here were set the <agent> flags for each <protocol>
 set(DLAGENT_FILE_FLAGS "-gqC - -o %o %u")
 set(DLAGENT_FTP_FLAGS "-gqfC - --ftp-pasv --retry 3 --retry-delay 3 -o %o %u")
@@ -604,15 +568,25 @@ set(DLAGENT_HTTP_FLAGS "-gqb \"\" -fLC - --retry 3 --retry-delay 3 -o %o %u")
 set(DLAGENT_HTTPS_FLAGS "-gqb \"\" -fLC - --retry 3 --retry-delay 3 -o %o %u")
 set(DLAGENT_RSYNC_FLAGS "--no-motd -z %u %o")
 set(DLAGENT_SCP_FLAGS "-C %u %o")
+# Compile agents with their flags
+set(DLAGENT_FILE_COMMAND "file::${DLAGENT_FILE} ${DLAGENT_FILE_FLAGS}" CACHE STRING "The standard command for downloads (file)." FORCE)
+set(DLAGENT_FTP_COMMAND  "ftp::${DLAGENT_FTP} ${DLAGENT_FTP_FLAGS}"    CACHE STRING "The standard command for downloads (ftp)." FORCE)
+set(DLAGENT_HTTP_COMMAND "http::${DLAGENT_HTTP} ${DLAGENT_HTTP_FLAGS}" CACHE STRING "The standard command for downloads (http)." FORCE)
+set(DLAGENT_HTTPS_COMMAND "https::${DLAGENT_HTTPS} ${DLAGENT_HTTPS_FLAGS}" CACHE STRING "The standard command for downloads (https)." FORCE)
+set(DLAGENT_RSYNC_COMMAND "rsync::${DLAGENT_RSYNC} ${DLAGENT_RSYNC_FLAGS}" CACHE STRING "The standard command for downloads (rsync)." FORCE)
+set(DLAGENT_SCP_COMMAND "scp::${DLAGENT_SCP} ${DLAGENT_SCP_FLAGS}" CACHE STRING "The standard command for downloads (scp)." FORCE)
 #  Format: 'protocol::agent'
-set(DLAGENTS
-    "file::${DLAGENT_FILE_AGENT} ${DLAGENT_FILE_FLAGS}"
-    "ftp::${DLAGENT_FTP_AGENT} ${DLAGENT_FTP_FLAGS}"
-    "http::${DLAGENT_HTTP_AGENT} ${DLAGENT_HTTP_FLAGS}"
-    "https::${DLAGENT_HTTPS_AGENT} ${DLAGENT_HTTPS_FLAGS}"
-    "rsync::${DLAGENT_RSYNC_AGENT} ${DLAGENT_RSYNC_FLAGS}"
-    "scp::${DLAGENT_SCP_AGENT} ${DLAGENT_SCP_FLAGS}"
+set(DLAGENTS)
+list(APPEND DLAGENTS
+    "${DLAGENT_FILE}"
+    "${DLAGENT_FTP}"
+    "${DLAGENT_HTTP}"
+    "${DLAGENT_HTTPS}"
+    "${DLAGENT_RSYNC}"
+    "${DLAGENT_SCP}"
 )
+set(DLAGENTS "${DLAGENTS}" CACHE STRING "" FORCE)
+
 # In other words...
 # set(DLAGENTS
 #     "file::/usr/bin/curl -gqC - -o %o %u"
@@ -631,13 +605,15 @@ set(DLAGENTS
 #-- The package required by makepkg to download VCS sources.
 # We can use vcpkg to fetch these for linking our packages with.
 # Format: 'protocol::package'
-set(VCSCLIENTS
+set(VCSCLIENTS)
+list(APPEND VCSCLIENTS
     bzr::bzr
     fossil::fossil
     git::git
     hg::mercurial
     svn::subversion
 )
+set(VCSCLIENTS "${VCSCLIENTS}" CACHE STRING "The package(s) required by makepkg to download VCS sources." FORCE)
 
 #########################################################################
 # BUILD ENVIRONMENT
@@ -651,11 +627,18 @@ set(VCSCLIENTS
 #-- ccache:   Use ccache to cache compilation
 #-- check:    Run the check() function if present in the PKGBUILD
 #-- sign:     Generate PGP signature file
-#
+option(ENABLE_DISTCC "Use the Distributed C/C++/ObjC compiler." OFF)
+option(ENABLE_COLOR "Colorize output messages." ON)
+option(ENABLE_CCACHE "Use ccache to cache compilation." OFF)
+option(ENABLE_CHECK "Run the check() function if present in the build." ON)
+option(ENABLE_SIGN "Generate PGP signature file." OFF)
+
 if(NOT DEFINED BUILDENV)
-    set(BUILDENV !distcc color !ccache check !sign)
+    set(BUILDENV)
+    list(APPEND BUILDENV "!distcc" "color" "!ccache" "check" "!sign")
 endif()
-#
+set(BUILDENV "${BUILDENV}" CACHE STRING "A negated environment option will do the opposite of the comments below." FORCE)
+
 #-- If using DistCC, your MAKEFLAGS will also need modification. In addition,
 #-- specify a space-delimited list of hosts running in the DistCC cluster.
 #DISTCC_HOSTS=""
@@ -774,13 +757,30 @@ set(INTEGRITY_CHECK "${INTEGRITY_CHECK}" CACHE STRING "File integrity checks to 
 set(STRIP_SHARED --strip-unneeded CACHE STRING "Options to be used when stripping shared libraries. See `man strip' for details." FORCE)
 #-- Options to be used when stripping static libraries. See `man strip' for details.
 set(STRIP_STATIC --strip-debug CACHE STRING "Options to be used when stripping static libraries. See `man strip' for details." FORCE)
+
 #-- Manual (man and info) directories to compress (if zipman is specified)
-set(MAN_DIRS "\"\${MINGW_PREFIX#/}\"{{,/local}{,/share},/opt/*}/{man,info}" CACHE STRING "Manual (man and info) directories to compress (if zipman is specified)" FORCE)
+if(NOT DEFINED MAN_DIRS)
+    if(DEFINED MINGW_PREFIX)
+        set(MAN_DIRS "\"\${MINGW_PREFIX#/}\"{{,/local}{,/share},/opt/*}/{man,info}" CACHE STRING "Manual (man and info) directories to compress (if zipman is specified)" FORCE)
+    else()
+        set(MAN_DIRS "{{,usr/}{,local/}{,share/},opt/*/}{man,info} mingw{32,64}{{,/local}{,/share},/opt/*}/{man,info}" CACHE STRING "Manual (man and info) directories to compress (if zipman is specified)" FORCE)
+    endif()
+endif()
 #-- Doc directories to remove (if !docs is specified)
-set(DOC_DIRS "\"\${MINGW_PREFIX#/}\"/{,local/}{,share/}{doc,gtk-doc}" CACHE STRING "Doc directories to remove (if !docs is specified)" FORCE)
+if(NOT DEFINED DOC_DIRS)
+    if(DEFINED MINGW_PREFIX)
+        set(DOC_DIRS "\"\${MINGW_PREFIX#/}\"/{,local/}{,share/}{doc,gtk-doc}" CACHE STRING "Doc directories to remove (if !docs is specified)" FORCE)
+    else()
+        set(DOC_DIRS "{,usr/}{,local/}{,share/}{doc,gtk-doc} mingw{32,64}/{,local/}{,share/}{doc,gtk-doc} opt/*/{doc,gtk-doc}" CACHE STRING "Doc directories to remove (if !docs is specified)" FORCE)
+    endif()
+endif()
 #-- Files to be removed from all packages (if purge is specified)
 if(NOT DEFINED PURGE_TARGETS)
-    set(PURGE_TARGETS "\"\${MINGW_PREFIX#/}\"/{,share}/info/dir .packlist *.pod" CACHE STRING "Files to be removed from all packages (if purge is specified)" FORCE)
+    if(DEFINED MINGW_PREFIX)
+        set(PURGE_TARGETS "{,usr/}{,share}/info/dir mingw{32,64}/{,share}/info/dir .packlist *.pod" CACHE STRING "Files to be removed from all packages (if purge is specified)" FORCE)
+    else()
+        set(PURGE_TARGETS "\"\${MINGW_PREFIX#/}\"/{,share}/info/dir .packlist *.pod" CACHE STRING "Files to be removed from all packages (if purge is specified)" FORCE)
+    endif()
 endif()
 
 
@@ -907,6 +907,49 @@ execute_process(COMMAND "${CMAKE_COMMAND}" -E environment
 )
 
 file(APPEND ${ENV_VARS_FILE_PATH} "${ENV_VARS_FILE}")
+
+unset(CC)
+unset(CXX)
+unset(LD)
+unset(RC)
+unset(LDFLAGS)
+unset(LDFLAGS_DEBUG)
+unset(LDFLAGS_MINSIZEREL)
+unset(LDFLAGS_RELEASE)
+unset(LDFLAGS_RELWITHDEBINFO)
+unset(RCFLAGS)
+unset(RCFLAGS_DEBUG)
+unset(RCFLAGS_MINSIZEREL)
+unset(RCFLAGS_RELEASE)
+unset(RCFLAGS_RELWITHDEBINFO)
+unset(CFLAGS)
+unset(CFLAGS_DEBUG)
+unset(CFLAGS_MINSIZEREL)
+unset(CFLAGS_RELEASE)
+unset(CFLAGS_RELWITHDEBINFO)
+unset(CXXFLAGS)
+unset(CXXFLAGS_DEBUG)
+unset(CXXFLAGS_MINSIZEREL)
+unset(CXXFLAGS_RELEASE)
+unset(CXXFLAGS_RELWITHDEBINFO)
+unset(CPPFLAGS)
+unset(CPPFLAGS_DEBUG)
+unset(CPPFLAGS_MINSIZEREL)
+unset(CPPFLAGS_RELEASE)
+unset(CPPFLAGS_RELWITHDEBINFO)
+unset(DEBUG_CFLAGS)
+unset(DEBUG_CPPFLAGS)
+unset(DEBUG_CXXFLAGS)
+unset(DEBUG_LDFLAGS)
+unset(DEBUG_RCFLAGS)
+unset(RELEASE_CFLAGS)
+unset(RELEASE_CPPFLAGS)
+unset(RELEASE_CXXFLAGS)
+unset(RELEASE_LDFLAGS)
+unset(RELEASE_RCFLAGS)
+unset(CARCH)
+unset(CHOST)
+
 
 #########################################################################
 # NOTES
