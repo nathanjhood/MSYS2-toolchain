@@ -170,8 +170,8 @@ if(MSYSTEM STREQUAL MINGW64)
     set(LD                      "${MINGW64_ROOT}/bin/ld")              #CACHE FILEPATH "The full path to the linker <LD>." FORCE)
     set(RC                      "${MINGW64_ROOT}/bin/windres")         #CACHE FILEPATH "" FORCE)
 
-    set(CFLAGS                  "-march=nocona -msahf -mtune=generic -O2 -pipe -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong") #CACHE STRING "Default <CFLAGS> flags for all build types." FORCE)
-    set(CXXFLAGS                "-march=nocona -msahf -mtune=generic -O2 -pipe") #CACHE STRING "Default <CXXFLAGS> flags for all build types." FORCE)
+    set(CFLAGS                  "-march=nocona -msahf -mtune=generic -pipe -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong") #CACHE STRING "Default <CFLAGS> flags for all build types." FORCE)
+    set(CXXFLAGS                "-march=nocona -msahf -mtune=generic -pipe") #CACHE STRING "Default <CXXFLAGS> flags for all build types." FORCE)
     set(CPPFLAGS                "-D__USE_MINGW_ANSI_STDIO=1")          #CACHE STRING    "Default <CPPFLAGS> flags for all build types." FORCE)
     set(LDFLAGS                 "-pipe")                               #CACHE STRING    "Default <LD> flags for linker for all build types." FORCE)
 
