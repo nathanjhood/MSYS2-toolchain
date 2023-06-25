@@ -61,8 +61,8 @@ if(${MSYSTEM} STREQUAL MINGW64)
 
     set(CFLAGS                  "-march=nocona -msahf -mtune=generic -O2 -pipe -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong" CACHE STRING "Default <CFLAGS> flags for all build types." FORCE)
     set(CXXFLAGS                "-march=nocona -msahf -mtune=generic -O2 -pipe" CACHE STRING "Default <CXXFLAGS> flags for all build types." FORCE)
-    set(CPPFLAGS                "-D__USE_MINGW_ANSI_STDIO=1" CACHE STRING "Default <CPPFLAGS> flags for all build types." FORCE)
-    set(LDFLAGS                 "-pipe" CACHE STRING "Default <LD> flags for linker for all build types." FORCE)
+    set(CPPFLAGS                "-D__USE_MINGW_ANSI_STDIO=1"          CACHE STRING   "Default <CPPFLAGS> flags for all build types." FORCE)
+    set(LDFLAGS                 "-pipe"                               CACHE STRING "Default <LD> flags for linker for all build types." FORCE)
 
     #-- Debugging flags
     set(DEBUG_CFLAGS            "-ggdb -Og"                           CACHE STRING "Default <CFLAGS_DEBUG> flags." FORCE)
@@ -98,14 +98,14 @@ elseif(${MSYSTEM} STREQUAL MINGW32)
     set(CXX                     "g++"                                 CACHE FILEPATH  "The full path to the compiler for <CXX>." FORCE)
     set(LD                      "ld"                                  CACHE FILEPATH  "The full path to the linker <LD>." FORCE)
 
-    set(CFLAGS "-march=pentium4 -mtune=generic -O2 -pipe -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong" CACHE STRING "Default <CFLAGS> flags for all build types." FORCE)
-    set(CXXFLAGS "-march=pentium4 -mtune=generic -O2 -pipe" CACHE STRING "Default <CXXFLAGS> flags for all build types." FORCE)
-    set(CPPFLAGS "-D__USE_MINGW_ANSI_STDIO=1")
-    set(LDFLAGS "-pipe -Wl,--no-seh -Wl,--large-address-aware")
+    set(CFLAGS                  "-march=pentium4 -mtune=generic -O2 -pipe -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong" CACHE STRING "Default <CFLAGS> flags for all build types." FORCE)
+    set(CXXFLAGS                "-march=pentium4 -mtune=generic -O2 -pipe" CACHE STRING "Default <CXXFLAGS> flags for all build types." FORCE)
+    set(CPPFLAGS                "-D__USE_MINGW_ANSI_STDIO=1"          CACHE STRING    "Default <CPPFLAGS> flags for all build types." FORCE)
+    set(LDFLAGS                 "-pipe -Wl,--no-seh -Wl,--large-address-aware" CACHE STRING    "Default <LD> flags for linker for all build types." FORCE)
 
     #-- Debugging flags
-    set(DEBUG_CFLAGS            "-ggdb -Og"                           CACHE STRING "Default <CFLAGS_DEBUG> flags." FORCE)
-    set(DEBUG_CXXFLAGS          "-ggdb -Og"                           CACHE STRING "Default <CXXFLAGS_DEBUG> flags." FORCE)
+    set(DEBUG_CFLAGS            "-ggdb -Og"                           CACHE STRING    "Default <CFLAGS_DEBUG> flags." FORCE)
+    set(DEBUG_CXXFLAGS          "-ggdb -Og"                           CACHE STRING    "Default <CXXFLAGS_DEBUG> flags." FORCE)
 
     set(PREFIX                  "/mingw32"                            CACHE PATH      "")
     set(CARCH                   "i686"                                CACHE STRING    "")
@@ -168,12 +168,12 @@ elseif(${MSYSTEM} STREQUAL CLANG32)
 
     set(CC                      "clang"                               CACHE FILEPATH  "The full path to the compiler for <CC>." FORCE)
     set(CXX                     "clang++"                             CACHE FILEPATH  "The full path to the compiler for <CXX>." FORCE)
-    set(LD                      "lld"                                  CACHE FILEPATH "The full path to the linker <LD>." FORCE)
+    set(LD                      "lld"                                 CACHE FILEPATH  "The full path to the linker <LD>." FORCE)
 
-    set(CFLAGS "-march=pentium4 -mtune=generic -O2 -pipe -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong" CACHE STRING "Default <CFLAGS> flags for all build types." FORCE)
-    set(CXXFLAGS "-march=pentium4 -mtune=generic -O2 -pipe" CACHE STRING "Default <CXXFLAGS> flags for all build types." FORCE)
-    set(CPPFLAGS "-D__USE_MINGW_ANSI_STDIO=1")
-    set(LDFLAGS "-pipe -Wl,--no-seh -Wl,--large-address-aware")
+    set(CFLAGS                  "-march=pentium4 -mtune=generic -O2 -pipe -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong" CACHE STRING "Default <CFLAGS> flags for all build types." FORCE)
+    set(CXXFLAGS                "-march=pentium4 -mtune=generic -O2 -pipe" CACHE STRING "Default <CXXFLAGS> flags for all build types." FORCE)
+    set(CPPFLAGS                "-D__USE_MINGW_ANSI_STDIO=1"         CACHE STRING     "Default <CPPFLAGS> flags for all build types." FORCE)
+    set(LDFLAGS                 "-pipe -Wl,--no-seh -Wl,--large-address-aware" CACHE STRING "Default <LD> flags for linker for all build types." FORCE)
 
     set(PREFIX                  "/clang32"                            CACHE PATH      "")
     set(CARCH                   "i686"                                CACHE STRING    "")
@@ -200,12 +200,12 @@ elseif(${MSYSTEM} STREQUAL CLANGARM64)
 
     set(CC                      "clang"                               CACHE FILEPATH  "The full path to the compiler for <CC>." FORCE)
     set(CXX                     "clang++"                             CACHE FILEPATH  "The full path to the compiler for <CXX>." FORCE)
-    set(LD                      "lld"                                  CACHE FILEPATH "The full path to the linker <LD>." FORCE)
+    set(LD                      "lld"                                 CACHE FILEPATH  "The full path to the linker <LD>." FORCE)
 
-    set(CFLAGS "-O2 -pipe -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong" CACHE STRING "Default <CFLAGS> flags for all build types." FORCE)
-    set(CXXFLAGS "-O2 -pipe" CACHE STRING "Default <CXXFLAGS> flags for all build types." FORCE)
-    set(CPPFLAGS "-D__USE_MINGW_ANSI_STDIO=1")
-    set(LDFLAGS "-pipe")
+    set(CFLAGS                  "-O2 -pipe -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong" CACHE STRING "Default <CFLAGS> flags for all build types." FORCE)
+    set(CXXFLAGS                "-O2 -pipe"                           CACHE STRING    "Default <CXXFLAGS> flags for all build types." FORCE)
+    set(CPPFLAGS                "-D__USE_MINGW_ANSI_STDIO=1"          CACHE STRING    "Default <CPPFLAGS> flags for all build types." FORCE)
+    set(LDFLAGS                 "-pipe"                               CACHE STRING    "Default <LD> flags for linker for all build types." FORCE)
 
     set(PREFIX                  "/clangarm64"                         CACHE PATH      "")
     set(CARCH                   "aarch64"                             CACHE STRING    "")
@@ -234,10 +234,10 @@ elseif(${MSYSTEM} STREQUAL UCRT64)
     set(CXX                     "g++"                                 CACHE FILEPATH  "The full path to the compiler for <CXX>." FORCE)
     set(LD                      "ld"                                  CACHE FILEPATH  "The full path to the linker <LD>." FORCE)
 
-    set(CFLAGS "-march=nocona -msahf -mtune=generic -O2 -pipe -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong" CACHE STRING "Default <CFLAGS> flags for all build types." FORCE)
-    set(CXXFLAGS "-march=nocona -msahf -mtune=generic -O2 -pipe" CACHE STRING "Default <CXXFLAGS> flags for all build types." FORCE)
-    set(CPPFLAGS "-D__USE_MINGW_ANSI_STDIO=1")
-    set(LDFLAGS "-pipe")
+    set(CFLAGS                  "-march=nocona -msahf -mtune=generic -O2 -pipe -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong" CACHE STRING "Default <CFLAGS> flags for all build types." FORCE)
+    set(CXXFLAGS                "-march=nocona -msahf -mtune=generic -O2 -pipe" CACHE STRING "Default <CXXFLAGS> flags for all build types." FORCE)
+    set(CPPFLAGS                "-D__USE_MINGW_ANSI_STDIO=1"          CACHE STRING    "Default <CPPFLAGS> flags for all build types." FORCE)
+    set(LDFLAGS                 "-pipe"                               CACHE STRING    "Default <LD> flags for linker for all build types." FORCE)
 
     set(PREFIX                  "/ucrt64"                             CACHE PATH      "")
     set(CARCH                   "x86_64"                              CACHE STRING    "")
@@ -251,7 +251,7 @@ elseif(${MSYSTEM} STREQUAL UCRT64)
     set(MINGW_PREFIX            "${MSYSTEM_PREFIX}"                   CACHE PATH      "")
     set(MINGW_PACKAGE_PREFIX    "mingw-w64-ucrt-${MSYSTEM_CARCH}"     CACHE STRING    "")
 
-elseif(${MSYSTEM} STREQUAL MSYS)
+elseif(MSYSTEM STREQUAL "MSYS")
 
     set(BUILDSYSTEM             "MSYS2 MSYS"                          CACHE STRING    "Name of the build system." FORCE)
 
@@ -268,8 +268,8 @@ elseif(${MSYSTEM} STREQUAL MSYS)
 
     set(CFLAGS                  "-march=nocona -msahf -mtune=generic -O2 -pipe" CACHE STRING "Default <CFLAGS> flags for all build types." FORCE)
     set(CXXFLAGS                "-march=nocona -msahf -mtune=generic -O2 -pipe" CACHE STRING "" CACHE STRING "Default <CXXFLAGS> flags for all build types." FORCE)
-    set(CPPFLAGS "" CACHE STRING "" FORCE)
-    set(LDFLAGS "-pipe" CACHE STRING "" FORCE)
+    set(CPPFLAGS                ""                                    CACHE STRING    "Default <CPPFLAGS> flags for all build types." FORCE)
+    set(LDFLAGS                 "-pipe"                               CACHE STRING    "Default <LD> flags for linker for all build types." FORCE)
 
     #-- Debugging flags
     set(DEBUG_CFLAGS "-ggdb -Og" CACHE STRING "" FORCE)
