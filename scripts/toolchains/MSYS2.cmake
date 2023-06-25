@@ -41,7 +41,7 @@ set(MSYSTEM "$ENV{MSYSTEM}" CACHE STRING "The detected MSYS sub-system in use." 
 
 if(NOT DEFINED MSYS_ROOT)
     if(EXISTS "$ENV{HOMEDRIVE}/msys64")
-        set(MSYS_ROOT "$ENV{HOMEDRIVE}/msys64" CACHE PATH "" FORCE)
+        set(MSYS_ROOT "$ENV{HOMEDRIVE}/msys64" CACHE PATH "Msys2 installation root directory." FORCE)
     else()
         message(FATAL_ERROR "Cannot find any valid msys2 installation..."
         "please try passing '-DMSYS_ROOT:PATH=<path/to/msys64>' on the CMake invocation."
@@ -83,15 +83,15 @@ set(MSYS2_OPT_DIR "${MSYS_ROOT}/opt" CACHE PATH "")
 
 if(MSYSTEM STREQUAL MINGW64)
 
-    set(BUILDSYSTEM             "MinGW x64"                           CACHE STRING "Name of the build system." FORCE)
-    set(BUILDSYSTEM_ROOT        "${MSYS_ROOT}/mingw64"                CACHE PATH   "Root of the build system.")
+    set(BUILDSYSTEM             "MinGW x64"                           CACHE STRING   "Name of the build system." FORCE)
+    set(BUILDSYSTEM_ROOT        "${MSYS_ROOT}/mingw64"                CACHE PATH     "Root of the build system." FORCE)
 
-    set(TOOLCHAIN_VARIANT       gcc                                   CACHE STRING "Identification string of the compiler toolchain variant." FORCE)
-    set(CRT_LIBRARY             msvcrt                                CACHE STRING "Identification string of the C Runtime variant. Can be 'ucrt' (modern, 64-bit only) or 'msvcrt' (compatibilty for legacy builds)." FORCE)
-    set(CXX_STD_LIBRARY         libstdc++                             CACHE STRING "Identification string of the C++ Standard Library variant. Can be 'libstdc++' (GNU implementation) or 'libc++' (LLVM implementation)." FORCE)
+    set(TOOLCHAIN_VARIANT       gcc                                   CACHE STRING   "Identification string of the compiler toolchain variant." FORCE)
+    set(CRT_LIBRARY             msvcrt                                CACHE STRING   "Identification string of the C Runtime variant. Can be 'ucrt' (modern, 64-bit only) or 'msvcrt' (compatibilty for legacy builds)." FORCE)
+    set(CXX_STD_LIBRARY         libstdc++                             CACHE STRING   "Identification string of the C++ Standard Library variant. Can be 'libstdc++' (GNU implementation) or 'libc++' (LLVM implementation)." FORCE)
     #
-    set(__USE_MINGW_ANSI_STDIO  "1"                                   CACHE STRING "Use the MinGW ANSI definition for 'stdio.h'." FORCE)
-    set(_FORTIFY_SOURCE         "2"                                   CACHE STRING "Fortify source definition." FORCE)
+    set(__USE_MINGW_ANSI_STDIO  "1"                                   CACHE STRING   "Use the MinGW ANSI definition for 'stdio.h'." FORCE)
+    set(_FORTIFY_SOURCE         "2"                                   CACHE STRING   "Fortify source definition." FORCE)
 
     set(CC                      "gcc"                                 CACHE FILEPATH "The full path to the compiler for <CC>." FORCE)
     set(CXX                     "g++"                                 CACHE FILEPATH "The full path to the compiler for <CXX>." FORCE)
@@ -99,12 +99,12 @@ if(MSYSTEM STREQUAL MINGW64)
 
     set(CFLAGS                  "-march=nocona -msahf -mtune=generic -O2 -pipe -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong" CACHE STRING "Default <CFLAGS> flags for all build types." FORCE)
     set(CXXFLAGS                "-march=nocona -msahf -mtune=generic -O2 -pipe" CACHE STRING "Default <CXXFLAGS> flags for all build types." FORCE)
-    set(CPPFLAGS                "-D__USE_MINGW_ANSI_STDIO=1"          CACHE STRING   "Default <CPPFLAGS> flags for all build types." FORCE)
-    set(LDFLAGS                 "-pipe"                               CACHE STRING "Default <LD> flags for linker for all build types." FORCE)
+    set(CPPFLAGS                "-D__USE_MINGW_ANSI_STDIO=1"          CACHE STRING    "Default <CPPFLAGS> flags for all build types." FORCE)
+    set(LDFLAGS                 "-pipe"                               CACHE STRING    "Default <LD> flags for linker for all build types." FORCE)
 
     #-- Debugging flags
-    set(DEBUG_CFLAGS            "-ggdb -Og"                           CACHE STRING "Default <CFLAGS_DEBUG> flags." FORCE)
-    set(DEBUG_CXXFLAGS          "-ggdb -Og"                           CACHE STRING "Default <CXXFLAGS_DEBUG> flags." FORCE)
+    set(DEBUG_CFLAGS            "-ggdb -Og"                           CACHE STRING    "Default <CFLAGS_DEBUG> flags." FORCE)
+    set(DEBUG_CXXFLAGS          "-ggdb -Og"                           CACHE STRING    "Default <CXXFLAGS_DEBUG> flags." FORCE)
 
     set(PREFIX                  "/mingw64"                            CACHE PATH      "Sub-system prefix." FORCE)
     set(CARCH                   "x86_64"                              CACHE STRING    "Sub-system architecture." FORCE)
@@ -118,13 +118,10 @@ if(MSYSTEM STREQUAL MINGW64)
     set(MINGW_PREFIX            "${MSYSTEM_PREFIX}"                   CACHE PATH      "Sub-system prefix." FORCE)
     set(MINGW_PACKAGE_PREFIX    "mingw-w64-${MSYSTEM_CARCH}"          CACHE STRING    "Sub-system prefix." FORCE)
 
-    set(ACLOCAL_PATH            "${MINGW_PREFIX}/share/aclocal" "/usr/share/aclocal"              CACHE PATH "By default, aclocal searches for .m4 files in the following directories." FORCE)
-    set(PKG_CONFIG_PATH         "${MINGW_PREFIX}/lib/pkgconfig" "${MINGW_PREFIX}/share/pkgconfig" CACHE PATH "A colon-separated (on Windows, semicolon-separated) list of directories to search for .pc files. The default directory will always be searched after searching the path." FORCE)
-
 elseif(MSYSTEM STREQUAL MINGW32)
 
     set(BUILDSYSTEM             "MinGW x32"                           CACHE STRING    "Name of the build system." FORCE)
-    set(BUILDSYSTEM_ROOT        "${MSYS_ROOT}/mingw32"                CACHE PATH      "Root of the build system.")
+    set(BUILDSYSTEM_ROOT        "${MSYS_ROOT}/mingw32"                CACHE PATH      "Root of the build system." FORCE)
 
     set(TOOLCHAIN_VARIANT       gcc                                   CACHE STRING    "Identification string of the compiler toolchain variant." FORCE)
     set(CRT_LIBRARY             msvcrt                                CACHE STRING    "Identification string of the C Runtime variant. Can be 'ucrt' (modern, 64-bit only) or 'msvcrt' (compatibilty for legacy builds)." FORCE)
@@ -161,7 +158,7 @@ elseif(MSYSTEM STREQUAL MINGW32)
 elseif(MSYSTEM STREQUAL CLANG64)
 
     set(BUILDSYSTEM             "MinGW Clang x64"                     CACHE STRING    "Name of the build system." FORCE)
-    set(BUILDSYSTEM_ROOT        "${MSYS_ROOT}/clang64"                CACHE PATH      "Root of the build system.")
+    set(BUILDSYSTEM_ROOT        "${MSYS_ROOT}/clang64"                CACHE PATH      "Root of the build system." FORCE)
 
     set(TOOLCHAIN_VARIANT       llvm                                  CACHE STRING    "Identification string of the compiler toolchain variant." FORCE)
     set(CRT_LIBRARY             ucrt                                  CACHE STRING    "Identification string of the C Runtime variant. Can be 'ucrt' (modern, 64-bit only) or 'msvcrt' (compatibilty for legacy builds)." FORCE)
@@ -379,6 +376,9 @@ set(MINGW_W64_CROSS_PACKAGES
 ) # Actually identical to the previous var...
 
 if(DEFINED MSYSTEM AND (NOT MSYSTEM STREQUAL "MSYS"))
+
+    set(ACLOCAL_PATH              "${BUILDSYSTEM_ROOT}/share/aclocal" "${BUILDSYSTEM_ROOT}/usr/share/aclocal"              CACHE PATH "By default, aclocal searches for .m4 files in the following directories." FORCE)
+    set(PKG_CONFIG_PATH           "${BUILDSYSTEM_ROOT}/lib/pkgconfig" "${BUILDSYSTEM_ROOT}/share/pkgconfig" CACHE PATH "A colon-separated (on Windows, semicolon-separated) list of directories to search for .pc files. The default directory will always be searched after searching the path." FORCE)
 
     # Flag config name fixup...
     set(CFLAGS_DEBUG              "${DEBUG_CFLAGS}"                  CACHE STRING "Default <CFLAGS_DEBUG> flags." FORCE)
