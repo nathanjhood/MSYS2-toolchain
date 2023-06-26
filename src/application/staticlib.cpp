@@ -1,4 +1,4 @@
-#include "../include/application/staticlib.h"
+#include "../../include/application/staticlib.h"
 
 application::StaticLibrary::StaticLibrary() : Message("Static library: constructed.")
 {

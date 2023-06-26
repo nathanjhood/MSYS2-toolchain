@@ -1,4 +1,4 @@
-#include "../include/application/impl/library.h"
+#include "../../../include/application/impl/library.h"
 
 Library::Library() : Message("Generic library: constructed.")
 {

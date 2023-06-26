@@ -1,4 +1,4 @@
-#include "../include/application/sharedlib.h"
+#include "../../include/application/sharedlib.h"
 
 application::SharedLibrary::SharedLibrary() : Message("Shared library: constructed.")
 {

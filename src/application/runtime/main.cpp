@@ -11,9 +11,9 @@ int main()
 
 #else
 
-    std::cout << TARGET_TRIPLET << "\n" << std::endl;
-    std::cout << TARGET_PLATFORM << "\n" << std::endl;
-    std::cout << TARGET_ARCH << "\n" << std::endl;
+    std::cout << MSYSTEM << "\n" << std::endl;
+    std::cout << MSYSTEM_CARCH << "\n" << std::endl;
+    std::cout << MSYSTEM_CHOST << "\n" << std::endl;
 
 #endif // APPLICATION_CONFIGURATION_H_INCLUDED
 

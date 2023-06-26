@@ -15,16 +15,17 @@ struct Configuration
     #define STRINGIFY_HELPER(X) #X
     #define STRINGIFY(X) STRINGIFY_HELPER(X)
 
-    #define TARGET_TRIPLET @TARGET_TRIPLET@
-    #define TARGET_PLATFORM @TARGET_PLATFORM@
-    #define TARGET_ARCH @TARGET_ARCH@
+    #define MSYSTEM "@MSYSTEM@"
+    #define MSYSTEM_CARCH "@MSYSTEM_CARCH@"
+    #define MSYSTEM_CHOST "@MSYSTEM_CHOST@"
 
     /* Construct the string literal in pieces to prevent the source from
     getting matched.  Store it in a pointer rather than an array
     because some compilers will just produce instructions to fill the
     array rather than assigning a pointer to a static array.  */
-    char const* TargetPlatform = "INFO" ":" "platform[" TARGET_PLATFORM "]";
-    char const* TargetArch = "INFO" ":" "arch[" TARGET_ARCH "]";
+    char const* MSystem = "INFO" ":" "Msys Sub-system[" MSYSTEM "]";
+    char const* MSystemArch = "INFO" ":" "Msys Sub-system arch[" MSYSTEM_CARCH "]";
+    char const* MSystemHost = "INFO" ":" "Msys Sub-system host[" MSYSTEM_CHOST "]";
 
 };
 
