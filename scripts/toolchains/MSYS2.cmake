@@ -1,47 +1,7 @@
-# # Mark variables as used so cmake doesn't complain about them
-# mark_as_advanced(CMAKE_TOOLCHAIN_FILE)
-
-# set(CMAKE_REQUIRED_MINIMUM_VERSION "3.7.2")
-# if(CMAKE_VERSION VERSION_LESS CMAKE_REQUIRED_MINIMUM_VERSION)
-#     message(FATAL_ERROR "Toolchain requires at least CMake ${CMAKE_REQUIRED_MINIMUM_VERSION}.")
-# endif()
-# cmake_policy(PUSH)
-# cmake_policy(VERSION 3.7.2)
-
-# Info: packages.msys2.org/groups/
-#
-# Toolchain programs:
-#
-# CMAKE_AR
-# CMAKE_<LANG>_COMPILER_AR (Wrapper)
-# CMAKE_RANLIB
-# CMAKE_<LANG>_COMPILER_RANLIB
-# CMAKE_STRIP
-# CMAKE_NM
-# CMAKE_OBJDUMP
-# CMAKE_DLLTOOL
-# CMAKE_MT
-# CMAKE_LINKER
-# CMAKE_C_COMPILER
-# CMAKE_CXX_COMPILER
-# CMAKE_RC_COMPILER
-#
-# Flags:
-#
-# CMAKE_<LANG>_FLAGS
-# CMAKE_<LANG>_FLAGS_<CONFIG>
-# CMAKE_RC_FLAGS
-# CMAKE_SHARED_LINKER_FLAGS
-# CMAKE_STATIC_LINKER_FLAGS
-# CMAKE_STATIC_LINKER_FLAGS_<CONFIG>
-# CMAKE_EXE_LINKER_FLAGS
-# CMAKE_EXE_LINKER_FLAGS_<CONFIG>
-
-# # Pick up the relevant root-level files for just-in-case purposes...?
-# string(TOLOWER ${MSYSTEM} MSYSTEM_NAME)
-# set(MSYSTEM_CONFIG_FILE "${MSYS_ROOT}/${MSYSTEM_NAME}.ini")
-# set(MSYSTEM_LAUNCH_FILE "${MSYS_ROOT}/${MSYSTEM_NAME}.exe")
-# set(MSYSTEM_ICON_FILE "${MSYS_ROOT}/${MSYSTEM_NAME}.ico")
+# Copyright (c) 2023
+# Nathan J. Hood (@StoneyDSP) <nathanjhood@googlemail.com>.
+# Licensed under the MIT License.
+# All rights reserved.
 
 # if(DEFINED ENV{MSYSTEM})
 #     set(MSYSTEM "$ENV{MSYSTEM}" CACHE STRING "The detected MSYS sub-system in use." FORCE)
