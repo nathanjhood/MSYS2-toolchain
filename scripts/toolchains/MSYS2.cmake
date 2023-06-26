@@ -816,6 +816,23 @@ if(NOT DEFINED LOGDEST)
 endif()
 set(LOGDEST "${LOGDEST}" CACHE PATH "Log files: specify a fixed directory where all log files will be placed" FORCE)
 
+#########################################################################
+# EXTENSION DEFAULTS
+#########################################################################
+
+set(MSYS_PKGEXT ".pkg.tar.zst" CACHE STRING "File extension to use for packages." FORCE)
+set(MSYS_SRCEXT ".src.tar.zst" CACHE STRING "File extension to use for packages containing source code." FORCE)
+
+#########################################################################
+# OTHER
+#########################################################################
+
+#-- Command used to run pacman as root, instead of trying sudo and su
+if(NOT DEFINED PACMAN_AUTH)
+    set(PACMAN_AUTH "()")
+endif()
+set(PACMAN_AUTH "${PACMAN_AUTH}" CACHE STRING "Command used to run pacman as root, instead of trying sudo and su" FORCE)
+
 #-- Packager: name/email of the person or organization building packages
 if(DEFINED PACKAGER)
     set(PACKAGER "${PACKAGER}" CACHE STRING "Packager: name/email of the person or organization building packages (optional)." FORCE)
@@ -823,78 +840,130 @@ else()
     set(PACKAGER "John Doe <john@doe.com>" CACHE STRING "Packager: name/email of the person or organization building packages (Default)." FORCE)
 endif()
 
-#-- Specify a key to use for package signing
-if(DEFINED GPGKEY)
-    set(GPGKEY "${GPGKEY}" CACHE STRING "Specify a key to use for package signing (Optional)." FORCE)
-else()
-    set(GPGKEY "UNDEFINED" CACHE STRING "Specify a key to use for package signing (Undefined)." FORCE)
+if(ENABLE_SIGN)
+    #-- Specify a key to use for package signing
+    if(DEFINED GPGKEY)
+        set(GPGKEY "${GPGKEY}" CACHE STRING "Specify a key to use for package signing (User-specified)." FORCE)
+    elseif(DEFINED ENV{GPGKEY})
+        set(GPGKEY "$ENV{GPGKEY}" CACHE STRING "Specify a key to use for package signing (Environment-detected)." FORCE)
+    else()
+        set(GPGKEY "UNDEFINED" CACHE STRING "Specify a key to use for package signing (Undefined)." FORCE)
+    endif()
 endif()
 
 #########################################################################
 # COMPRESSION DEFAULTS
 #########################################################################
+option(ENABLE_GZIP "Enable the 'gzip' compression utility." ON)
+if(ENABLE_GZIP)
+    find_program(GZ "${MSYS_ROOT}/usr/bin/gzip")
+    if(NOT DEFINED GZ_FLAGS)
+        set(GZ_FLAGS)
+        string(APPEND GZ_FLAGS "-c ") # --stdout (write on standard output, keep original files unchanged)
+        string(APPEND GZ_FLAGS "-f ") # --force (force overwrite of output file and compress links)
+        string(APPEND GZ_FLAGS "-n ") # --no-name (do not save or restore the original name and timestamp)
+    endif() # (NOT DEFINED GZ_FLAGS)
+    set(GZ_FLAGS "${GZ_FLAGS}" CACHE STRING "Flags for the 'gzip' compression utility." FORCE)
+    set(GZ_COMMAND "${GZ} ${GZ_FLAGS}" CACHE STRING "The 'gzip' compression utility command." FORCE)
+    unset(GZ_FLAGS)
+endif() # (ENABLE_GZIP)
 
-if(NOT DEFINED COMPRESSGZ_FLAGS)
-    set(COMPRESSGZ_FLAGS "-c -f -n" CACHE STRING "Flags for the gzip compression utility." FORCE)
-endif()
-if(NOT DEFINED COMPRESSBZ2_FLAGS)
-    set(COMPRESSBZ2_FLAGS "-c -f" CACHE STRING "Flags for the bzip compression utility." FORCE)
-endif()
-if(NOT DEFINED COMPRESSXZ_FLAGS)
-    set(COMPRESSXZ_FLAGS "-c -z -T0 -" CACHE STRING "Flags for the xz compression utility." FORCE)
-endif()
-if(NOT DEFINED COMPRESSZST_FLAGS)
-    set(COMPRESSZST_FLAGS "-c -T0 --ultra -20 -" CACHE STRING "Flags for the zstd compression utility." FORCE)
-endif()
-if(NOT DEFINED COMPRESSLRZ_FLAGS)
-    set(COMPRESSLRZ_FLAGS "-q" CACHE STRING "Flags for the lrzip compression utility." FORCE)
-endif()
-if(NOT DEFINED COMPRESSLZO_FLAGS)
-    set(COMPRESSLZO_FLAGS "-q" CACHE STRING "Flags for the lzop compression utility." FORCE)
-endif()
-if(NOT DEFINED COMPRESSZ_FLAGS)
-    set(COMPRESSZ_FLAGS "-c -f" CACHE STRING "Flags for the compress compression utility." FORCE)
-endif()
-if(NOT DEFINED COMPRESSLZ4_FLAGS)
-    set(COMPRESSLZ4_FLAGS "-q" CACHE STRING "Flags for the lz4 compression utility." FORCE)
-endif()
-if(NOT DEFINED COMPRESSLZ_FLAGS)
-    set(COMPRESSLZ_FLAGS "-c -f" CACHE STRING "Flags for the lzip compression utility." FORCE)
+#[===[.md
+# bzip2
+
+bzip2, a block-sorting file compressor.
+
+#]===]
+option(ENABLE_BZ2 "Enable the 'bzip2' compression utility." ON)
+if(ENABLE_BZ2)
+    find_program(BZ2 "${MSYS_ROOT}/usr/bin/bzip2")
+    #[===[.md
+    # bzip2_usage
+
+    usage: bzip2 [flags and input files in any order]
+
+    If invoked as `bzip2', default action is to compress.
+    If invoked as `bunzip2',  default action is to decompress.
+    If invoked as `bzcat', default action is to decompress to stdout.
+
+    If no file names are given, bzip2 compresses or decompresses
+    from standard input to standard output.  You can combine
+    short flags, so `-v -4' means the same as -v4 or -4v, &c.
+
+    ]===]
+    if(NOT DEFINED BZ2_FLAGS)
+        set(BZ2_FLAGS)
+        #[===[.md
+        # bzip2_flags
+
+        Flags for the 'bzip2' compression utility.
+
+        -h --help           print this message
+        -d --decompress     force decompression
+        -z --compress       force compression
+        -k --keep           keep (don't delete) input files
+        -f --force          overwrite existing output files
+        -t --test           test compressed file integrity
+        -c --stdout         output to standard out
+        -q --quiet          suppress noncritical error messages
+        -v --verbose        be verbose (a 2nd -v gives more)
+        -L --license        display software version & license
+        -V --version        display software version & license
+        -s --small          use less memory (at most 2500k)
+        -1 .. -9            set block size to 100k .. 900k
+        --fast              alias for -1
+        --best              alias for -9
+
+        #]===]
+        string(APPEND BZ2_FLAGS "-c ")
+        string(APPEND BZ2_FLAGS "-f ")
+    endif() # (NOT DEFINED BZ2_FLAGS)
+    set(BZ2_FLAGS "${BZ2_FLAGS}" CACHE STRING "Flags for the 'bzip2' compression utility." FORCE)
+    set(BZ2_COMMAND "${BZ2} ${BZ2_FLAGS}" CACHE STRING "The 'bzip2' compression utility command." FORCE)
+    unset(BZ2_FLAGS)
+endif() # (ENABLE_BZ2)
+
+option(ENABLE_XZ "Enable the 'bzip2' compression utility." ON)
+if(ENABLE_XZ)
+    if(NOT DEFINED XZ_FLAGS)
+        set(XZ_FLAGS "-c -z -T0 -") # CACHE STRING "Flags for the xz compression utility." FORCE)
+    endif()
 endif()
 
-set(COMPRESSGZ "gzip ${COMPRESSGZ_FLAGS}" CACHE STRING "The gzip compression utility command." FORCE)
-set(COMPRESSBZ2 "bzip2 ${COMPRESSBZ2_FLAGS}" CACHE STRING "The bzip compression utility command." FORCE)
-set(COMPRESSXZ "xz ${COMPRESSXZ_FLAGS}" CACHE STRING "The xz compression utility command." FORCE)
-set(COMPRESSZST "zstd ${COMPRESSZST_FLAGS}" CACHE STRING "The zst compression utility command." FORCE)
-set(COMPRESSLRZ "lrzip ${COMPRESSLRZ_FLAGS}" CACHE STRING "The lrzip compression utility command." FORCE)
-set(COMPRESSLZO "lzop ${COMPRESSLZO_FLAGS}" CACHE STRING "The lzop compression utility command." FORCE)
-set(COMPRESSZ "compress ${COMPRESSZ_FLAGS}" CACHE STRING "The compress compression utility command." FORCE)
-set(COMPRESSLZ4 "lz4 ${COMPRESSLZ4_FLAGS}" CACHE STRING "The lz4 compression utility command." FORCE)
-set(COMPRESSLZ "lzip ${COMPRESSLZ_FLAGS}" CACHE STRING "The lzip compression utility command." FORCE)
+if(NOT DEFINED ZST_FLAGS)
+    set(ZST_FLAGS "-c -T0 --ultra -20 -") # CACHE STRING "Flags for the zstd compression utility." FORCE)
+endif()
+if(NOT DEFINED LRZ_FLAGS)
+    set(LRZ_FLAGS "-q") # CACHE STRING "Flags for the lrzip compression utility." FORCE)
+endif()
+if(NOT DEFINED LZO_FLAGS)
+    set(LZO_FLAGS "-q") # CACHE STRING "Flags for the lzop compression utility." FORCE)
+endif()
+if(NOT DEFINED Z_FLAGS)
+    set(Z_FLAGS "-c -f") # CACHE STRING "Flags for the compress compression utility." FORCE)
+endif()
+if(NOT DEFINED LZ4_FLAGS)
+    set(LZ4_FLAGS "-q") # CACHE STRING "Flags for the lz4 compression utility." FORCE)
+endif()
+if(NOT DEFINED LZ_FLAGS)
+    set(LZ_FLAGS "-c -f") # CACHE STRING "Flags for the lzip compression utility." FORCE)
+endif()
 
-unset(COMPRESSGZ_FLAGS)
-unset(COMPRESSBZ2_FLAGS)
-unset(COMPRESSXZ_FLAGS)
-unset(COMPRESSZST_FLAGS)
-unset(COMPRESSLRZ_FLAGS)
-unset(COMPRESSLZO_FLAGS)
-unset(COMPRESSZ_FLAGS)
-unset(COMPRESSLZ4_FLAGS)
-unset(COMPRESSLZ_FLAGS)
-#########################################################################
-# EXTENSION DEFAULTS
-#########################################################################
+set(COMPRESS_XZ_COMMAND "xz ${XZ_FLAGS}" CACHE STRING "The xz compression utility command." FORCE)
+set(COMPRESS_ZST_COMMAND "zstd ${ZST_FLAGS}" CACHE STRING "The zst compression utility command." FORCE)
+set(COMPRESS_LRZ_COMMAND "lrzip ${LRZ_FLAGS}" CACHE STRING "The lrzip compression utility command." FORCE)
+set(COMPRESS_LZO_COMMAND "lzop ${LZO_FLAGS}" CACHE STRING "The lzop compression utility command." FORCE)
+set(COMPRESS_Z_COMMAND "compress ${Z_FLAGS}" CACHE STRING "The compress compression utility command." FORCE)
+set(COMPRESS_LZ4_COMMAND "lz4 ${LZ4_FLAGS}" CACHE STRING "The lz4 compression utility command." FORCE)
+set(COMPRESS_LZ_COMMAND "lzip ${LZ_FLAGS}" CACHE STRING "The lzip compression utility command." FORCE)
 
-set(PKGEXT ".pkg.tar.zst" CACHE STRING "File extension to use for packages." FORCE)
-set(SRCEXT ".src.tar.zst" CACHE STRING "File extension to use for packages containing source code." FORCE)
-
-#########################################################################
-# OTHER
-#########################################################################
-
-#-- Command used to run pacman as root, instead of trying sudo and su
-# PACMAN_AUTH=()
-set(PACMAN_AUTH "()" CACHE STRING "Command used to run pacman as root, instead of trying sudo and su" FORCE)
+unset(XZ_FLAGS)
+unset(ZST_FLAGS)
+unset(LRZ_FLAGS)
+unset(LZO_FLAGS)
+unset(Z_FLAGS)
+unset(LZ4_FLAGS)
+unset(LZ_FLAGS)
 
 # cmake_policy(POP)
 
@@ -950,167 +1019,162 @@ unset(RELEASE_RCFLAGS)
 unset(CARCH)
 unset(CHOST)
 
+#[===[.md:
+# toolchain_programs
+
+Info: packages.msys2.org/groups/
+
+CMAKE_AR
+CMAKE_<LANG>_COMPILER_AR (Wrapper)
+CMAKE_RANLIB
+CMAKE_<LANG>_COMPILER_RANLIB
+CMAKE_STRIP
+CMAKE_NM
+CMAKE_OBJDUMP
+CMAKE_DLLTOOL
+CMAKE_MT
+CMAKE_LINKER
+CMAKE_C_COMPILER
+CMAKE_CXX_COMPILER
+CMAKE_RC_COMPILER
+#]===]
+
+#[===[.md:
+# flags
+
+CMAKE_<LANG>_FLAGS
+CMAKE_<LANG>_FLAGS_<CONFIG>
+CMAKE_RC_FLAGS
+CMAKE_SHARED_LINKER_FLAGS
+CMAKE_STATIC_LINKER_FLAGS
+CMAKE_STATIC_LINKER_FLAGS_<CONFIG>
+CMAKE_EXE_LINKER_FLAGS
+CMAKE_EXE_LINKER_FLAGS_<CONFIG>
+#]===]
+
+#[===[.md:
+
+# Todo
 
 #########################################################################
 # NOTES
 #########################################################################
 
-# These vars (examples) can be detected in Windows system environments...
-# UCRTVersion := 10.0.22621.0
-# UniversalCRTSdkDir := C:\Program Files (x86)\Windows Kits\10\
-# VCIDEInstallDir := C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\Common7\IDE\VC\
-# VCINSTALLDIR := C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\
-# VCToolsRedistDir := C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Redist\MSVC\14.36.32532\
-# VisualStudioVersion := 17.0
-# VSINSTALLDIR := C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\
-# WindowsLibPath := C:\Program Files (x86)\Windows Kits\10\UnionMetadata\10.0.22621.0;C:\Program Files (x86)\Windows Kits\10\References\10.0.22621.0
-# WindowsSdkBinPath := C:\Program Files (x86)\Windows Kits\10\bin\
-# WindowsSdkDir := C:\Program Files (x86)\Windows Kits\10\
-# WindowsSDKLibVersion := 10.0.22621.0\
-# WindowsSDKVersion := 10.0.22621.0\
-# TMP := C:\Users\natha\AppData\Local\Temp
+# Pick up the relevant root-level files for just-in-case purposes...?
+string(TOLOWER ${MSYSTEM} MSYSTEM_NAME)
+set(MSYSTEM_CONFIG_FILE "${MSYS_ROOT}/${MSYSTEM_NAME}.ini")
+set(MSYSTEM_LAUNCH_FILE "${MSYS_ROOT}/${MSYSTEM_NAME}.exe")
+set(MSYSTEM_ICON_FILE "${MSYS_ROOT}/${MSYSTEM_NAME}.ico")
+
+These vars (examples) can be detected in Windows system environments...
+
+UCRTVersion := 10.0.22621.0
+UniversalCRTSdkDir := C:\Program Files (x86)\Windows Kits\10\
+VCIDEInstallDir := C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\Common7\IDE\VC\
+VCINSTALLDIR := C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\
+VCToolsRedistDir := C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Redist\MSVC\14.36.32532\
+VisualStudioVersion := 17.0
+VSINSTALLDIR := C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\
+WindowsLibPath := C:\Program Files (x86)\Windows Kits\10\UnionMetadata\10.0.22621.0;C:\Program Files (x86)\Windows Kits\10\References\10.0.22621.0
+WindowsSdkBinPath := C:\Program Files (x86)\Windows Kits\10\bin\
+WindowsSdkDir := C:\Program Files (x86)\Windows Kits\10\
+WindowsSDKLibVersion := 10.0.22621.0\
+WindowsSDKVersion := 10.0.22621.0\
+TMP := C:\Users\natha\AppData\Local\Temp
 
 
-# # The below is the equivalent to /etc/msystem but for cmake...
-# if(MSYSTEM STREQUAL MINGW32)
-#     set(MSYSTEM_PREFIX          "/mingw32"                            CACHE PATH      "")
-#     set(MSYSTEM_CARCH           "i686"                                CACHE STRING    "")
-#     set(MSYSTEM_CHOST           "i686-w64-mingw32"                    CACHE STRING    "")
-#     set(MINGW_CHOST             "${MSYSTEM_CHOST}"                    CACHE STRING    "")
-#     set(MINGW_PREFIX            "${MSYSTEM_PREFIX}"                   CACHE PATH      "")
-#     set(MINGW_PACKAGE_PREFIX    "mingw-w64-${MSYSTEM_CARCH}"          CACHE STRING    "")
-# elseif(MSYSTEM STREQUAL MINGW64)
-#     set(MSYSTEM_PREFIX          "/mingw64"                            CACHE PATH      "")
-#     set(MSYSTEM_CARCH           "x86_64"                              CACHE STRING    "")
-#     set(MSYSTEM_CHOST           "x86_64-w64-mingw32"                  CACHE STRING    "")
-#     set(MINGW_CHOST             "${MSYSTEM_CHOST}"                    CACHE STRING    "")
-#     set(MINGW_PREFIX            "${MSYSTEM_PREFIX}"                   CACHE PATH      "")
-#     set(MINGW_PACKAGE_PREFIX    "mingw-w64-${MSYSTEM_CARCH}"          CACHE STRING    "")
-# elseif(MSYSTEM STREQUAL CLANG32)
-#     set(MSYSTEM_PREFIX          "/clang32"                            CACHE PATH      "")
-#     set(MSYSTEM_CARCH           "i686"                                CACHE STRING    "")
-#     set(MSYSTEM_CHOST           "i686-w64-mingw32"                    CACHE STRING    "")
-#     set(MINGW_CHOST             "${MSYSTEM_CHOST}"                    CACHE STRING    "")
-#     set(MINGW_PREFIX            "${MSYSTEM_PREFIX}"                   CACHE PATH      "")
-#     set(MINGW_PACKAGE_PREFIX    "mingw-w64-clang-${MSYSTEM_CARCH}"    CACHE STRING    "")
-# elseif(MSYSTEM STREQUAL CLANG64)
-#     set(MSYSTEM_PREFIX          "/clang64"                            CACHE PATH      "")
-#     set(MSYSTEM_CARCH           "x86_64"                              CACHE STRING    "")
-#     set(MSYSTEM_CHOST           "x86_64-w64-mingw32"                  CACHE STRING    "")
-#     set(MINGW_CHOST             "${MSYSTEM_CHOST}"                    CACHE STRING    "")
-#     set(MINGW_PREFIX            "${MSYSTEM_PREFIX}"                   CACHE PATH      "")
-#     set(MINGW_PACKAGE_PREFIX    "mingw-w64-clang-${MSYSTEM_CARCH}"    CACHE STRING    "")
-# elseif(MSYSTEM STREQUAL CLANGARM64)
-#     set(MSYSTEM_PREFIX          "/clangarm64"                         CACHE PATH      "")
-#     set(MSYSTEM_CARCH           "aarch64"                             CACHE STRING    "")
-#     set(MSYSTEM_CHOST           "aarch64-w64-mingw32"                 CACHE STRING    "")
-#     set(MINGW_CHOST             "${MSYSTEM_CHOST}"                    CACHE STRING    "")
-#     set(MINGW_PREFIX            "${MSYSTEM_PREFIX}"                   CACHE PATH      "")
-#     set(MINGW_PACKAGE_PREFIX    "mingw-w64-clang-${MSYSTEM_CARCH}"    CACHE STRING    "")
-# elseif(MSYSTEM STREQUAL UCRT64)
-#     set(MSYSTEM_PREFIX          "/ucrt64"                             CACHE PATH      "")
-#     set(MSYSTEM_CARCH           "x86_64"                              CACHE STRING    "")
-#     set(MSYSTEM_CHOST           "x86_64-w64-mingw32"                  CACHE STRING    "")
-#     set(MINGW_CHOST             "${MSYSTEM_CHOST}"                    CACHE STRING    "")
-#     set(MINGW_PREFIX            "${MSYSTEM_PREFIX}"                   CACHE PATH      "")
-#     set(MINGW_PACKAGE_PREFIX    "mingw-w64-ucrt-${MSYSTEM_CARCH}"     CACHE STRING    "")
-# else()
-#     execute_process(
-#         COMMAND /usr/bin/uname -m
-#         WORKING_DIRECTORY "."
-#         OUTPUT_VARIABLE MSYSTEM_CARCH
-#     )
-#     set(MSYSTEM_PREFIX          "/usr"                                CACHE PATH      "")
-#     set(MSYSTEM_CARCH           "${MSYSTEM_CARCH}"                    CACHE STRING    "")
-#     set(MSYSTEM_CHOST           "${MSYSTEM_CARCH}-pc-msys"            CACHE STRING    "")
-#     set(MSYSTEM "MSYS")
-# endif()
+# The below is the equivalent to /etc/msystem but for cmake...
+if(MSYSTEM STREQUAL MINGW32)
+    set(MSYSTEM_PREFIX          "/mingw32"                            CACHE PATH      "")
+    set(MSYSTEM_CARCH           "i686"                                CACHE STRING    "")
+    set(MSYSTEM_CHOST           "i686-w64-mingw32"                    CACHE STRING    "")
+    set(MINGW_CHOST             "${MSYSTEM_CHOST}"                    CACHE STRING    "")
+    set(MINGW_PREFIX            "${MSYSTEM_PREFIX}"                   CACHE PATH      "")
+    set(MINGW_PACKAGE_PREFIX    "mingw-w64-${MSYSTEM_CARCH}"          CACHE STRING    "")
+elseif(MSYSTEM STREQUAL MINGW64)
+    set(MSYSTEM_PREFIX          "/mingw64"                            CACHE PATH      "")
+    set(MSYSTEM_CARCH           "x86_64"                              CACHE STRING    "")
+    set(MSYSTEM_CHOST           "x86_64-w64-mingw32"                  CACHE STRING    "")
+    set(MINGW_CHOST             "${MSYSTEM_CHOST}"                    CACHE STRING    "")
+    set(MINGW_PREFIX            "${MSYSTEM_PREFIX}"                   CACHE PATH      "")
+    set(MINGW_PACKAGE_PREFIX    "mingw-w64-${MSYSTEM_CARCH}"          CACHE STRING    "")
+elseif(MSYSTEM STREQUAL CLANG32)
+    set(MSYSTEM_PREFIX          "/clang32"                            CACHE PATH      "")
+    set(MSYSTEM_CARCH           "i686"                                CACHE STRING    "")
+    set(MSYSTEM_CHOST           "i686-w64-mingw32"                    CACHE STRING    "")
+    set(MINGW_CHOST             "${MSYSTEM_CHOST}"                    CACHE STRING    "")
+    set(MINGW_PREFIX            "${MSYSTEM_PREFIX}"                   CACHE PATH      "")
+    set(MINGW_PACKAGE_PREFIX    "mingw-w64-clang-${MSYSTEM_CARCH}"    CACHE STRING    "")
+elseif(MSYSTEM STREQUAL CLANG64)
+    set(MSYSTEM_PREFIX          "/clang64"                            CACHE PATH      "")
+    set(MSYSTEM_CARCH           "x86_64"                              CACHE STRING    "")
+    set(MSYSTEM_CHOST           "x86_64-w64-mingw32"                  CACHE STRING    "")
+    set(MINGW_CHOST             "${MSYSTEM_CHOST}"                    CACHE STRING    "")
+    set(MINGW_PREFIX            "${MSYSTEM_PREFIX}"                   CACHE PATH      "")
+    set(MINGW_PACKAGE_PREFIX    "mingw-w64-clang-${MSYSTEM_CARCH}"    CACHE STRING    "")
+elseif(MSYSTEM STREQUAL CLANGARM64)
+    set(MSYSTEM_PREFIX          "/clangarm64"                         CACHE PATH      "")
+    set(MSYSTEM_CARCH           "aarch64"                             CACHE STRING    "")
+    set(MSYSTEM_CHOST           "aarch64-w64-mingw32"                 CACHE STRING    "")
+    set(MINGW_CHOST             "${MSYSTEM_CHOST}"                    CACHE STRING    "")
+    set(MINGW_PREFIX            "${MSYSTEM_PREFIX}"                   CACHE PATH      "")
+    set(MINGW_PACKAGE_PREFIX    "mingw-w64-clang-${MSYSTEM_CARCH}"    CACHE STRING    "")
+elseif(MSYSTEM STREQUAL UCRT64)
+    set(MSYSTEM_PREFIX          "/ucrt64"                             CACHE PATH      "")
+    set(MSYSTEM_CARCH           "x86_64"                              CACHE STRING    "")
+    set(MSYSTEM_CHOST           "x86_64-w64-mingw32"                  CACHE STRING    "")
+    set(MINGW_CHOST             "${MSYSTEM_CHOST}"                    CACHE STRING    "")
+    set(MINGW_PREFIX            "${MSYSTEM_PREFIX}"                   CACHE PATH      "")
+    set(MINGW_PACKAGE_PREFIX    "mingw-w64-ucrt-${MSYSTEM_CARCH}"     CACHE STRING    "")
+else()
+    execute_process(
+        COMMAND /usr/bin/uname -m
+        WORKING_DIRECTORY "."
+        OUTPUT_VARIABLE MSYSTEM_CARCH
+    )
+    set(MSYSTEM_PREFIX          "/usr"                                CACHE PATH      "")
+    set(MSYSTEM_CARCH           "${MSYSTEM_CARCH}"                    CACHE STRING    "")
+    set(MSYSTEM_CHOST           "${MSYSTEM_CARCH}-pc-msys"            CACHE STRING    "")
+    set(MSYSTEM "MSYS")
+endif()
 
 
-# # A round of custom vars...
-# if(MSYSTEM STREQUAL "MSYS")
-#     set(MSYSTEM_TITLE "MSYS2 MSYS")
-#     set(MSYSTEM_TOOLCHAIN_VARIANT gcc)
-#     set(MSYSTEM_C_LIBRARY cygwin)
-#     set(MSYSTEM_CXX_LIBRARY libstdc++)
-# elseif(MSYSTEM STREQUAL UCRT64)
-#     set(MSYSTEM_TITLE "MinGW UCRT x64")
-#     set(MSYSTEM_TOOLCHAIN_VARIANT gcc)
-#     set(MSYSTEM_C_LIBRARY ucrt)
-#     set(MSYSTEM_CXX_LIBRARY libstdc++)
-# elseif(MSYSTEM STREQUAL CLANG64)
-#     set(MSYSTEM_TITLE "MinGW Clang x64")
-#     set(MSYSTEM_TOOLCHAIN_VARIANT llvm)
-#     set(MSYSTEM_C_LIBRARY ucrt)
-#     set(MSYSTEM_CXX_LIBRARY libc++)
-# elseif(MSYSTEM STREQUAL CLANGARM64)
-#     set(MSYSTEM_TITLE "MinGW Clang ARM64")
-#     set(MSYSTEM_TOOLCHAIN_VARIANT llvm)
-#     set(MSYSTEM_C_LIBRARY ucrt)
-#     set(MSYSTEM_CXX_LIBRARY libc++)
-# elseif(MSYSTEM STREQUAL CLANG32)
-#     set(MSYSTEM_TITLE "MinGW Clang x32")
-#     set(MSYSTEM_TOOLCHAIN_VARIANT llvm)
-#     set(MSYSTEM_C_LIBRARY ucrt)
-#     set(MSYSTEM_CXX_LIBRARY libc++)
-# elseif(MSYSTEM STREQUAL MINGW64)
-#     set(MSYSTEM_TITLE "MinGW x64")
-#     set(MSYSTEM_TOOLCHAIN_VARIANT gcc)
-#     set(MSYSTEM_C_LIBRARY msvcrt)
-#     set(MSYSTEM_CXX_LIBRARY libstdc++)
-# elseif(MSYSTEM STREQUAL MINGW32)
-#     set(MSYSTEM_TITLE "MinGW x32")
-#     set(MSYSTEM_TOOLCHAIN_VARIANT gcc)
-#     set(MSYSTEM_C_LIBRARY msvcrt)
-#     set(MSYSTEM_CXX_LIBRARY libstdc++)
-# endif()
+# A round of custom vars...
+if(MSYSTEM STREQUAL "MSYS")
+    set(MSYSTEM_TITLE "MSYS2 MSYS")
+    set(MSYSTEM_TOOLCHAIN_VARIANT gcc)
+    set(MSYSTEM_C_LIBRARY cygwin)
+    set(MSYSTEM_CXX_LIBRARY libstdc++)
+elseif(MSYSTEM STREQUAL UCRT64)
+    set(MSYSTEM_TITLE "MinGW UCRT x64")
+    set(MSYSTEM_TOOLCHAIN_VARIANT gcc)
+    set(MSYSTEM_C_LIBRARY ucrt)
+    set(MSYSTEM_CXX_LIBRARY libstdc++)
+elseif(MSYSTEM STREQUAL CLANG64)
+    set(MSYSTEM_TITLE "MinGW Clang x64")
+    set(MSYSTEM_TOOLCHAIN_VARIANT llvm)
+    set(MSYSTEM_C_LIBRARY ucrt)
+    set(MSYSTEM_CXX_LIBRARY libc++)
+elseif(MSYSTEM STREQUAL CLANGARM64)
+    set(MSYSTEM_TITLE "MinGW Clang ARM64")
+    set(MSYSTEM_TOOLCHAIN_VARIANT llvm)
+    set(MSYSTEM_C_LIBRARY ucrt)
+    set(MSYSTEM_CXX_LIBRARY libc++)
+elseif(MSYSTEM STREQUAL CLANG32)
+    set(MSYSTEM_TITLE "MinGW Clang x32")
+    set(MSYSTEM_TOOLCHAIN_VARIANT llvm)
+    set(MSYSTEM_C_LIBRARY ucrt)
+    set(MSYSTEM_CXX_LIBRARY libc++)
+elseif(MSYSTEM STREQUAL MINGW64)
+    set(MSYSTEM_TITLE "MinGW x64")
+    set(MSYSTEM_TOOLCHAIN_VARIANT gcc)
+    set(MSYSTEM_C_LIBRARY msvcrt)
+    set(MSYSTEM_CXX_LIBRARY libstdc++)
+elseif(MSYSTEM STREQUAL MINGW32)
+    set(MSYSTEM_TITLE "MinGW x32")
+    set(MSYSTEM_TOOLCHAIN_VARIANT gcc)
+    set(MSYSTEM_C_LIBRARY msvcrt)
+    set(MSYSTEM_CXX_LIBRARY libstdc++)
+endif()
 
-# # Pass vars to CMake vars...
-# set(CMAKE_CPP_FLAGS_INIT "${CPPFLAGS}" CACHE STRING "Value used to initialize the ``CMAKE_<LANG>_FLAGS`` cache entry the first time a build tree is configured for language ``<LANG>``." FORCE)
-
-# set(CMAKE_C_FLAGS_INIT "${CFLAGS}" CACHE STRING "Value used to initialize the ``CMAKE_<LANG>_FLAGS`` cache entry the first time a build tree is configured for language ``<LANG>``." FORCE)
-# set(CMAKE_C_FLAGS_DEBUG_INIT "${CFLAGS_DEBUG}" CACHE STRING "Value used to initialize the ``CMAKE_<LANG>_FLAGS_<CONFIG>`` cache entry the first time a build tree is configured for language ``<LANG>``." FORCE)
-# set(CMAKE_C_FLAGS_MINSIZEREL_INIT "${CFLAGS_MINSIZEREL}" CACHE STRING "Value used to initialize the ``CMAKE_<LANG>_FLAGS`` cache entry the first time a build tree is configured for language ``<LANG>``." FORCE)
-# set(CMAKE_C_FLAGS_RELEASE_INIT "${CFLAGS_RELEASE}" CACHE STRING "Value used to initialize the ``CMAKE_<LANG>_FLAGS_<CONFIG>`` cache entry the first time a build tree is configured for language ``<LANG>``." FORCE)
-# set(CMAKE_C_FLAGS_RELWITHDEBINFO_INIT "${CFLAGS_RELWITHDEBINFO}" CACHE STRING "Value used to initialize the ``CMAKE_<LANG>_FLAGS_<CONFIG>`` cache entry the first time a build tree is configured for language ``<LANG>``." FORCE)
-
-# set(CMAKE_CXX_FLAGS_INIT "${CXXFLAGS}" CACHE STRING "Value used to initialize the ``CMAKE_<LANG>_FLAGS`` cache entry the first time a build tree is configured for language ``<LANG>``." FORCE)
-# set(CMAKE_CXX_FLAGS_DEBUG_INIT "${CXXFLAGS_DEBUG}" CACHE STRING "Value used to initialize the ``CMAKE_<LANG>_FLAGS_<CONFIG>`` cache entry the first time a build tree is configured for language ``<LANG>``." FORCE)
-# set(CMAKE_CXX_FLAGS_MINSIZEREL_INIT "${CXXFLAGS_MINSIZEREL}" CACHE STRING "Value used to initialize the ``CMAKE_<LANG>_FLAGS`` cache entry the first time a build tree is configured for language ``<LANG>``." FORCE)
-# set(CMAKE_CXX_FLAGS_RELEASE_INIT "${CXXFLAGS_RELEASE}" CACHE STRING "Value used to initialize the ``CMAKE_<LANG>_FLAGS_<CONFIG>`` cache entry the first time a build tree is configured for language ``<LANG>``." FORCE)
-# set(CMAKE_CXX_FLAGS_RELWITHDEBINFO_INIT "${CXXFLAGS_RELWITHDEBINFO}" CACHE STRING "Value used to initialize the ``CMAKE_<LANG>_FLAGS_<CONFIG>`` cache entry the first time a build tree is configured for language ``<LANG>``." FORCE)
-
-# set(CMAKE_RC_FLAGS_INIT "${RCFLAGS}" CACHE STRING "Value used to initialize the ``CMAKE_<LANG>_FLAGS`` cache entry the first time a build tree is configured for language ``<LANG>``." FORCE)
-# set(CMAKE_RC_FLAGS_DEBUG_INIT "${RCFLAGS_DEBUG}" CACHE STRING "Value used to initialize the ``CMAKE_<LANG>_FLAGS_<CONFIG>`` cache entry the first time a build tree is configured for language ``<LANG>``." FORCE)
-# set(CMAKE_RC_FLAGS_MINSIZEREL_INIT "${RCFLAGS_MINSIZEREL}" CACHE STRING "Value used to initialize the ``CMAKE_<LANG>_FLAGS`` cache entry the first time a build tree is configured for language ``<LANG>``." FORCE)
-# set(CMAKE_RC_FLAGS_RELEASE_INIT "${RCFLAGS_RELEASE}" CACHE STRING "Value used to initialize the ``CMAKE_<LANG>_FLAGS_<CONFIG>`` cache entry the first time a build tree is configured for language ``<LANG>``." FORCE)
-# set(CMAKE_RC_FLAGS_RELWITHDEBINFO_INIT "${RCFLAGS_RELWITHDEBINFO}" CACHE STRING "Value used to initialize the ``CMAKE_<LANG>_FLAGS_<CONFIG>`` cache entry the first time a build tree is configured for language ``<LANG>``." FORCE)
-
-# set(CMAKE_C_COMPILER "${CC}" CACHE FILEPATH "The full path to the compiler for ``LANG``." FORCE)
-# set(CMAKE_CXX_COMPILER "${CXX}" CACHE FILEPATH "The full path to the compiler for ``LANG``." FORCE)
-
-
-# set(CMAKE_LINK_LIBRARY_FLAG)
-# set(CMAKE_CXX_LINKER_WRAPPER_FLAG)
-# set(CMAKE_CXX_LINKER_WRAPPER_FLAG_SEP)
-
-# set(CMAKE_EXE_LINKER_FLAGS_INIT "${STRIP_BINARIES}" CACHE STRING "Value used to initialize the ``CMAKE_EXE_LINKER_FLAGS`` cache entry the first time a build tree is configured." FORCE)
-# set(CMAKE_EXE_LINKER_FLAGS_DEBUG_INIT "" CACHE STRING "Value used to initialize the ``CMAKE_EXE_LINKER_FLAGS_<CONFIG>`` cache entry the first time a build tree is configured." FORCE)
-# set(CMAKE_EXE_LINKER_FLAGS_MINSIZEREL_INIT "" CACHE STRING "Value used to initialize the ``CMAKE_EXE_LINKER_FLAGS_<CONFIG>`` cache entry the first time a build tree is configured." FORCE)
-# set(CMAKE_EXE_LINKER_FLAGS_RELEASE_INIT "" CACHE STRING "Value used to initialize the ``CMAKE_EXE_LINKER_FLAGS_<CONFIG>`` cache entry the first time a build tree is configured." FORCE)
-# set(CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO_INIT "" CACHE STRING "Value used to initialize the ``CMAKE_EXE_LINKER_FLAGS_<CONFIG>`` cache entry the first time a build tree is configured." FORCE)
-
-# set(CMAKE_STATIC_LINKER_FLAGS_INIT "${STRIP_STATIC}" CACHE STRING "Value used to initialize the ``CMAKE_STATIC_LINKER_FLAGS`` cache entry the first time a build tree is configured." FORCE)
-# set(CMAKE_STATIC_LINKER_FLAGS_DEBUG_INIT "" CACHE STRING "Value used to initialize the ``CMAKE_STATIC_LINKER_FLAGS_<CONFIG>`` cache entry the first time a build tree is configured." FORCE)
-# set(CMAKE_STATIC_LINKER_FLAGS_MINSIZEREL_INIT "" CACHE STRING "Value used to initialize the ``CMAKE_STATIC_LINKER_FLAGS_<CONFIG>`` cache entry the first time a build tree is configured." FORCE)
-# set(CMAKE_STATIC_LINKER_FLAGS_RELEASE_INIT "" CACHE STRING "Value used to initialize the ``CMAKE_STATIC_LINKER_FLAGS_<CONFIG>`` cache entry the first time a build tree is configured." FORCE)
-# set(CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO_INIT "" CACHE STRING "Value used to initialize the ``CMAKE_STATIC_LINKER_FLAGS_<CONFIG>`` cache entry the first time a build tree is configured." FORCE)
-
-# set(CMAKE_SHARED_LINKER_FLAGS_INIT "${STRIP_SHARED}" CACHE STRING "Value used to initialize the ``CMAKE_SHARED_LINKER_FLAGS_<CONFIG>`` cache entry the first time a build tree is configured." FORCE)
-# set(CMAKE_SHARED_LINKER_FLAGS_DEBUG_INIT "" CACHE STRING "Value used to initialize the ``CMAKE_SHARED_LINKER_FLAGS_<CONFIG>`` cache entry the first time a build tree is configured." FORCE)
-# set(CMAKE_SHARED_LINKER_FLAGS_MINSIZEREL_INIT "" CACHE STRING "Value used to initialize the ``CMAKE_SHARED_LINKER_FLAGS_<CONFIG>`` cache entry the first time a build tree is configured." FORCE)
-# set(CMAKE_SHARED_LINKER_FLAGS_RELEASE_INIT "" CACHE STRING "Value used to initialize the ``CMAKE_SHARED_LINKER_FLAGS_<CONFIG>`` cache entry the first time a build tree is configured." FORCE)
-# set(CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO_INIT "" CACHE STRING "Value used to initialize the ``CMAKE_SHARED_LINKER_FLAGS_<CONFIG>`` cache entry the first time a build tree is configured." FORCE)
-
-# # Requires C++ module support (C++20 etc)...
-# set(CMAKE_MODULE_LINKER_FLAGS_INIT "" CACHE STRING "Flags to be used to create static libraries." FORCE)
+#]===]
