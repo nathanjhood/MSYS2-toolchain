@@ -29,14 +29,6 @@ if(NOT DEFINED MSYS_ROOT)
     endif()
 endif()
 
-# Could keep these all exposed for potential cross-compiling...?
-set(CLANGARM64_ROOT "${MSYS_ROOT}/clangarm64") #CACHE PATH "")
-set(CLANG64_ROOT "${MSYS_ROOT}/clang64") #CACHE PATH "")
-set(CLANG32_ROOT "${MSYS_ROOT}/clang32") #CACHE PATH "")
-set(MINGW32_ROOT "${MSYS_ROOT}/mingw32") #CACHE PATH "")
-set(MINGW64_ROOT "${MSYS_ROOT}/mingw64") #CACHE PATH "")
-set(UCRT64_ROOT "${MSYS_ROOT}/ucrt64")  #CACHE PATH "")
-
 if(EXISTS "$ENV{HOMEDRIVE}/cygwin64")
     set(CYGWIN64_ROOT "$ENV{HOMEDRIVE}/cygwin64") #CACHE PATH "Path to cygwin installation (64-bit)." FORCE)
 endif()
@@ -55,25 +47,25 @@ set(MSYS2_VAR_DIR "${MSYS_ROOT}/var" CACHE PATH "")
 # Additional cross-compiler toolchains are in here...
 set(MSYS2_OPT_DIR "${MSYS_ROOT}/opt" CACHE PATH "")
 
-# /etc/profile.sh...
-
-# need prefixing...
 set(MSYS2_PATH
-    "/usr/local/bin"
-    "/usr/bin"
-    "/bin"
+    "${MSYS_ROOT}/usr/local/bin"
+    "${MSYS_ROOT}/usr/bin"
+    "${MSYS_ROOT}/bin"
+    CACHE PATH "" FORCE
 )
-set(MANPATH
-    "/usr/local/man"
-    "/usr/share/man"
-    "/usr/man"
-    "/share/man"
+set(MSYS2_MANPATH
+    "${MSYS_ROOT}/usr/local/man"
+    "${MSYS_ROOT}/usr/share/man"
+    "${MSYS_ROOT}/usr/man"
+    "${MSYS_ROOT}/share/man"
+    CACHE PATH "" FORCE
 )
-set(INFOPATH
-    "/usr/local/info"
-    "/usr/share/info"
-    "/usr/info"
-    "/share/info"
+set(MSYS2_INFOPATH
+    "${MSYS_ROOT}/usr/local/info"
+    "${MSYS_ROOT}/usr/share/info"
+    "${MSYS_ROOT}/usr/info"
+    "${MSYS_ROOT}/share/info"
+    CACHE PATH "" FORCE
 )
 
 # if(MSYS2_PATH_TYPE STREQUAL "strict")
@@ -100,40 +92,19 @@ set(INFOPATH
 #########################################################################
 # ARCHITECTURE, COMPILE FLAGS
 #########################################################################
-#-- Compiler and Linker Flags
-# -march (or -mcpu) builds exclusively for an architecture
-# -mtune optimizes for an architecture, but builds for whole processor family
 
-if(MSYSTEM STREQUAL MINGW64)
+#[===[.md
 
-    if(NOT _VCPKG_MSYS_MINGW64_TOOLCHAIN)
-    set(_VCPKG_MSYS_MINGW64_TOOLCHAIN 1)
+# compiler_and_linker_flags
 
-    set(BUILDSYSTEM             "MinGW x64")                           #CACHE STRING   "Name of the build system." FORCE)
-    set(BUILDSYSTEM_ROOT        "${MSYS_ROOT}/mingw64")                #CACHE PATH     "Root of the build system." FORCE)
+-march (or -mcpu) builds exclusively for an architecture
+-mtune optimizes for an architecture, but builds for whole processor family
 
-    if(NOT DEFINED CRT_LINKAGE)
-        set(CRT_LINKAGE "static") # CACHE STRING "" FORCE)
-    endif()
+Could look into some other variations on this...
 
-    set(TOOLCHAIN_VARIANT       gcc                                   CACHE STRING   "Identification string of the compiler toolchain variant." FORCE)
-    set(CRT_LIBRARY             msvcrt                                CACHE STRING   "Identification string of the C Runtime variant. Can be 'ucrt' (modern, 64-bit only) or 'msvcrt' (compatibilty for legacy builds)." FORCE)
-    set(CXX_STD_LIBRARY         libstdc++                             CACHE STRING   "Identification string of the C++ Standard Library variant. Can be 'libstdc++' (GNU implementation) or 'libc++' (LLVM implementation)." FORCE)
-    set(CRT_LINKAGE             "${CRT_LINKAGE}"                      CACHE STRING   "" FORCE)
-    set(MINGW64_ROOT            "${MSYS_ROOT}/mingw64"                CACHE PATH     "")
-
-    set(__USE_MINGW_ANSI_STDIO  "1"                                   CACHE STRING   "Use the MinGW ANSI definition for 'stdio.h'." FORCE)
-    set(_FORTIFY_SOURCE         "2"                                   CACHE STRING   "Fortify source definition." FORCE)
-
-    set(CC                      "${MINGW64_ROOT}/bin/gcc")             #CACHE FILEPATH "The full path to the compiler for <CC>." FORCE)
-    set(CXX                     "${MINGW64_ROOT}/bin/g++")             #CACHE FILEPATH "The full path to the compiler for <CXX>." FORCE)
-    set(LD                      "${MINGW64_ROOT}/bin/ld")              #CACHE FILEPATH "The full path to the linker <LD>." FORCE)
-    set(RC                      "${MINGW64_ROOT}/bin/windres")         #CACHE FILEPATH "" FORCE)
-
-    set(CFLAGS                  "-march=nocona -msahf -mtune=generic -pipe -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong") #CACHE STRING "Default <CFLAGS> flags for all build types." FORCE)
-    set(CXXFLAGS                "-march=nocona -msahf -mtune=generic -pipe") #CACHE STRING "Default <CXXFLAGS> flags for all build types." FORCE)
-    set(CPPFLAGS                "-D__USE_MINGW_ANSI_STDIO=1")          #CACHE STRING    "Default <CPPFLAGS> flags for all build types." FORCE)
-    set(LDFLAGS                 "-pipe")                               #CACHE STRING    "Default <LD> flags for linker for all build types." FORCE)
+    # add_compile_definitions("__USE_MINGW_ANSI_STDIO=1")
+    # add_compile_definitions("$<$<COMPILE_LANGUAGE:C>:_FORTIFY_SOURCE=2>")
+    # add_compile_options(-march=nocona -msahf -mtune=generic -pipe "$<$<COMPILE_LANGUAGE:C>:-Wp,-D_FORTIFY_SOURCE=2>" "$<$<COMPILE_LANGUAGE:C>:-fstack-protector-strong>")
 
     #-- Release build flags
     # set(RELEASE_CFLAGS          "-O2")                                 #CACHE STRING    "Default <CFLAGS_RELEASE> flags." FORCE)
@@ -143,81 +114,117 @@ if(MSYSTEM STREQUAL MINGW64)
     # set(DEBUG_CFLAGS            "-ggdb -Og")                           #CACHE STRING    "Default <CFLAGS_DEBUG> flags." FORCE)
     # set(DEBUG_CXXFLAGS          "-ggdb -Og")                           #CACHE STRING    "Default <CXXFLAGS_DEBUG> flags." FORCE)
 
-    set(PREFIX                  "/mingw64")                            #CACHE PATH      "Sub-system prefix." FORCE)
-    set(CARCH                   "x86_64")                              #CACHE STRING    "Sub-system architecture." FORCE)
-    set(CHOST                   "x86_64-w64-mingw32")                  #CACHE STRING    "Sub-system name string." FORCE)
 
-    set(MSYSTEM_PREFIX          "/mingw64"                            CACHE PATH      "Msystem prefix." FORCE)
-    set(MSYSTEM_CARCH           "x86_64"                              CACHE STRING    "Msystem architecture." FORCE)
-    set(MSYSTEM_CHOST           "x86_64-w64-mingw32"                  CACHE STRING    "Msystem name string." FORCE)
+#]===]
 
-    set(MINGW_CHOST             "${MSYSTEM_CHOST}"                    CACHE STRING    "Sub-system prefix." FORCE)
-    set(MINGW_PREFIX            "${MSYSTEM_PREFIX}"                   CACHE PATH      "Sub-system prefix." FORCE)
-    set(MINGW_PACKAGE_PREFIX    "mingw-w64-${MSYSTEM_CARCH}"          CACHE STRING    "Sub-system prefix." FORCE)
+if(MSYSTEM STREQUAL MINGW64)
 
-    # Need to override MinGW from VCPKG_CMAKE_SYSTEM_NAME
-    set(CMAKE_SYSTEM_NAME Windows CACHE STRING "" FORCE)
+    if(NOT _MSYS_MINGW64_TOOLCHAIN) # simple include guard (closing endif() is at the end of this block)
+        set(_MSYS_MINGW64_TOOLCHAIN 1)
 
-    if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
-        set(CMAKE_CROSSCOMPILING OFF CACHE BOOL "")
-    endif()
+        set(ENABLE_MINGW64 ON CACHE BOOL "" FORCE)
 
-    set(CMAKE_SYSTEM_PROCESSOR x86_64 CACHE STRING "")
+        set(MSYSTEM_TITLE       "MinGW x64"                              CACHE STRING   "Name of the build system." FORCE)
+        set(MSYSTEM_ROOT        "${MSYS_ROOT}/mingw64"                   CACHE PATH     "Root of the build system." FORCE)
 
-    foreach(lang C CXX)
-        set(CMAKE_${lang}_COMPILER_TARGET "${CMAKE_SYSTEM_PROCESSOR}-windows-gnu" CACHE STRING "")
-    endforeach()
-
-    find_program(CMAKE_C_COMPILER "${CMAKE_SYSTEM_PROCESSOR}-w64-mingw32-gcc")
-    find_program(CMAKE_CXX_COMPILER "${CMAKE_SYSTEM_PROCESSOR}-w64-mingw32-g++")
-    find_program(CMAKE_RC_COMPILER "${CMAKE_SYSTEM_PROCESSOR}-w64-mingw32-windres")
-
-    if(NOT CMAKE_RC_COMPILER)
-        find_program(CMAKE_RC_COMPILER "windres")
-    endif()
-
-    get_property( _CMAKE_IN_TRY_COMPILE GLOBAL PROPERTY IN_TRY_COMPILE )
-    if(NOT _CMAKE_IN_TRY_COMPILE)
-        string(APPEND CMAKE_C_FLAGS_INIT " ${CFLAGS} ")
-        string(APPEND CMAKE_CXX_FLAGS_INIT " ${CXXFLAGS} ")
-        string(APPEND CMAKE_C_FLAGS_DEBUG_INIT " ${DEBUG_CFLAGS} ")
-        string(APPEND CMAKE_CXX_FLAGS_DEBUG_INIT " ${DEBUG_CXXFLAGS} ")
-        string(APPEND CMAKE_C_FLAGS_RELEASE_INIT " ${RELEASE_CFLAGS} ")
-        string(APPEND CMAKE_CXX_FLAGS_RELEASE_INIT " ${RELEASE_CXXFLAGS} ")
-
-        string(APPEND CMAKE_SHARED_LINKER_FLAGS_INIT " ${LDFLAGS} ${STRIP_SHARED} ")
-        string(APPEND CMAKE_EXE_LINKER_FLAGS_INIT " ${LDFLAGS} ${STRIP_BINARIES} ")
-        if(CRT_LINKAGE STREQUAL "static")
-            string(APPEND CMAKE_SHARED_LINKER_FLAGS_INIT "-static ")
-            string(APPEND CMAKE_EXE_LINKER_FLAGS_INIT "-static ")
+        if(NOT DEFINED CRT_LINKAGE)
+            set(CRT_LINKAGE "static")
         endif()
-        string(APPEND CMAKE_SHARED_LINKER_FLAGS_DEBUG_INIT " ${LDFLAGS_DEBUG} ")
-        string(APPEND CMAKE_EXE_LINKER_FLAGS_DEBUG_INIT " ${LDFLAGS_DEBUG} ")
-        string(APPEND CMAKE_SHARED_LINKER_FLAGS_RELEASE_INIT " ${LDFLAGS_RELEASE} ")
-        string(APPEND CMAKE_EXE_LINKER_FLAGS_RELEASE_INIT " ${LDFLAGS_RELEASE} ")
-    endif()
-    endif()
+
+        set(CC                      "${MSYSTEM_ROOT}/bin/cc")             #CACHE FILEPATH "The full path to the compiler for <CC>." FORCE)
+        set(CXX                     "${MSYSTEM_ROOT}/bin/c++")             #CACHE FILEPATH "The full path to the compiler for <CXX>." FORCE)
+        set(LD                      "${MSYSTEM_ROOT}/bin/ld")              #CACHE FILEPATH "The full path to the linker <LD>." FORCE)
+        set(RC                      "${MSYSTEM_ROOT}/bin/windres")         #CACHE FILEPATH "" FORCE)
+
+        set(CFLAGS                  "-march=nocona -msahf -mtune=generic -O2 -pipe -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong") #CACHE STRING "Default <CFLAGS> flags for all build types." FORCE)
+        set(CXXFLAGS                "-march=nocona -msahf -mtune=generic -O2 -pipe") #CACHE STRING "Default <CXXFLAGS> flags for all build types." FORCE)
+        set(CPPFLAGS                "-D__USE_MINGW_ANSI_STDIO=1")          #CACHE STRING    "Default <CPPFLAGS> flags for all build types." FORCE)
+        set(LDFLAGS                 "-pipe")                               #CACHE STRING    "Default <LD> flags for linker for all build types." FORCE)
+
+        set(__USE_MINGW_ANSI_STDIO  "1"                                   CACHE STRING   "Use the MinGW ANSI definition for 'stdio.h'." FORCE)
+        set(_FORTIFY_SOURCE         "2"                                   CACHE STRING   "Fortify source definition." FORCE)
+
+        # Need to override MinGW from VCPKG_CMAKE_SYSTEM_NAME
+        set(CMAKE_SYSTEM_NAME Windows       CACHE STRING "" FORCE)
+        set(CMAKE_SYSTEM_PROCESSOR x86_64   CACHE STRING "When not cross-compiling, this variable has the same value as the ``CMAKE_HOST_SYSTEM_PROCESSOR`` variable." FORCE)
+
+        if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
+
+            set(CMAKE_CROSSCOMPILING OFF    CACHE BOOL  "Intended to indicate whether CMake is cross compiling, but note limitations discussed below.")
+
+        endif() # (CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
+
+
+        foreach(lang C CXX)
+
+            set(CMAKE_${lang}_COMPILER_TARGET "${CMAKE_SYSTEM_PROCESSOR}-w64-mingw32" CACHE STRING "The target for cross-compiling, if supported. '--target=x86_64-w64-mingw32'")
+
+        endforeach() # (lang C CXX)
+
+        find_program(CMAKE_C_COMPILER   "${CMAKE_SYSTEM_PROCESSOR}-w64-mingw32-gcc")
+        find_program(CMAKE_CXX_COMPILER "${CMAKE_SYSTEM_PROCESSOR}-w64-mingw32-g++")
+        find_program(CMAKE_RC_COMPILER  "${CMAKE_SYSTEM_PROCESSOR}-w64-mingw32-windres")
+
+        if(NOT CMAKE_RC_COMPILER)
+
+            find_program(CMAKE_RC_COMPILER "windres")
+
+        endif() # (NOT CMAKE_RC_COMPILER)
+
+        get_property( _CMAKE_IN_TRY_COMPILE GLOBAL PROPERTY IN_TRY_COMPILE )
+
+        if(NOT _CMAKE_IN_TRY_COMPILE)
+
+            string(APPEND CMAKE_C_FLAGS_INIT " ${CFLAGS} ")
+            string(APPEND CMAKE_CXX_FLAGS_INIT " ${CXXFLAGS} ")
+            string(APPEND CMAKE_C_FLAGS_DEBUG_INIT " ${DEBUG_CFLAGS} ")
+            string(APPEND CMAKE_CXX_FLAGS_DEBUG_INIT " ${DEBUG_CXXFLAGS} ")
+            string(APPEND CMAKE_C_FLAGS_RELEASE_INIT " ${RELEASE_CFLAGS} ")
+            string(APPEND CMAKE_CXX_FLAGS_RELEASE_INIT " ${RELEASE_CXXFLAGS} ")
+
+            string(APPEND CMAKE_SHARED_LINKER_FLAGS_INIT " ${LDFLAGS} ${STRIP_SHARED} ")
+            string(APPEND CMAKE_EXE_LINKER_FLAGS_INIT " ${LDFLAGS} ${STRIP_BINARIES} ")
+
+            if(CRT_LINKAGE STREQUAL "static")
+
+                string(APPEND CMAKE_SHARED_LINKER_FLAGS_INIT "-static ")
+                string(APPEND CMAKE_EXE_LINKER_FLAGS_INIT "-static ")
+
+            endif() # (CRT_LINKAGE STREQUAL "static")
+
+            string(APPEND CMAKE_SHARED_LINKER_FLAGS_DEBUG_INIT " ${LDFLAGS_DEBUG} ")
+            string(APPEND CMAKE_EXE_LINKER_FLAGS_DEBUG_INIT " ${LDFLAGS_DEBUG} ")
+            string(APPEND CMAKE_SHARED_LINKER_FLAGS_RELEASE_INIT " ${LDFLAGS_RELEASE} ")
+            string(APPEND CMAKE_EXE_LINKER_FLAGS_RELEASE_INIT " ${LDFLAGS_RELEASE} ")
+
+        endif() # (NOT _CMAKE_IN_TRY_COMPILE)
+
+    endif() # Include guard (_MSYS_MINGW64_TOOLCHAIN)
 
 elseif(MSYSTEM STREQUAL MINGW32)
 
-    set(BUILDSYSTEM             "MinGW x32"                           CACHE STRING    "Name of the build system." FORCE)
-    set(BUILDSYSTEM_ROOT        "${MSYS_ROOT}/mingw32"                CACHE PATH      "Root of the build system." FORCE)
+    set(ENABLE_MINGW32 ON CACHE BOOL "" FORCE)
 
-    set(TOOLCHAIN_VARIANT       gcc                                   CACHE STRING    "Identification string of the compiler toolchain variant." FORCE)
-    set(CRT_LIBRARY             msvcrt                                CACHE STRING    "Identification string of the C Runtime variant. Can be 'ucrt' (modern, 64-bit only) or 'msvcrt' (compatibilty for legacy builds)." FORCE)
-    set(CXX_STD_LIBRARY         libstdc++                             CACHE STRING    "Identification string of the C++ Standard Library variant. Can be 'libstdc++' (GNU implementation) or 'libc++' (LLVM implementation)." FORCE)
+    set(MSYSTEM_TITLE       "MinGW x32"                              CACHE STRING   "Name of the build system." FORCE)
+    set(MSYSTEM_ROOT        "${MSYS_ROOT}/mingw32"                   CACHE PATH     "Root of the build system." FORCE)
+
+    if(NOT DEFINED CRT_LINKAGE)
+        set(CRT_LINKAGE "static")
+    endif()
+
+    set(CC                      "${MSYSTEM_ROOT}/bin/gcc")             #CACHE FILEPATH "The full path to the compiler for <CC>." FORCE)
+    set(CXX                     "${MSYSTEM_ROOT}/bin/g++")             #CACHE FILEPATH "The full path to the compiler for <CXX>." FORCE)
+    set(LD                      "${MSYSTEM_ROOT}/bin/ld")              #CACHE FILEPATH "The full path to the linker <LD>." FORCE)
+    set(RC                      "${MSYSTEM_ROOT}/bin/windres")         #CACHE FILEPATH "" FORCE)
+
+    set(CFLAGS                  "-march=pentium4 -mtune=generic -O2 -pipe -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong") #CACHE STRING "Default <CFLAGS> flags for all build types." FORCE)
+    set(CXXFLAGS                "-march=pentium4 -mtune=generic -O2 -pipe") #CACHE STRING "Default <CXXFLAGS> flags for all build types." FORCE)
+    set(CPPFLAGS                "-D__USE_MINGW_ANSI_STDIO=1")          #CACHE STRING    "Default <CPPFLAGS> flags for all build types." FORCE)
+    set(LDFLAGS                 "-pipe -Wl,--no-seh -Wl,--large-address-aware") #CACHE STRING    "Default <LD> flags for linker for all build types." FORCE)
 
     set(__USE_MINGW_ANSI_STDIO  "1"                                   CACHE STRING    "Use the MinGW ANSI definition for 'stdio.h'." FORCE)
     set(_FORTIFY_SOURCE         "2"                                   CACHE STRING    "Fortify source definition." FORCE)
 
-    set(CC                      "gcc"                                 CACHE FILEPATH  "The full path to the compiler for <CC>." FORCE)
-    set(CXX                     "g++"                                 CACHE FILEPATH  "The full path to the compiler for <CXX>." FORCE)
-    set(LD                      "ld"                                  CACHE FILEPATH  "The full path to the linker <LD>." FORCE)
-
-    set(CFLAGS                  "-march=pentium4 -mtune=generic -O2 -pipe -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong" CACHE STRING "Default <CFLAGS> flags for all build types." FORCE)
-    set(CXXFLAGS                "-march=pentium4 -mtune=generic -O2 -pipe" CACHE STRING "Default <CXXFLAGS> flags for all build types." FORCE)
-    set(CPPFLAGS                "-D__USE_MINGW_ANSI_STDIO=1"          CACHE STRING    "Default <CPPFLAGS> flags for all build types." FORCE)
-    set(LDFLAGS                 "-pipe -Wl,--no-seh -Wl,--large-address-aware" CACHE STRING    "Default <LD> flags for linker for all build types." FORCE)
 
     #-- Debugging flags
     set(DEBUG_CFLAGS            "-ggdb -Og"                           CACHE STRING    "Default <CFLAGS_DEBUG> flags." FORCE)
