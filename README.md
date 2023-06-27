@@ -2,9 +2,9 @@
 
 For CMake/vcpkg integration.
 
-NOTE: Until further notice, you should treat this repo 'not fiished, but interesting to study' and consider helping out/contributing if you can :) I may become too busy to finish this beyond a basic implementation for my own needs, for the time being, without a little help.
+NOTE: Until further notice, you should treat this repo 'not finished, but interesting to study' and consider helping out/contributing if you can :) I may become too busy to finish this beyond a basic implementation for my own needs, for the time being, without a little help.
 
-As of writing, I've hard-coded <b>'\<MSYSTEM\>'</b> to be set to the <b>'\<MINGW64\>'</b> environment/toolchain, to narrow down a single working environment before copying the successful design pattern over to enable the remaining environments. It's a pretty simple fix away if you know CMake and would like to poke around with it's current state. Make sure you 'pacman -S mingw-w64-x86_64-toolchain' as well as get the CMake/Ninja/etc packages for the default MSYS shell, for the best experience.
+As of writing, I've hard-coded <b>'\<MSYSTEM\>'</b> to be set to the <b>'\<MINGW64\>'</b> environment/toolchain, to narrow down a single working environment before copying the successful design pattern over to enable the remaining environments. It's a pretty simple fix away if you know CMake and would like to poke around with the differing <b>'\<MSYSTEM\>'</b>'s in it's current state. Make sure you 'pacman -S mingw-w64-x86_64-toolchain' as well as get the CMake/Ninja/etc packages for the default MSYS shell, for the best experience.
 
 ## Example usage:
 
