@@ -1,7 +1,9 @@
 {
+    // These three directory settings are just for building the test project.
     "cmake.sourceDirectory": "${workspaceFolder}",
-    "cmake.buildDirectory": "${workspaceFolder}/build",
-    "cmake.installPrefix": "${workspaceFolder}/installed",
+    "cmake.buildDirectory": "${workspaceFolder}/usr",
+    "cmake.installPrefix": "${workspaceFolder}/usr/local",
+
     "cmake.generator": "Ninja Multi-Config",
     "cmake.preferredGenerators": [
         "Unix Makefiles",
@@ -9,11 +11,11 @@
         "MSYS Makefiles"
     ],
     "cmake.configureSettings": {
-        // "MSYSTEM": "MINGW64",
+        // "CMAKE_TOOLCHAIN_FILE": "${workspaceFolder}/scripts/toolchains/MINGW64.cmake"
+
+        // "MSYSTEM": "MINGW64", - ideally, we'd rather/also like to be able to pass this to control things :)
         "CMAKE_TOOLCHAIN_FILE": "${workspaceFolder}/scripts/buildsystems/MSYS2.cmake",
         "MSYS_CHAINLOAD_TOOLCHAIN_FILE": "${workspaceFolder}/scripts/toolchains/MINGW64.cmake"
-        // "CMAKE_TOOLCHAIN_FILE": "C:/Users/natha/vcpkg/scripts/buildsystems/vcpkg.cmake",
-        // "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${workspaceFolder}/scripts/toolchains/MSYS2.cmake"
     },
     "cmake.configureOnEdit": false,
     "cmake.configureOnOpen": false,
