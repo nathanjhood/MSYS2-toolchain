@@ -1,28 +1,43 @@
 if(NOT _MSYS_MINGW64_TOOLCHAIN)
     set(_MSYS_MINGW64_TOOLCHAIN 1)
 
-    message(STATUS "[toolchain] -- [mingw64] -- Toolchain loading...")
-    # message(":: [toolchain] -- MinGW x64 toolchain loading...")
+    # if(MSYS_VERBOSE)
+    #     message(":: [toolchain] :: [mingw64] -- Toolchain loading...")
+    # else()
+    #     message(STATUS "MinGW x64 toolchain loading...")
+    # endif()
+    message(STATUS "MinGW x64 toolchain loading...")
 
     # We still need to set some sort of default Z_MSYS_ROOT_DIR in case this file
     # is being loaded outside of the MSYS buildsystem file... Let's just use the MSYSTEM name.
 
     # Detect msys2.ico to figure MSYS_ROOT_DIR
     set(Z_MINGW64_ROOT_DIR_CANDIDATE "${CMAKE_CURRENT_LIST_DIR}")
+
     while(NOT DEFINED Z_MINGW64_ROOT_DIR)
+
         if(EXISTS "${Z_MINGW64_ROOT_DIR_CANDIDATE}msys64/mingw64.ini")
+
             set(Z_MINGW64_ROOT_DIR "${Z_MINGW64_ROOT_DIR_CANDIDATE}msys64/mingw64" CACHE INTERNAL "MinGW64 root directory")
+
         elseif(IS_DIRECTORY "${Z_MINGW64_ROOT_DIR_CANDIDATE}")
+
             get_filename_component(Z_MINGW64_ROOT_DIR_TEMP "${Z_MINGW64_ROOT_DIR_CANDIDATE}" DIRECTORY)
+
             if(Z_MINGW64_ROOT_DIR_TEMP STREQUAL Z_MINGW64_ROOT_DIR_CANDIDATE)
                 break() # If unchanged, we have reached the root of the drive without finding vcpkg.
             endif()
+
             set(Z_MINGW64_ROOT_DIR_CANDIDATE "${Z_MINGW64_ROOT_DIR_TEMP}")
             unset(Z_MINGW64_ROOT_DIR_TEMP)
+
         else()
+
             message(WARNING "Could not find '/mingw64.ini'")
             break()
+
         endif()
+
     endwhile()
     unset(Z_MINGW64_ROOT_DIR_CANDIDATE)
 
@@ -258,7 +273,14 @@ if(NOT _MSYS_MINGW64_TOOLCHAIN)
 
     endif() # (NOT _MSYS_IN_TRY_COMPILE)
 
-    message(STATUS "[toolchain] -- [mingw64] -- Toolchain loaded.")
-    # message(":: [toolchain] -- MinGW x64 toolchain loaded.")
+
+
+
+    # if(MSYS_VERBOSE)
+    #     message(":: [toolchain] :: [mingw64] -- Toolchain loaded.")
+    # else()
+    #     message(STATUS "MinGW x64 toolchain loaded.")
+    # endif()
+    message(STATUS "MinGW x64 toolchain loaded")
 
 endif()

@@ -367,7 +367,7 @@ endwhile()
 unset(Z_MSYS_ROOT_DIR_CANDIDATE)
 
 if(NOT Z_MSYS_ROOT_DIR)
-    z_msys_add_fatal_error("Could not find .msys-root")
+    z_msys_add_fatal_error("Could not find '/msys2.ini'")
 endif()
 
 if(DEFINED MSYS_INSTALLED_DIR)
