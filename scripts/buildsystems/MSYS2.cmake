@@ -3,6 +3,19 @@
 # Licensed under the MIT License.
 # All rights reserved.
 
+# message("Reading MSYS.cmake from the top...")
+
+# if(DEFINED ENV{MSYSTEM})
+#     set(MSYSTEM "$ENV{MSYSTEM}" CACHE STRING "The detected MSYS sub-system in use." FORCE)
+# elseif(DEFINED MSYSTEM)
+#     set(MSYSTEM "${MSYSTEM}" CACHE STRING "The detected MSYS sub-system in use." FORCE)
+# else()
+#     set(MSYSTEM "MSYS" CACHE STRING "The detected MSYS sub-system in use." FORCE)
+#     message(WARNING "Cannot find any valid msys2 subsystem specification...")
+#     message(WARNING "please try passing '-DMSYSTEM:STRING=UCRT64' on the CMake invocation.")
+#     message(WARNING "Attempting to use MSYS as a fallback.")
+# endif()
+
 # Mark variables as used so cmake doesn't complain about them
 mark_as_advanced(CMAKE_TOOLCHAIN_FILE)
 
@@ -44,9 +57,12 @@ endif()
 cmake_policy(PUSH)
 cmake_policy(VERSION 3.7.2)
 
+# message("Reading MSYS.cmake from ${CMAKE_CURRENT_LIST_LINE}")
+
 # Prevents multiple inclusions...
 if(MSYS_TOOLCHAIN)
     # Must always come after 'cmake_policy(PUSH)'
+    # message("Leaving MSYS.cmake at ${CMAKE_CURRENT_LIST_LINE}")
     cmake_policy(POP)
     return()
 endif()
@@ -57,7 +73,7 @@ include(CMakeDependentOption)
 if(DEFINED ENV{VERBOSE})
     set(MSYS_VERBOSE ON)
 endif()
-option(MSYS_VERBOSE "Enables messages from the MSYS toolchain for debugging purposes." OFF)
+option(MSYS_VERBOSE "Enables messages from the MSYS toolchain for debugging purposes." ON)
 mark_as_advanced(MSYS_VERBOSE)
 
 # if(MSYS_VERBOSE)
@@ -72,14 +88,12 @@ if(MSYS_VERBOSE)
 endif()
 
 option(MSYS_APPLOCAL_DEPS "Automatically copy dependencies into the output directory for executables." ON)
-option(X_MSYS_APPLOCAL_DEPS_SERIALIZED "(experimental) Add USES_TERMINAL to MSYS_APPLOCAL_DEPS to force serialization." OFF)
-
-# requires CMake 3.14
-option(X_MSYS_APPLOCAL_DEPS_INSTALL "(experimental) Automatically copy dependencies into the install target directory for executables. Requires CMake 3.14." OFF)
-option(MSYS_PREFER_SYSTEM_LIBS "Appends the msys paths to CMAKE_PREFIX_PATH, CMAKE_LIBRARY_PATH and CMAKE_FIND_ROOT_PATH so that msys libraries/packages are found after toolchain/system libraries/packages." OFF)
-if(MSYS_PREFER_SYSTEM_LIBS)
-    message(WARNING "MSYS_PREFER_SYSTEM_LIBS has been deprecated. Use empty overlay ports instead.")
-endif()
+option(MSYS_APPLOCAL_DEPS_INSTALL_X "(experimental) Automatically copy dependencies into the install target directory for executables. Requires CMake 3.14." OFF)
+option(MSYS_APPLOCAL_DEPS_SERIALIZED_X "(experimental) Add USES_TERMINAL to MSYS_APPLOCAL_DEPS to force serialization." OFF)
+option(MSYS_PREFER_SYSTEM_LIBS "Appends the msys paths to CMAKE_PREFIX_PATH, CMAKE_LIBRARY_PATH and CMAKE_FIND_ROOT_PATH so that <MSYSTEM> libraries/packages are found after MSYS2 libraries/packages." OFF)
+# if(MSYS_PREFER_SYSTEM_LIBS)
+#     message(WARNING "MSYS_PREFER_SYSTEM_LIBS has been deprecated. Use empty overlay ports instead.")
+# endif()
 
 # CMake helper utilities
 
@@ -171,38 +185,29 @@ if(MSYS_CHAINLOAD_TOOLCHAIN_FILE)
 endif()
 
 if(MSYS_TOOLCHAIN)
+    # message("Leaving MSYS.cmake at ${CMAKE_CURRENT_LIST_LINE}")
     cmake_policy(POP)
     return()
 endif()
 
 option(ENABLE_IMPORTED_CONFIGS "If CMake does not have a mapping for MinSizeRel and RelWithDebInfo in imported targets it will map those configuration to the first valid configuration in <CMAKE_CONFIGURATION_TYPES> or the targets <IMPORTED_CONFIGURATIONS> (in most cases this is the debug configuration which is wrong)." OFF)
     if(ENABLE_IMPORTED_CONFIGS)
-    #If CMake does not have a mapping for MinSizeRel and RelWithDebInfo in imported targets
-    #it will map those configuration to the first valid configuration in CMAKE_CONFIGURATION_TYPES or the targets IMPORTED_CONFIGURATIONS.
-    #In most cases this is the debug configuration which is wrong.
+    # If CMake does not have a mapping for MinSizeRel and RelWithDebInfo in imported targets
+    # it will map those configuration to the first valid configuration in CMAKE_CONFIGURATION_TYPES or the targets IMPORTED_CONFIGURATIONS.
+    # In most cases this is the debug configuration which is wrong.
     if(NOT DEFINED CMAKE_MAP_IMPORTED_CONFIG_MINSIZEREL)
         set(CMAKE_MAP_IMPORTED_CONFIG_MINSIZEREL "MinSizeRel;Release;")
         if(MSYS_VERBOSE)
-            message(STATUS "msys2: CMAKE_MAP_IMPORTED_CONFIG_MINSIZEREL set to MinSizeRel;Release;")
+            message(STATUS "CMAKE_MAP_IMPORTED_CONFIG_MINSIZEREL set to MinSizeRel;Release;")
         endif()
     endif()
     if(NOT DEFINED CMAKE_MAP_IMPORTED_CONFIG_RELWITHDEBINFO)
         set(CMAKE_MAP_IMPORTED_CONFIG_RELWITHDEBINFO "RelWithDebInfo;Release;")
         if(MSYS_VERBOSE)
-            message(STATUS "msys2: CMAKE_MAP_IMPORTED_CONFIG_RELWITHDEBINFO set to RelWithDebInfo;Release;")
+            message(STATUS "CMAKE_MAP_IMPORTED_CONFIG_RELWITHDEBINFO set to RelWithDebInfo;Release;")
         endif()
     endif()
 endif()
-# if(DEFINED ENV{MSYSTEM})
-#     set(MSYSTEM "$ENV{MSYSTEM}" CACHE STRING "The detected MSYS sub-system in use." FORCE)
-# elseif(DEFINED MSYSTEM)
-#     set(MSYSTEM "${MSYSTEM}" CACHE STRING "The detected MSYS sub-system in use." FORCE)
-# else()
-#     set(MSYSTEM "MSYS" CACHE STRING "The detected MSYS sub-system in use." FORCE)
-#     message(WARNING "Cannot find any valid msys2 subsystem specification...")
-#     message(WARNING "please try passing '-DMSYSTEM:STRING=UCRT64' on the CMake invocation.")
-#     message(WARNING "Attempting to use MSYS as a fallback.")
-# endif()
 
 set(MSYSTEM "MINGW64" CACHE STRING "The detected MSYS sub-system in use." FORCE)
 
@@ -261,6 +266,7 @@ else()
                                 "Consider providing a value for the CMAKE_OSX_ARCHITECTURES cache variable. "
                                 "Continuing without msys.")
                 set(MSYS_TOOLCHAIN ON)
+                # message("Leaving MSYS.cmake at ${CMAKE_CURRENT_LIST_LINE}")
                 cmake_policy(POP)
                 return()
             endif()
@@ -284,6 +290,7 @@ else()
             else()
                 message(WARNING "Unable to determine target architecture, continuing without msys.")
                 set(MSYS_TOOLCHAIN ON)
+                # message("Leaving MSYS.cmake at ${CMAKE_CURRENT_LIST_LINE}")
                 cmake_policy(POP)
                 return()
             endif()
@@ -310,6 +317,7 @@ else()
                 message(WARNING "Unable to determine target architecture, continuing without msys.")
             endif()
             set(MSYS_TOOLCHAIN ON)
+            # message("Leaving MSYS.cmake at ${CMAKE_CURRENT_LIST_LINE}")
             cmake_policy(POP)
             return()
         endif()
@@ -338,10 +346,10 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD" OR (NOT CMAKE_SYSTEM_NAME AND CMAKE_
     set(Z_MSYS_TARGET_TRIPLET_PLAT freebsd)
 endif()
 
-# if(EMSCRIPTEN)
-#     set(Z_MSYS_TARGET_TRIPLET_ARCH wasm32)
-#     set(Z_MSYS_TARGET_TRIPLET_PLAT emscripten)
-# endif()
+if(EMSCRIPTEN)
+    set(Z_MSYS_TARGET_TRIPLET_ARCH wasm32)
+    set(Z_MSYS_TARGET_TRIPLET_PLAT emscripten)
+endif()
 
 set(MSYS_TARGET_TRIPLET "${Z_MSYS_TARGET_TRIPLET_ARCH}-${Z_MSYS_TARGET_TRIPLET_PLAT}" CACHE STRING "Msys target triplet (ex. x86-windows)")
 set(Z_MSYS_TOOLCHAIN_DIR "${CMAKE_CURRENT_LIST_DIR}")
@@ -611,6 +619,7 @@ if(NOT DEFINED MSYS_ROOT)
         # message(STATUS "CMAKE_SOURCE_DIR_UNIX = ${CMAKE_SOURCE_DIR_UNIX}")
 
     else()
+        # message("Leaving MSYS.cmake at ${CMAKE_CURRENT_LIST_LINE}")
         message(FATAL_ERROR "Cannot find any valid msys2 installation..."
         "please try passing '-DMSYS_ROOT:PATH=<path/to/msys64>' on the CMake invocation."
         )
@@ -765,26 +774,6 @@ Could look into some other variations on this...
 #     return()
 # endif()
 
-
-#[===[.md:
-# environments
-
-'<MSYSTEM>_TITLE'
-Name of the build system.
-Example: "MinGW x64"
-
-'<MSYSTEM>_TOOLCHAIN_VARIANT'
-Identification string of the compiler toolchain variant.
-Example: 'gcc' or 'llvm'
-
-set(MINGW64_CRT_LIBRARY             msvcrt                              CACHE STRING    "MinGW x64: Identification string of the C Runtime variant. Can be 'ucrt' (modern, 64-bit only) or 'msvcrt' (compatibilty for legacy builds)." FORCE)
-set(MINGW64_CXX_STD_LIBRARY         libstdc++                           CACHE STRING    "MinGW x64: Identification string of the C++ Standard Library variant. Can be 'libstdc++' (GNU implementation) or 'libc++' (LLVM implementation)." FORCE)
-set(MINGW64_PREFIX                  "/mingw64"                          CACHE PATH      "MinGW x64: Sub-system prefix." FORCE)
-set(MINGW64_CARCH                   "x86_64"                            CACHE STRING    "MinGW x64: Sub-system architecture." FORCE)
-set(MINGW64_CHOST                   "x86_64-w64-mingw32"                CACHE STRING    "MinGW x64: Sub-system name string." FORCE)
-set(MINGW64_PACKAGE_PREFIX          "mingw-w64-x86_64"                  CACHE STRING    "MinGW x64: Sub-system package prefix." FORCE)
-set(MINGW64_ROOT                    "${MSYS_ROOT}${MINGW64_PREFIX}"     CACHE PATH      "MinGW x64: Root of the build system." FORCE)
-#]===]
 # set(ENABLE_MSYS2 ON)
 option(ENABLE_MSYS2 "Enable the msys2 MinGW x64 environment." ON)
 if(ENABLE_MSYS2)
@@ -1269,120 +1258,11 @@ if(ENABLE_SIGN)
     endif()
 endif()
 
-#########################################################################
-# COMPRESSION DEFAULTS
-#########################################################################
 
-# include("${CMAKE_CURRENT_LIST_DIR}/../../cmake/msys-gzip.cmake")
+# include("${Z_MSYS_ROOT_DIR}/scripts/cmake/msys_compression_defaults.cmake")
 
-#[===[.md
-# bzip2
 
-bzip2, a block-sorting file compressor.
-
-#]===]
-option(ENABLE_BZ2 "Enable the 'bzip2' compression utility." ON)
-if(ENABLE_BZ2)
-    find_program(BZ2 "${Z_MSYS_ROOT_DIR}/usr/bin/bzip2" NO_CACHE)
-    #[===[.md
-    # bzip2_usage
-
-    usage: bzip2 [flags and input files in any order]
-
-    If invoked as `bzip2', default action is to compress.
-    If invoked as `bunzip2',  default action is to decompress.
-    If invoked as `bzcat', default action is to decompress to stdout.
-
-    If no file names are given, bzip2 compresses or decompresses
-    from standard input to standard output.  You can combine
-    short flags, so `-v -4' means the same as -v4 or -4v, &c.
-
-    ]===]
-    if(NOT DEFINED BZ2_FLAGS)
-        set(BZ2_FLAGS)
-        #[===[.md
-        # bzip2_flags
-
-        Flags for the 'bzip2' compression utility.
-
-        -h --help           print this message
-        -d --decompress     force decompression
-        -z --compress       force compression
-        -k --keep           keep (don't delete) input files
-        -f --force          overwrite existing output files
-        -t --test           test compressed file integrity
-        -c --stdout         output to standard out
-        -q --quiet          suppress noncritical error messages
-        -v --verbose        be verbose (a 2nd -v gives more)
-        -L --license        display software version & license
-        -V --version        display software version & license
-        -s --small          use less memory (at most 2500k)
-        -1 .. -9            set block size to 100k .. 900k
-        --fast              alias for -1
-        --best              alias for -9
-
-        #]===]
-        string(APPEND BZ2_FLAGS "-c ")
-        string(APPEND BZ2_FLAGS "-f ")
-    endif() # (NOT DEFINED BZ2_FLAGS)
-    set(BZ2_FLAGS "${BZ2_FLAGS}") # CACHE STRING "Flags for the 'bzip2' compression utility." FORCE)
-    set(BZ2_COMMAND "${BZ2} ${BZ2_FLAGS}") # CACHE STRING "The 'bzip2' compression utility command." FORCE)
-    set(COMPRESSBZ2 "${BZ2_COMMAND}") # CACHE STRING "The 'bzip2' compression utility." FORCE)
-    unset(BZ2_FLAGS)
-endif() # (ENABLE_BZ2)
-
-option(ENABLE_XZ "Enable the 'xz' compression utility." ON)
-if(ENABLE_XZ)
-    find_program(XZ "${Z_MSYS_ROOT_DIR}/usr/bin/xz" NO_CACHE)
-    if(NOT DEFINED XZ_FLAGS)
-        set(XZ_FLAGS) # CACHE STRING "Flags for the xz compression utility." FORCE)
-        set(XZ_FLAGS "-c ")
-        set(XZ_FLAGS "-z ")
-        set(XZ_FLAGS "-T0 ")
-        set(XZ_FLAGS "- ")
-    endif() # (NOT DEFINED XZ_FLAGS)
-    set(XZ_FLAGS "${XZ_FLAGS}") # CACHE STRING "Flags for the 'xz' compression utility." FORCE)
-    set(XZ_COMMAND "${XZ} ${XZ_FLAGS}") # CACHE STRING "The 'xz' compression utility command." FORCE)
-    set(COMPRESSXZ "${XZ_COMMAND}") # CACHE STRING "The 'xz' compression utility." FORCE)
-    unset(XZ_FLAGS)
-endif() # (ENABLE_XZ)
-
-if(NOT DEFINED ZST_FLAGS)
-    set(ZST_FLAGS "-c -T0 --ultra -20 -") # CACHE STRING "Flags for the zstd compression utility." FORCE)
-endif()
-if(NOT DEFINED LRZ_FLAGS)
-    set(LRZ_FLAGS "-q") # CACHE STRING "Flags for the lrzip compression utility." FORCE)
-endif()
-if(NOT DEFINED LZO_FLAGS)
-    set(LZO_FLAGS "-q") # CACHE STRING "Flags for the lzop compression utility." FORCE)
-endif()
-if(NOT DEFINED Z_FLAGS)
-    set(Z_FLAGS "-c -f") # CACHE STRING "Flags for the compress compression utility." FORCE)
-endif()
-if(NOT DEFINED LZ4_FLAGS)
-    set(LZ4_FLAGS "-q") # CACHE STRING "Flags for the lz4 compression utility." FORCE)
-endif()
-if(NOT DEFINED LZ_FLAGS)
-    set(LZ_FLAGS "-c -f") # CACHE STRING "Flags for the lzip compression utility." FORCE)
-endif()
-
-set(COMPRESS_XZ_COMMAND "xz ${XZ_FLAGS}") # CACHE STRING "The xz compression utility command." FORCE)
-set(COMPRESS_ZST_COMMAND "zstd ${ZST_FLAGS}") # CACHE STRING "The zst compression utility command." FORCE)
-set(COMPRESS_LRZ_COMMAND "lrzip ${LRZ_FLAGS}") # CACHE STRING "The lrzip compression utility command." FORCE)
-set(COMPRESS_LZO_COMMAND "lzop ${LZO_FLAGS}") # CACHE STRING "The lzop compression utility command." FORCE)
-set(COMPRESS_Z_COMMAND "compress ${Z_FLAGS}") # CACHE STRING "The compress compression utility command." FORCE)
-set(COMPRESS_LZ4_COMMAND "lz4 ${LZ4_FLAGS}") # CACHE STRING "The lz4 compression utility command." FORCE)
-set(COMPRESS_LZ_COMMAND "lzip ${LZ_FLAGS}") # CACHE STRING "The lzip compression utility command." FORCE)
-
-unset(XZ_FLAGS)
-unset(ZST_FLAGS)
-unset(LRZ_FLAGS)
-unset(LZO_FLAGS)
-unset(Z_FLAGS)
-unset(LZ4_FLAGS)
-unset(LZ_FLAGS)
-
-set(ENV_VARS_FILE_PATH "${CMAKE_CURRENT_BINARY_DIR}/.${MSYS_TARGET_TRIPLET}.env")
+set(ENV_VARS_FILE_PATH "${CMAKE_CURRENT_BINARY_DIR}/.${MSYS_TARGET_TRIPLET}/.env")
 # file(WRITE ${ENV_VARS_FILE_PATH} "Generator: Toolchain file.\n")
 
 execute_process(COMMAND "${CMAKE_COMMAND}" -E environment
@@ -1457,40 +1337,7 @@ unset(RELEASE_RCFLAGS)
 unset(CARCH)
 unset(CHOST)
 
-#[===[.md:
-# toolchain_programs
-
-Info: packages.msys2.org/groups/
-
-CMAKE_AR
-CMAKE_<LANG>_COMPILER_AR (Wrapper)
-CMAKE_RANLIB
-CMAKE_<LANG>_COMPILER_RANLIB
-CMAKE_STRIP
-CMAKE_NM
-CMAKE_OBJDUMP
-CMAKE_DLLTOOL
-CMAKE_MT
-CMAKE_LINKER
-CMAKE_C_COMPILER
-CMAKE_CXX_COMPILER
-CMAKE_RC_COMPILER
-#]===]
-
-#[===[.md:
-# flags
-
-CMAKE_<LANG>_FLAGS
-CMAKE_<LANG>_FLAGS_<CONFIG>
-CMAKE_RC_FLAGS
-CMAKE_SHARED_LINKER_FLAGS
-CMAKE_STATIC_LINKER_FLAGS
-CMAKE_STATIC_LINKER_FLAGS_<CONFIG>
-CMAKE_EXE_LINKER_FLAGS
-CMAKE_EXE_LINKER_FLAGS_<CONFIG>
-#]===]
-
-#[===[.md:
+#[===[.md
 
 # Todo
 
@@ -1642,10 +1489,13 @@ endif()
 # endif()
 message(STATUS "Msys2 Build system loaded")
 
+# message("Leaving MSYS.cmake at ${CMAKE_CURRENT_LIST_LINE}")
 cmake_policy(POP)
 
 cmake_policy(PUSH)
 cmake_policy(VERSION 3.7.2)
+
+# message("Reading MSYS.cmake from ${CMAKE_CURRENT_LIST_LINE}")
 
 set(MSYS_TOOLCHAIN ON)
 set(Z_MSYS_UNUSED "${CMAKE_ERROR_ON_ABSOLUTE_INSTALL_DESTINATION}")
@@ -1669,4 +1519,5 @@ if(Z_MSYS_HAS_FATAL_ERROR)
     message(FATAL_ERROR "MSYS_FATAL_ERROR = ${Z_MSYS_FATAL_ERROR}")
 endif()
 
+# message("Leaving MSYS.cmake from the bottom...")
 cmake_policy(POP)
