@@ -1,0 +1,9 @@
+/usr/local
+/usr
+
+.env
+
+.vscode
+!.vscode/settings.json
+
+/etc/pacman.d/gnupg
