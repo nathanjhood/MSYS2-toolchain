@@ -81,6 +81,75 @@ For best results, it is recommended to use either <i>'Ninja'</i> or <i>'Ninja Mu
 
 Some useful settings are provided in <i>'.vscode/settings.json'</i>.
 
+## Development
+
+In practice, I'm trying to define multiple 'sets' of CMake variables, each 'set' given the prefix of "${MSYSTEM}_". This allows, for example, that we might have access to, and control over, multiple different sub-systems at the same time, without naming clashes.
+
+For example, if looking for a C++ compiler, we'd usually find that CMake has set the following variable in the Cache file:
+
+* CMAKE_CXX_COMPILER=clang++.exe
+
+Which is great, but when we have up to 6 (woe!) toolchains - and that's only the ones in an Msys64 installation, you might have more on your system of course - the string 'clang++.exe' doesn't actually give us much indication as to what compiler is running, under the hood. CMake does provide some verbiage to this effect while running, but it might be much better if we could utilize everything that the amazing team behind Msys64 already did in their configuration scripts, something more like (and here's some more vcpkg inspiration...):
+
+* ${MSYSTEM}_CXX_COMPILER="${MSYSTEM_ROOT_DIR}/${MSYSTEM_PACKAGE_PREFIX}-c++.exe"
+
+Which, for an "MSYSTEM" == "MINGW64", would resolve to:
+
+```
+MINGW64_CXX_COMPILER="C:/msys64/mingw64/mingw-w64-x86_64-c++.exe"
+```
+
+Or, for an "MSYSTEM" == "CLANGARM64", would resolve to:
+
+```
+CLANGARM64_CXX_COMPILER="C:/msys64/clangarm64/mingw-w64-clang-aarch64-c++.exe"
+```
+
+It would then be easy (!) to wrap some logic like so:
+
+```
+set(MSYS_ROOT_DIR "$ENV{HomeDrive}/msys64")
+set(CLANGARM64_INC_DIR "${MSYS_ROOT_DIR}/include")
+set(CLANGARM64_BIN_DIR "${MSYS_ROOT_DIR}/bin")
+
+if("${MSYSTEM}" EQUAL "MINGW64")
+
+    # Get MINGW64 paths...
+    set(MINGW64_ROOT_DIR "${MSYS_ROOT}/mingw64")
+    set(MINGW64_INC_DIR "${MINGW64_ROOT_DIR}/include")
+    set(MINGW64_BIN_DIR "${MINGW64_ROOT_DIR}/bin")
+
+    set(CMAKE_CXX_COMPILER="${MINGW64_BIN_DIR}/mingw-w64-x86_64-c++.exe")
+
+    set(MINGW64_ENABLED ON)
+
+elseif("${MSYSTEM}" EQUAL "CLANGARM64")
+
+    # Get CLANGARM64 paths...
+    set(CLANGARM64_ROOT_DIR "${MSYS_ROOT_DIR}/clangarm64")
+    set(CLANGARM64_INC_DIR "${CLANGARM64_ROOT_DIR}/include")
+    set(CLANGARM64_BIN_DIR "${CLANGARM64_ROOT_DIR}/bin")
+
+    set(CMAKE_CXX_COMPILER="${CLANGARM64_BIN_DIR}/mingw-w64-clang-aarch64-c++.exe")
+
+    set(CLANGARM64_ENABLED ON)
+
+else()
+
+    # Get MSYS2 paths...
+    set(MSYS2_ROOT_DIR "${MSYS_ROOT_DIR}")
+    set(MSYS2_INC_DIR "${MSYS2_ROOT_DIR}/include")
+    set(MSYS2_BIN_DIR "${MSYS2_ROOT_DIR}/bin")
+
+    set(CMAKE_CXX_COMPILER="${MSYS2_BIN_DIR}/c++.exe")
+
+    set(MSYS2_ENABLED ON)
+
+endif()
+```
+
+...and so forth. Naturally, the above is a condensed representation of the overall idea. There is a lot of testing and head-scratching to get one sub-system (and the 'buildsystem/chainload' paradigm) running nicely, for which I'm currently using MINGW64. Once that chainload file is complete (...?) it should be easy work for the IDE to 'change all occurances' of certain vars, and I'm sure everything will all just work out fine. :D
+
 ## Todo
 
 Lots of paths to fix, test, etc. Lots of cleanup. Potentially a re-write in store to compile more variable strings from other variable strings (<b><i>'\<MINGW_PACKAGE_PREFIX\>-\<TOOLCHAIN_TO_USE\>'</i></b>, etc...), however I don't personally prefer this approach because it requires a CMake run in order to fetch these compiled variables, compared to just having them defined at-a-glance in the toolchain file, and tells us (less than) nothing about the variables that we *haven't* selected for that run. Preferring verbosity during dev/debug, meanwhile.
