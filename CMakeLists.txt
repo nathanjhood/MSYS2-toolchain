@@ -454,3 +454,7 @@ export(
 # )
 
 endif() # BUILD_TESTS
+
+set(MINGW64_INSTALL_PREFIX      "${MINGW64_ROOT}/usr/local"         CACHE PATH "" FORCE)
+
+include("c:/Users/natha/Development/StoneyDSP/MSYS2-toolchain/scripts/cmake/Modules/_MinGW64/MINGW64InstallDirs.cmake")
