@@ -1,0 +1,46 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!-- Do not define derived properties here. This file may be imported once and some of the properties below may be overridden afterwards -->
+  <PropertyGroup>
+    <MsysPropsImported>true</MsysPropsImported>
+    <MsysEnabled Condition="'$(MsysEnabled)' == ''">true</MsysEnabled>
+  </PropertyGroup>
+
+  <!-- Set the default value of $(MsysConfiguration) according to $(UseDebugLibraries) and $(Configuration) -->
+  <Choose>
+    <When Condition="'$(MsysConfiguration)' != ''" />
+    <When Condition="'$(UseDebugLibraries)' == ''">
+      <PropertyGroup>
+        <MsysConfiguration>$(Configuration)</MsysConfiguration>
+      </PropertyGroup>
+    </When>
+    <When Condition="'$(UseDebugLibraries)' == 'true'">
+      <PropertyGroup>
+        <MsysConfiguration>Debug</MsysConfiguration>
+      </PropertyGroup>
+    </When>
+    <Otherwise>
+      <PropertyGroup>
+        <MsysConfiguration>Release</MsysConfiguration>
+      </PropertyGroup>
+    </Otherwise>
+  </Choose>
+
+  <PropertyGroup>
+    <MsysUseStatic Condition="'$(MsysUseStatic)' == ''">false</MsysUseStatic>
+    <MsysRoot Condition="'$(MsysRoot)' == ''">$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\..\..'))</MsysRoot>
+
+    <MsysAutoLink Condition="'$(MsysAutoLink)' == ''">true</MsysAutoLink>
+    <!-- Deactivate Autolinking if lld is used as a linker. (Until a better way to solve the problem is found!).
+    Tried to add /lib as a parameter to the linker call but was unable to find a way to pass it as the first parameter. -->
+    <MsysAutoLink Condition="'$(UseLldLink)' == 'true' OR '$(PlatformToolset.ToLower())' == 'clangcl'">false</MsysAutoLink>
+    <MsysApplocalDeps Condition="'$(MsysApplocalDeps)' == ''">true</MsysApplocalDeps>
+
+    <!-- Classic Mode: The following line is edited by the mint standalone bundle script to be false for standlone copies -->
+    <!-- <MsysEnableClassic Condition="'$(MsysEnableClassic)' == ''">true</MsysEnableClassic> -->
+
+    <!-- Manifest files -->
+    <!-- <MsysEnableManifest Condition="'$(MsysEnableManifest)' == ''">false</MsysEnableManifest>
+    <MsysManifestInstall Condition="'$(MsysManifestInstall)' == ''">true</MsysManifestInstall>
+    <MsysManifestRoot Condition="'$(MsysManifestRoot)' == ''">$([MSbuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), vcpkg.json))</MsysManifestRoot> -->
+  </PropertyGroup>
+</Project>

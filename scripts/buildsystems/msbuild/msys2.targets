@@ -1,0 +1,239 @@
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <!-- Import default properties if not done yet. This does not overwrite any previously defined properties. -->
+  <Import Condition="'$(MsysPropsImported)' != 'true'" Project="msys.props" />
+
+  <!-- VS2015's version of "Msys integrate install" imports both the props and targets together in the "props" area,
+  meaning we have no opportunity to respond to user customizations in their project files. It also means that this
+  .targets must defend against normal properties being unset. (For example, MsysPlatformTarget below.)
+
+  Also, we copy all initial values to internal values to avoid properties being inconsistently evaluated in targets
+  and dependent properties.
+  -->
+
+  <PropertyGroup>
+    <_ZMsysRoot>$(MsysRoot)</_ZMsysRoot>
+    <_ZMsysManifestRoot>$(MsysManifestRoot)</_ZMsysManifestRoot>
+    <_ZMsysInstalledDir>$(MsysInstalledDir)</_ZMsysInstalledDir>
+  </PropertyGroup>
+
+  <!-- Add trailing slashes to inputs that must have them to conform with msbuild conventions. -->
+  <PropertyGroup>
+    <_ZMsysRoot Condition="!$(_ZMsysRoot.EndsWith('\'))">$(_ZMsysRoot)\</_ZMsysRoot>
+    <!-- <_ZMsysManifestRoot Condition="'$(_ZMsysManifestRoot)' != '' and !$(_ZMsysManifestRoot.EndsWith('\'))">$(_ZMsysManifestRoot)\</_ZMsysManifestRoot> -->
+    <_ZMsysInstalledDir Condition="'$(_ZMsysInstalledDir)' != '' and !$(_ZMsysInstalledDir.EndsWith('\'))">$(_ZMsysInstalledDir)\</_ZMsysInstalledDir>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <_ZMsysClassicOrManifest Condition="'$(MsysEnabled)' == 'true' And ('$(MsysEnableClassic)' == 'true' Or '$(MsysEnableManifest)' == 'true')">true</_ZMsysClassicOrManifest>
+    <_ZMsysClassicOrManifest Condition="'$(_ZMsysClassicOrManifest)' == ''">false</_ZMsysClassicOrManifest>
+  </PropertyGroup>
+
+  <!-- Special-case custom MSBuild platforms defined in the Microsoft GDK. See https://aka.ms/gdk and https://aka.ms/gdkx -->
+  <PropertyGroup Condition="'$(MsysOSTarget)' == '' AND '$(MsysPlatformTarget)' == '' AND '$(Platform)'=='Gaming.Desktop.x64'">
+    <MsysOSTarget>windows</MsysOSTarget>
+    <MsysPlatformTarget>x64</MsysPlatformTarget>
+    <MsysUseMD>true</MsysUseMD>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(MsysOSTarget)' == '' AND '$(MsysPlatformTarget)' == '' AND '$(Platform)'=='Gaming.Xbox.Scarlett.x64'">
+    <MsysOSTarget>xbox-scarlett</MsysOSTarget>
+    <MsysPlatformTarget>x64</MsysPlatformTarget>
+    <MsysUseMD>false</MsysUseMD>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(MsysOSTarget)' == '' AND '$(MsysPlatformTarget)' == '' AND '$(Platform)'=='Gaming.Xbox.XboxOne.x64'">
+    <MsysOSTarget>xbox-xboxone</MsysOSTarget>
+    <MsysPlatformTarget>x64</MsysPlatformTarget>
+    <MsysUseMD>false</MsysUseMD>
+  </PropertyGroup>
+
+  <!-- Determine the triplet to use. Note that $(PlatformTarget) is not available at the top of the .vcxproj file. -->
+  <PropertyGroup Condition="'$(MsysOSTarget)' == ''">
+    <MsysOSTarget>windows</MsysOSTarget>
+    <MsysOSTarget Condition="'$(AppContainerApplication)' == 'true'">uwp</MsysOSTarget>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(MsysPlatformTarget)' == ''">
+    <MsysPlatformTarget>$(Platform)</MsysPlatformTarget>
+    <MsysPlatformTarget Condition="'$(Platform)' == 'Win32'">x86</MsysPlatformTarget>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <_ZMsysLinkage />
+    <_ZMsysLinkage Condition="'$(MsysUseStatic)' == 'true'">-static</_ZMsysLinkage>
+    <_ZMsysLinkageMD />
+    <_ZMsysLinkageMD Condition="'$(MsysUseStatic)' == 'true' and '$(MsysUseMD)' == 'true'">-md</_ZMsysLinkageMD>
+    <MsysTriplet Condition="'$(MsysTriplet)' == ''">$(MsysPlatformTarget)-$(MsysOSTarget)$(_ZMsysLinkage)$(_ZMsysLinkageMD)</MsysTriplet>
+    <MsysTriplet Condition="!$(MsysTriplet.EndsWith($(_ZMsysLinkage)$(_ZMsysLinkageMD)))">$(MsysTriplet)$(_ZMsysLinkage)$(_ZMsysLinkageMD)</MsysTriplet>
+  </PropertyGroup>
+
+  <!-- Include the triplet in ProjectStateLine to force VS2017 and later to fully rebuild if the user changes it.  -->
+  <PropertyGroup>
+    <ProjectStateLine>MsysTriplet=$(MsysTriplet):$(ProjectStateLine)</ProjectStateLine>
+  </PropertyGroup>
+
+  <!-- Determine the locations trees we want to consume. _ZMsysInstalledDir is special in that it doesn't have a default
+  value in the .props because we normally derive it, but users may override the value. -->
+  <Choose>
+    <When Condition="'$(MsysEnableManifest)' == 'true'">
+      <PropertyGroup>
+        <_ZMsysInstalledDir Condition="'$(_ZMsysInstalledDir)' == ''">$(_ZMsysManifestRoot)Msys_installed\$(MsysTriplet)\</_ZMsysInstalledDir>
+      </PropertyGroup>
+    </When>
+    <Otherwise>
+      <PropertyGroup>
+        <_ZMsysInstalledDir Condition="'$(_ZMsysInstalledDir)' == ''">$(_ZMsysRoot)usr\local\</_ZMsysInstalledDir>
+      </PropertyGroup>
+    </Otherwise>
+  </Choose>
+
+  <PropertyGroup>
+    <_ZMsysCurrentInstalledDir>$(_ZMsysInstalledDir)$(MsysTriplet)\</_ZMsysCurrentInstalledDir>
+    <_ZMsysNormalizedConfiguration Condition="$(MsysConfiguration.StartsWith('Debug'))">Debug</_ZMsysNormalizedConfiguration>
+    <_ZMsysNormalizedConfiguration Condition="$(MsysConfiguration.StartsWith('Release')) or '$(MsysConfiguration)' == 'RelWithDebInfo' or '$(MsysConfiguration)' == 'MinSizeRel'">Release</_ZMsysNormalizedConfiguration>
+
+    <_ZMsysConfigSubdir Condition="'$(_ZMsysNormalizedConfiguration)' == 'Debug'">debug\</_ZMsysConfigSubdir>
+    <_ZMsysExecutable>$(_ZMsysRoot)Msys.exe</_ZMsysExecutable>
+    <ExternalIncludePath Condition="'$(_ZMsysClassicOrManifest)' == 'true'">$(ExternalIncludePath);$(_ZMsysCurrentInstalledDir)include</ExternalIncludePath>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- Note: Overwrite MsysPageSchema with a non-existing path to disable the Msys property sheet in your projects -->
+    <MsysPageSchema Condition="'$(MsysPageSchema)' == ''">$(_ZMsysRoot)scripts\buildsystems\msbuild\Msys-general.xml</MsysPageSchema>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(MsysPageSchema)' != '' and exists('$(MsysPageSchema)') and '$(MSBuildToolsVersion)' != '14.0'">
+    <PropertyPageSchema Include="$(MsysPageSchema)">
+      <Context>Project</Context>
+    </PropertyPageSchema>
+  </ItemGroup>
+
+  <!-- Install settings to get headers and import libs for the currently selected _ZMsysCurrentInstalledDir -->
+  <ItemDefinitionGroup Condition="'$(_ZMsysClassicOrManifest)' == 'true'">
+    <Lib>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories);$(_ZMsysCurrentInstalledDir)$(_ZMsysConfigSubdir)lib;$(_ZMsysCurrentInstalledDir)$(_ZMsysConfigSubdir)lib\manual-link</AdditionalLibraryDirectories>
+    </Lib>
+    <Link>
+      <AdditionalDependencies Condition="'$(MsysAutoLink)' != 'false'">%(AdditionalDependencies);$(_ZMsysCurrentInstalledDir)$(_ZMsysConfigSubdir)lib\*.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories);$(_ZMsysCurrentInstalledDir)$(_ZMsysConfigSubdir)lib;$(_ZMsysCurrentInstalledDir)$(_ZMsysConfigSubdir)lib\manual-link</AdditionalLibraryDirectories>
+    </Link>
+    <ClCompile>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(_ZMsysCurrentInstalledDir)include</AdditionalIncludeDirectories>
+    </ClCompile>
+    <ResourceCompile>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(_ZMsysCurrentInstalledDir)include</AdditionalIncludeDirectories>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+
+  <Target Name="MsysCheckManifestRoot" BeforeTargets="MsysInstallManifestDependencies" Condition="'$(MsysEnabled)' == 'true'">
+    <Error Text="The Msys manifest was enabled, but we couldn't find a manifest file (Msys.json) in any directories above $(MSBuildProjectDirectory). Please add a manifest, disable manifests in your properties page, or pass /p:MsysEnableManifest=false."
+           Condition="'$(MsysEnableManifest)' == 'true' and '$(_ZMsysManifestRoot)' == ''" />
+    <Message Text="The Msys manifest was disabled, but we found a manifest file in $(_ZMsysManifestRoot). You may want to enable Msys manifests in your properties page or pass /p:MsysEnableManifest=true to the msbuild invocation."
+             Importance="High" Condition="'$(MsysEnableManifest)' != 'true' and '$(_ZMsysManifestRoot)' != ''" />
+  </Target>
+
+  <Target Name="MsysTripletSelection" BeforeTargets="ClCompile" Condition="'$(_ZMsysClassicOrManifest)' == 'true'">
+    <Message Text="Using triplet &quot;$(MsysTriplet)&quot; from &quot;$(_ZMsysCurrentInstalledDir)&quot;"
+             Importance="Normal" Condition="'$(MsysEnabled)' == 'true'"/>
+    <Message Text="Using normalized configuration &quot;$(_ZMsysNormalizedConfiguration)&quot;"
+             Importance="Normal" Condition="'$(MsysEnabled)' == 'true'"/>
+    <Message Text="Not using Msys because MsysEnabled is &quot;$(MsysEnabled)&quot;"
+             Importance="Normal" Condition="'$(MsysEnabled)' != 'true'"/>
+    <Message Text="Msys is unable to link because we cannot decide between Release and Debug libraries. Please define the property MsysConfiguration to be 'Release' or 'Debug' (currently '$(MsysConfiguration)')."
+             Importance="High" Condition="'$(MsysEnabled)' == 'true' and '$(_ZMsysNormalizedConfiguration)' == ''"/>
+  </Target>
+
+  <Choose>
+    <When Condition="'$(MsysHostTriplet)' != ''">
+      <PropertyGroup>
+        <_ZMsysHostTripletParameter>"--host-triplet=$(MsysHostTriplet)"</_ZMsysHostTripletParameter>
+        <_ZMsysHostTripletSuffix>$(MsysHostTriplet).</_ZMsysHostTripletSuffix>
+      </PropertyGroup>
+    </When>
+    <Otherwise>
+      <PropertyGroup>
+        <_ZMsysHostTripletParameter />
+        <_ZMsysHostTripletSuffix />
+      </PropertyGroup>
+    </Otherwise>
+  </Choose>
+
+  <PropertyGroup>
+    <_ZMsysManifestFileLocation>$(_ZMsysManifestRoot)Msys.json</_ZMsysManifestFileLocation>
+    <_ZMsysConfigurationFileLocation>$(_ZMsysManifestRoot)Msys-configuration.json</_ZMsysConfigurationFileLocation>
+    <_ZMsysMSBuildStampFile>$(_ZMsysInstalledDir).msbuildstamp-$(MsysTriplet).$(_ZMsysHostTripletSuffix)stamp</_ZMsysMSBuildStampFile>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(MsysEnabled)' == 'true' and '$(MsysEnableManifest)' == 'true' and '$(MsysManifestInstall)' == 'true'">
+    <_ZMsysInstallManifestDependenciesInputs Include="$(_ZMsysManifestFileLocation)"/>
+    <_ZMsysInstallManifestDependenciesInputs Include="$(_ZMsysConfigurationFileLocation)" Condition="Exists('$(_ZMsysConfigurationFileLocation)')"/>
+  </ItemGroup>
+
+  <Target Name="MsysInstallManifestDependencies" BeforeTargets="ClCompile"
+          Condition="'$(MsysEnabled)' == 'true' and '$(MsysEnableManifest)' == 'true' and '$(MsysManifestInstall)' == 'true'"
+          Inputs="@(_ZMsysInstallManifestDependenciesInputs)"
+          Outputs="$(_ZMsysMSBuildStampFile)">
+    <!-- This is set inside the target because $(TLogLocation) may not be set yet when parsing the .targets on VS2015 -->
+    <PropertyGroup>
+      <_ZMsysTLogFileLocation>$(TLogLocation)MsysInstallManifest$(MsysTriplet).$(_ZMsysHostTripletSuffix)read.1u.tlog</_ZMsysTLogFileLocation>
+    </PropertyGroup>
+    <Message Text="Installing Msys dependencies to $(_ZMsysInstalledDir)" Importance="High" />
+    <MakeDir Directories="$(_ZMsysInstalledDir)" />
+    <Message Text="%22$(_ZMsysExecutable)%22 install $(_ZMsysHostTripletParameter) --x-wait-for-lock --triplet %22$(MsysTriplet)%22 --Msys-root %22$(_ZMsysRoot)\%22 %22--x-manifest-root=$(_ZMsysManifestRoot)\%22 %22--x-install-root=$(_ZMsysInstalledDir)\%22 $(MsysAdditionalInstallOptions)"
+          Importance="High" />
+    <Exec Command="%22$(_ZMsysExecutable)%22 install $(_ZMsysHostTripletParameter) --x-wait-for-lock --triplet %22$(MsysTriplet)%22 --Msys-root %22$(_ZMsysRoot)\%22 %22--x-manifest-root=$(_ZMsysManifestRoot)\%22 %22--x-install-root=$(_ZMsysInstalledDir)\%22 $(MsysAdditionalInstallOptions)"
+          StandardOutputImportance="High"
+          IgnoreStandardErrorWarningFormat="true"
+          CustomWarningRegularExpression="([Ee]rror|[Ww]arning):" />
+    <WriteLinesToFile File="$(_ZMsysTLogFileLocation)"
+                      Lines="@(_ZMsysInstallManifestDependenciesInputs -> '^%(Identity)')"
+                      Encoding="Unicode"
+                      Overwrite="true"/>
+    <Touch Files="$(_ZMsysMSBuildStampFile)" AlwaysCreate="true" />
+
+    <CreateProperty Value="false">
+      <Output TaskParameter="ValueSetByTask" PropertyName="Link_MinimalRebuildFromTracking" />
+    </CreateProperty>
+  </Target>
+
+  <Target Name="AppLocalFromInstalled" AfterTargets="CopyFilesToOutputDirectory" BeforeTargets="CopyLocalFilesOutputGroup;RegisterOutput"
+          Condition="'$(_ZMsysClassicOrManifest)' == 'true' and '$(MsysApplocalDeps)' == 'true' and '$(LinkSkippedExecution)' != 'true'">
+    <Message Text="[Msys] Starting MsysApplocalDeps" Importance="low" />
+    <PropertyGroup>
+      <_ZMsysAppLocalPowerShellCommonArguments>-ExecutionPolicy Bypass -noprofile -File "$(MSBuildThisFileDirectory)applocal.ps1" "$(TargetPath)" "$(_ZMsysCurrentInstalledDir)$(_ZMsysConfigSubdir)bin" "$(TLogLocation)$(ProjectName).write.1u.tlog" "$(IntDir)Msys.applocal.log"</_ZMsysAppLocalPowerShellCommonArguments>
+    </PropertyGroup>
+    <!-- Search %PATH% for pwsh.exe if it is available. -->
+    <Exec
+      Command="pwsh.exe $(_ZMsysAppLocalPowerShellCommonArguments)"
+      StandardOutputImportance="Normal"
+      StandardErrorImportance="Normal"
+      IgnoreExitCode="true"
+      UseCommandProcessor="false">
+      <Output TaskParameter="ExitCode"
+              PropertyName="_ZMsysAppLocalExitCode" />
+    </Exec>
+    <!-- Fall back to well known system PowerShell location otherwise. -->
+    <Message Text="[Msys] Failed to run applocal.ps1 using pwsh, falling back to system PowerShell." Importance="low"
+             Condition="$(_ZMsysAppLocalExitCode) == 9009" />
+    <Exec
+      Command="%22$(SystemRoot)\System32\WindowsPowerShell\v1.0\powershell.exe%22 $(_ZMsysAppLocalPowerShellCommonArguments)"
+      StandardOutputImportance="Normal"
+      StandardErrorImportance="Normal"
+      IgnoreExitCode="true"
+      UseCommandProcessor="false"
+      Condition="$(_ZMsysAppLocalExitCode) == 9009">
+      <Output TaskParameter="ExitCode"
+              PropertyName="_ZMsysAppLocalExitCode" />
+    </Exec>
+    <!-- We're ignoring the above exit codes, so translate into a warning if both failed. -->
+    <Warning Text="[Msys] Failed to gather app local DLL dependencies, program may not run. Set MsysApplocalDeps to false in your project file to suppress this warning. PowerShell arguments: $(_ZMsysAppLocalPowerShellCommonArguments)"
+      Condition="$(_ZMsysAppLocalExitCode) != 0"/>
+    <ReadLinesFromFile File="$(IntDir)Msys.applocal.log"
+      Condition="$(_ZMsysAppLocalExitCode) == 0">
+      <Output TaskParameter="Lines" ItemName="MsysAppLocalDLLs" />
+    </ReadLinesFromFile>
+    <Message Text="@(MsysAppLocalDLLs,'%0A')" Importance="Normal" Condition="$(_ZMsysAppLocalExitCode) == 0" />
+    <ItemGroup Condition="$(_ZMsysAppLocalExitCode) == 0">
+      <ReferenceCopyLocalPaths Include="@(MsysAppLocalDLLs)" />
+    </ItemGroup>
+  </Target>
+</Project>
