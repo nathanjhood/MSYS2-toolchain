@@ -10,10 +10,10 @@
     ],
     "cmake.configureSettings": {
         // "MSYSTEM": "MINGW64",
-        "CMAKE_TOOLCHAIN_FILE": "${workspaceFolder}/scripts/toolchains/MSYS2.cmake"
-    },
-    "cmake.environment": {
-        "MSYSTEM": "MINGW64"
+        "CMAKE_TOOLCHAIN_FILE": "${workspaceFolder}/scripts/buildsystems/MSYS2.cmake",
+        "MSYS_CHAINLOAD_TOOLCHAIN_FILE": "${workspaceFolder}/scripts/toolchains/MINGW64.cmake"
+        // "CMAKE_TOOLCHAIN_FILE": "C:/Users/natha/vcpkg/scripts/buildsystems/vcpkg.cmake",
+        // "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${workspaceFolder}/scripts/toolchains/MSYS2.cmake"
     },
     "cmake.configureOnEdit": false,
     "cmake.configureOnOpen": false,
