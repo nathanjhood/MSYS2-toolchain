@@ -55,20 +55,6 @@ or to use in tandem with a (supported!) sub-system;
 
 * <b>-DMSYS_CHAINLOAD_TOOLCHAIN_FILE</b>:FILEPATH=<i>"\<path/to/this/repo\>/scripts/toolchains/CLANG64.cmake"</i>
 
-*(NOT YET SUPPORTED! STAY TUNED!)* And also pass an <b>'\<MSYSTEM\>'</b>, just like when invoking msys64 (example);
-
-* <b>-DMSYSTEM</b>:STRING=<i>"CLANG64"</i>
-
-Available <b>'\<MSYSTEM\>'</b> options...
-
-* <b>'\<CLANGARM64\>'</b>
-* <b>'\<CLANG64\>'</b>
-* <b>'\<CLANG32\>'</b>
-* <b>'\<MINGW64\>'</b>
-* <b>'\<MINGW32\>'</b>
-* <b>'\<UCRT64\>'</b>
-* <b>'\<MSYS\>'</b>
-
 The 'chainload' toolchain files are named identically to the chosen <b>'\<MSYSTEM\>'</b> and provide more thorough default behaviours for invoked <b>'\<MSYSTEM\>'</b> settings. Use in tandem for best results. However, there is *some* experimental support for passing a 'chainload' file directly, outside of the Msys build system:
 
 * <b>-DCMAKE_TOOLCHAIN_FILE</b>:FILEPATH=<i>"\<VCPKG_ROOT\>/scripts/toolchains/UCRT64.cmake"</i>
@@ -87,19 +73,23 @@ In practice, I'm trying to define multiple 'sets' of CMake variables, each 'set'
 
 For example, if looking for a C++ compiler, we'd usually find that CMake has set the following variable in the Cache file:
 
-* CMAKE_CXX_COMPILER=clang++.exe
+```
+CMAKE_CXX_COMPILER=c++.exe
+```
 
-Which is great, but when we have up to 6 (woe!) toolchains - and that's only the ones in an Msys64 installation, you might have more on your system of course - the string 'clang++.exe' doesn't actually give us much indication as to what compiler is running, under the hood. CMake does provide some verbiage to this effect while running, but it might be much better if we could utilize everything that the amazing team behind Msys64 already did in their configuration scripts, something more like (and here's some more vcpkg inspiration...):
+Which is great, but when we have up to 6 (woe!) toolchains - and that's only the ones in an Msys64 installation, you might have more on your system of course - the string 'c++.exe' doesn't actually give us much indication as to what compiler is running, under the hood. CMake does provide some verbiage to this effect while running, but it might be much better if we could utilize everything that the amazing team behind Msys64 already did in their configuration scripts, something more like (and here's some more vcpkg inspiration...):
 
-* ${MSYSTEM}_CXX_COMPILER="${MSYSTEM_ROOT_DIR}/${MSYSTEM_PACKAGE_PREFIX}-c++.exe"
+```
+${MSYSTEM}_CXX_COMPILER="${MSYSTEM_ROOT_DIR}/${MSYSTEM_PACKAGE_PREFIX}-c++.exe"
+```
 
-Which, for an "MSYSTEM" == "MINGW64", would resolve to:
+Which, for an ```"MSYSTEM" == "MINGW64"```, would resolve to:
 
 ```
 MINGW64_CXX_COMPILER="C:/msys64/mingw64/mingw-w64-x86_64-c++.exe"
 ```
 
-Or, for an "MSYSTEM" == "CLANGARM64", would resolve to:
+Or, for an ```"MSYSTEM" == "CLANGARM64"```, would resolve to:
 
 ```
 CLANGARM64_CXX_COMPILER="C:/msys64/clangarm64/mingw-w64-clang-aarch64-c++.exe"
@@ -109,8 +99,8 @@ It would then be easy (!) to wrap some logic like so:
 
 ```
 set(MSYS_ROOT_DIR "$ENV{HomeDrive}/msys64")
-set(CLANGARM64_INC_DIR "${MSYS_ROOT_DIR}/include")
-set(CLANGARM64_BIN_DIR "${MSYS_ROOT_DIR}/bin")
+set(MSYS_INC_DIR "${MSYS_ROOT_DIR}/include")
+set(MSYS_BIN_DIR "${MSYS_ROOT_DIR}/bin")
 
 if("${MSYSTEM}" EQUAL "MINGW64")
 
@@ -149,6 +139,8 @@ endif()
 ```
 
 ...and so forth. Naturally, the above is a condensed representation of the overall idea. There is a lot of testing and head-scratching to get one sub-system (and the 'buildsystem/chainload' paradigm) running nicely, for which I'm currently using MINGW64. Once that chainload file is complete (...?) it should be easy work for the IDE to 'change all occurances' of certain vars, and I'm sure everything will all just work out fine. :D
+
+Please be aware that a prefix of just "MSYS_" is referring to vars coming from the 'buildsystem' file, if loaded. The vars with prefix of "MSYS<u>2</u>_" refer to what you would usually get from Msys64 if entering the "MSYS2" subsystem. It's a close call, but I think it's ok!?
 
 ## Todo
 
@@ -212,3 +204,17 @@ Lastly, the LLVM project contains some interesting CMake functions that run some
 ## In progress... please stay tuned :)
 
 As of writing, I've hard-coded <b>'\<MSYSTEM\>'</b> to be set to the <b>'\<MINGW64\>'</b> environment/toolchain, to narrow down a single working environment before copying the successful design pattern over to enable the remaining environments. It's a pretty simple fix away if you know CMake and would like to poke around with the differing <b>'\<MSYSTEM\>'</b>'s in it's current state. Make sure you 'pacman -S mingw-w64-x86_64-toolchain' as well as get the CMake/Ninja/etc packages for the default MSYS shell, for the best experience.
+
+*(NOT YET SUPPORTED! STAY TUNED!)* And also pass an <b>'\<MSYSTEM\>'</b> to easily pick up a config using familiar Msys64 commands, just like when invoking msys64 from a command line (example);
+
+* <b>-DMSYSTEM</b>:STRING=<i>"CLANG64"</i>
+
+Available <b>'\<MSYSTEM\>'</b> options...
+
+* <b>'\<CLANGARM64\>'</b>
+* <b>'\<CLANG64\>'</b>
+* <b>'\<CLANG32\>'</b>
+* <b>'\<MINGW64\>'</b>
+* <b>'\<MINGW32\>'</b>
+* <b>'\<UCRT64\>'</b>
+* <b>'\<MSYS\>'</b>
