@@ -9,7 +9,7 @@ As of writing, I've hard-coded <b>'\<MSYSTEM\>'</b> to be set to the <b>'\<MINGW
 ## Example usage:
 
 ```
-$ cmake -S "<path/to/project>" -B "<path/to/project>/build" -DCMAKE_TOOLCHAIN_FILE:FILEPATH=<path/to/this/repo>/scripts/toolchains/MSYS2.cmake -DMSYSTEM:STRING=MINGW64 -G Ninja
+$ cmake -S "<path/to/project>" -B "<path/to/project>/build" -DCMAKE_TOOLCHAIN_FILE:FILEPATH=<path/to/this/repo>/scripts/buildsystems/MSYS2.cmake -DMSYS_CHAINLOAD_TOOLCHAIN_FILE:FILEPATH=<path/to/this/repo>/scripts/toolchains/MINGW64.cmake -DMSYSTEM:STRING=MINGW64 -G Ninja
 ```
 
 ## Description
@@ -23,13 +23,13 @@ MSYS2-toolchain uses a direct translation of the OME-provided Make config variab
 
 To use the toolchain, pass either;
 
-* <b>-DCMAKE_TOOLCHAIN_FILE</b>:FILEPATH=<i>"\<path/to/this/repo\>/scripts/toolchains/MSYS2.cmake"</i>
+* <b>-DCMAKE_TOOLCHAIN_FILE</b>:FILEPATH=<i>"\<path/to/this/repo\>/scripts/buildsystem/MSYS2.cmake"</i>
 
-or to use in tandem with vcpkg;
+or to use in tandem with an MSYSTEM;
 
-* <b>-DCMAKE_TOOLCHAIN_FILE</b>:FILEPATH=<i>"\<VCPKG_ROOT\>/scripts/buildsystems/vcpkg.cmake"</i>
+* <b>-DCMAKE_TOOLCHAIN_FILE</b>:FILEPATH=<i>"\<VCPKG_ROOT\>/scripts/buildsystems/MSYS2.cmake"</i>
 
-* <b>-DVCPKG_CHAINLOAD_TOOLCHAIN_FILE</b>:FILEPATH=<i>"\<path/to/this/repo\>/scripts/toolchains/MSYS2.cmake"</i>
+* <b>-DMSYS_CHAINLOAD_TOOLCHAIN_FILE</b>:FILEPATH=<i>"\<path/to/this/repo\>/scripts/toolchains/CLANG64.cmake"</i>
 
 And also pass an <b>'\<MSYSTEM\>'</b>, just like when invoking msys64 (example);
 
@@ -45,7 +45,13 @@ Available <b>'\<MSYSTEM\>'</b> options...
 * <b>'\<UCRT64\>'</b>
 * <b>'\<MSYS\>'</b>
 
-<b>\'<CMAKE_TOOLCHAIN_FILE\>'</b> can often also be set in your IDE's CMake integration extension's settings, and/or a <i>'CMakePresets.json'</i> in the project root folder.
+The 'chainload' toolchain files are named identically to the chosen <b>'\<MSYSTEM\>'</b> and provide more thorough default behaviours for invoked <b>'\<MSYSTEM\>'</b> settings. Use in tandem for best results. However, there is *some* experimental support for passing a 'chainload' file directly, outside of the Msys build system:
+
+* <b>-DCMAKE_TOOLCHAIN_FILE</b>:FILEPATH=<i>"\<VCPKG_ROOT\>/scripts/toolchains/UCRT64.cmake"</i>
+
+Results may vary in these cases, in some parts due to differing levels of interoperability between the subsystems and the Windows environment itself. It *should* therefore be quite suitable to use a 'chainload' file as the primary toolchain file, if the project is invoked directly from inside the <b>'\<MSYSTEM\>'</b> bash shell itself (i.e., the relevant command line app in your Msys installation). This needs much more thorough testing, but initial results have been quite positive thus far.
+
+<b>\'<CMAKE_TOOLCHAIN_FILE\>'</b> and <b>\'<MSYS_CHAINLOAD_TOOLCHAIN_FILE\>'</b> can often also be set in your IDE's CMake integration extension's settings, and/or a <i>'CMakePresets.json'</i> in the project root folder.
 
 For best results, it is recommended to use either <i>'Ninja'</i> or <i>'Ninja Multi-Config'</i> as a generator, with the 'preferred' generator set to one of the Makefile generators - <i>'Unix/MinGW/MSYS Makefiles'</i> etc.
 
