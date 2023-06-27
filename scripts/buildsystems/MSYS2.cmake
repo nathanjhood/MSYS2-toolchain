@@ -51,14 +51,21 @@ if(MSYS_TOOLCHAIN)
     return()
 endif()
 
-message(STATUS "[toolchain] -- [msys2] -- Build system loading...")
-# message(":: [toolchain] -- MSYS build system loading...")
-
 include(CMakeDependentOption)
 
 # MSYS toolchain options.
-option(MSYS_VERBOSE "Enables messages from the MSYS toolchain for debugging purposes." ON)
+if(DEFINED ENV{VERBOSE})
+    set(MSYS_VERBOSE ON)
+endif()
+option(MSYS_VERBOSE "Enables messages from the MSYS toolchain for debugging purposes." OFF)
 mark_as_advanced(MSYS_VERBOSE)
+
+# if(MSYS_VERBOSE)
+#     message(":: [toolchain] :: [msys2] -- Build system loading...")
+# else()
+#     message(STATUS "Msys2 Build system loading...")
+# endif()
+message(STATUS "Msys2 Build system loading...")
 
 if(MSYS_VERBOSE)
     set(CMAKE_VERBOSE_MAKEFILE ON CACHE BOOL "Enable verbose output from Makefile builds." FORCE)
@@ -342,7 +349,9 @@ set(Z_MSYS_TOOLCHAIN_DIR "${CMAKE_CURRENT_LIST_DIR}")
 # Detect msys2.ico to figure MSYS_ROOT_DIR
 set(Z_MSYS_ROOT_DIR_CANDIDATE "${CMAKE_CURRENT_LIST_DIR}")
 while(NOT DEFINED Z_MSYS_ROOT_DIR)
-    if(EXISTS "${Z_MSYS_ROOT_DIR_CANDIDATE}msys64")
+    if(EXISTS "${Z_MSYS_ROOT_DIR_CANDIDATE}msys2.ini")
+        set(Z_MSYS_ROOT_DIR "${Z_MSYS_ROOT_DIR_CANDIDATE}msys64" CACHE INTERNAL "msys root directory")
+    elseif(EXISTS "${Z_MSYS_ROOT_DIR_CANDIDATE}msys64/msys2.ini")
         set(Z_MSYS_ROOT_DIR "${Z_MSYS_ROOT_DIR_CANDIDATE}msys64" CACHE INTERNAL "msys root directory")
     elseif(IS_DIRECTORY "${Z_MSYS_ROOT_DIR_CANDIDATE}")
         get_filename_component(Z_MSYS_ROOT_DIR_TEMP "${Z_MSYS_ROOT_DIR_CANDIDATE}" DIRECTORY)
@@ -1535,60 +1544,78 @@ elseif(MSYSTEM STREQUAL CLANG32)
     set(MINGW_PREFIX            "${MSYSTEM_PREFIX}"                   CACHE PATH      "")
     set(MINGW_PACKAGE_PREFIX    "mingw-w64-clang-${MSYSTEM_CARCH}"    CACHE STRING    "")
 elseif(MSYSTEM STREQUAL CLANG64)
+
+    set(MSYSTEM_TITLE "MinGW Clang x64")
+    set(MSYSTEM_TOOLCHAIN_VARIANT llvm)
+    set(MSYSTEM_C_LIBRARY ucrt)
+    set(MSYSTEM_CXX_LIBRARY libc++)
+
     set(MSYSTEM_PREFIX          "/clang64"                            CACHE PATH      "")
     set(MSYSTEM_CARCH           "x86_64"                              CACHE STRING    "")
     set(MSYSTEM_CHOST           "x86_64-w64-mingw32"                  CACHE STRING    "")
+
     set(MINGW_CHOST             "${MSYSTEM_CHOST}"                    CACHE STRING    "")
     set(MINGW_PREFIX            "${MSYSTEM_PREFIX}"                   CACHE PATH      "")
     set(MINGW_PACKAGE_PREFIX    "mingw-w64-clang-${MSYSTEM_CARCH}"    CACHE STRING    "")
+
 elseif(MSYSTEM STREQUAL CLANGARM64)
-    set(MSYSTEM_PREFIX          "/clangarm64"                         CACHE PATH      "")
-    set(MSYSTEM_CARCH           "aarch64"                             CACHE STRING    "")
-    set(MSYSTEM_CHOST           "aarch64-w64-mingw32"                 CACHE STRING    "")
-    set(MINGW_CHOST             "${MSYSTEM_CHOST}"                    CACHE STRING    "")
-    set(MINGW_PREFIX            "${MSYSTEM_PREFIX}"                   CACHE PATH      "")
-    set(MINGW_PACKAGE_PREFIX    "mingw-w64-clang-${MSYSTEM_CARCH}"    CACHE STRING    "")
+
+    set(MSYSTEM_TITLE               "MinGW Clang ARM64"                 CACHE STRING    "")
+    set(MSYSTEM_TOOLCHAIN_VARIANT   llvm                                CACHE STRING    "")
+    set(MSYSTEM_C_LIBRARY           ucrt                                CACHE STRING    "")
+    set(MSYSTEM_CXX_LIBRARY         libc++                              CACHE STRING    "")
+
+    set(MSYSTEM_PREFIX              "/clangarm64"                       CACHE PATH      "")
+    set(MSYSTEM_CARCH               "aarch64"                           CACHE STRING    "")
+    set(MSYSTEM_CHOST               "aarch64-w64-mingw32"               CACHE STRING    "")
+
+    set(MINGW_CHOST                 "${MSYSTEM_CHOST}"                  CACHE STRING    "")
+    set(MINGW_PREFIX                "${MSYSTEM_PREFIX}"                 CACHE PATH      "")
+    set(MINGW_PACKAGE_PREFIX        "mingw-w64-clang-${MSYSTEM_CARCH}"  CACHE STRING    "")
+
 elseif(MSYSTEM STREQUAL UCRT64)
-    set(MSYSTEM_PREFIX          "/ucrt64"                             CACHE PATH      "")
-    set(MSYSTEM_CARCH           "x86_64"                              CACHE STRING    "")
-    set(MSYSTEM_CHOST           "x86_64-w64-mingw32"                  CACHE STRING    "")
-    set(MINGW_CHOST             "${MSYSTEM_CHOST}"                    CACHE STRING    "")
-    set(MINGW_PREFIX            "${MSYSTEM_PREFIX}"                   CACHE PATH      "")
-    set(MINGW_PACKAGE_PREFIX    "mingw-w64-ucrt-${MSYSTEM_CARCH}"     CACHE STRING    "")
+
+    set(MSYSTEM_TITLE               "MinGW UCRT x64"                    CACHE STRING    "")
+    set(MSYSTEM_TOOLCHAIN_VARIANT   gcc                                 CACHE STRING    "")
+    set(MSYSTEM_C_LIBRARY           ucrt                                CACHE STRING    "")
+    set(MSYSTEM_CXX_LIBRARY         libstdc++                           CACHE STRING    "")
+
+    set(MSYSTEM_PREFIX              "/ucrt64"                           CACHE PATH      "")
+    set(MSYSTEM_CARCH               "x86_64"                            CACHE STRING    "")
+    set(MSYSTEM_CHOST               "x86_64-w64-mingw32"                CACHE STRING    "")
+
+    set(MINGW_CHOST                 "${MSYSTEM_CHOST}"                  CACHE STRING    "")
+    set(MINGW_PREFIX                "${MSYSTEM_PREFIX}"                 CACHE PATH      "")
+    set(MINGW_PACKAGE_PREFIX        "mingw-w64-ucrt-${MSYSTEM_CARCH}"   CACHE STRING    "")
+
 else()
+
+    # Fallback to MSYS
+
     execute_process(
         COMMAND /usr/bin/uname -m
         WORKING_DIRECTORY "."
         OUTPUT_VARIABLE MSYSTEM_CARCH
     )
-    set(MSYSTEM_PREFIX          "/usr"                                CACHE PATH      "")
-    set(MSYSTEM_CARCH           "${MSYSTEM_CARCH}"                    CACHE STRING    "")
-    set(MSYSTEM_CHOST           "${MSYSTEM_CARCH}-pc-msys"            CACHE STRING    "")
-    set(MSYSTEM "MSYS")
+
+    set(MSYSTEM                     MSYS                                CACHE STRING    "")
+    set(MSYSTEM_TOOLCHAIN_VARIANT   gcc                                 CACHE STRING    "")
+    set(MSYSTEM_C_LIBRARY           cygwin                              CACHE STRING    "")
+    set(MSYSTEM_CXX_LIBRARY         libstdc++                           CACHE STRING    "")
+
+    set(MSYSTEM_PREFIX              "/usr"                              CACHE PATH      "")
+    set(MSYSTEM_CARCH               "${MSYSTEM_CARCH}"                  CACHE STRING    "")
+    set(MSYSTEM_CHOST               "${MSYSTEM_CARCH}-pc-msys"          CACHE STRING    "")
+
 endif()
 
 
-# A round of custom vars...
-if(MSYSTEM STREQUAL "MSYS")
-    set(MSYSTEM_TITLE "MSYS2 MSYS")
-    set(MSYSTEM_TOOLCHAIN_VARIANT gcc)
-    set(MSYSTEM_C_LIBRARY cygwin)
-    set(MSYSTEM_CXX_LIBRARY libstdc++)
-elseif(MSYSTEM STREQUAL UCRT64)
-    set(MSYSTEM_TITLE "MinGW UCRT x64")
-    set(MSYSTEM_TOOLCHAIN_VARIANT gcc)
-    set(MSYSTEM_C_LIBRARY ucrt)
-    set(MSYSTEM_CXX_LIBRARY libstdc++)
 elseif(MSYSTEM STREQUAL CLANG64)
     set(MSYSTEM_TITLE "MinGW Clang x64")
     set(MSYSTEM_TOOLCHAIN_VARIANT llvm)
     set(MSYSTEM_C_LIBRARY ucrt)
     set(MSYSTEM_CXX_LIBRARY libc++)
-elseif(MSYSTEM STREQUAL CLANGARM64)
-    set(MSYSTEM_TITLE "MinGW Clang ARM64")
-    set(MSYSTEM_TOOLCHAIN_VARIANT llvm)
-    set(MSYSTEM_C_LIBRARY ucrt)
-    set(MSYSTEM_CXX_LIBRARY libc++)
+
 elseif(MSYSTEM STREQUAL CLANG32)
     set(MSYSTEM_TITLE "MinGW Clang x32")
     set(MSYSTEM_TOOLCHAIN_VARIANT llvm)
@@ -1608,8 +1635,12 @@ endif()
 
 #]===]
 
-message(STATUS "[toolchain] -- [msys2] -- Build system loaded.")
-# message(":: [toolchain] -- MSYS build system loaded.")
+# if(MSYS_VERBOSE)
+#     message(":: [toolchain] :: [msys2] -- Build system loaded.")
+# else()
+#     message(STATUS "Msys2 Build system loaded.")
+# endif()
+message(STATUS "Msys2 Build system loaded")
 
 cmake_policy(POP)
 
