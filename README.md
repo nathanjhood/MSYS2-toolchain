@@ -14,11 +14,19 @@ $ cmake -S "<path/to/project>" -B "<path/to/project>/build" -DCMAKE_TOOLCHAIN_FI
 
 ## Description
 
-This is a CMake port of the contents of <i>'/etc/makepkg.conf'</i> (for <b>'\<MSYS\>'</b>), and <i>'/etc/makepkg_mingw.conf'</i> (for <b>'\<MINGW32/64\>'</b>, <b>'\<CLANG32/64/ARM64\>'</b>, and <b>'\<URCRT64\>'</b>) as found in Windows MSYS2 installations. These configuration files provide a full set of environment variables, binary/library paths, and compiler flags for each of the available invoking MSYS sub-systems, targeting the configuration system-based Make program. This port replicates the same configuration behaviour, but relevant to CMake instead of GNU Make.
+This is a CMake port of the contents of <i>'/etc/makepkg.conf'</i> (for <b>'\<MSYS\>'</b>), and <i>'/etc/makepkg_mingw.conf'</i> (for <b>'\<MINGW32/64\>'</b>, <b>'\<CLANG32/64/ARM64\>'</b>, and <b>'\<URCRT64\>'</b>) as found in Windows MSYS2 installations, in tandem with the design of Microsoft's 'vcpkg' package manager and it's paradigm.
 
-We don't want build-system configs to be baked into our projects, so the typical procedure is to specify a 'toolchain' that configures our build system for us, based on what is available to the specific build system, come build time. Since each MSYS2 sub-system has it's own compiler toolchain, there are many environmental variants among each sub-system that require critical attention in order to be correctly utilized in custom builds and projects.
+There are several components that comprise this paradigm:
 
-MSYS2-toolchain uses a direct translation of the OME-provided Make config variables, to configure your MSYS2-based CMake runs ensuring all meaningful native build system variables are translated from GNU-based Make projects, to the more universal CMake platform
+* Build system
+* Toolchain
+* Configuration of 'target' and 'host'
+
+In a CMake-driven build, these are all essentially controlled by configuration files ('toolchain' files) which provide a full set of environment variables, binary/library paths, and compiler flags for each of the available invoking MSYS sub-systems, targeting each of the underlying Make program behaviours.
+
+We don't want build-system configs to be baked into our projects (because they contain variables relevant only to the machine used to build with), so the typical procedure is to specify a 'toolchain' that configures the end-users build system appropriately, based on what is available to the specific build system, come build time. Since each MSYS2 sub-system has it's own compiler toolchain, there are many environmental variants among each sub-system that require critical attention in order to be correctly utilized in custom builds and projects.
+
+MSYS2-toolchain uses a direct translation of the MSYS-provided Makefile config variables and Microsoft's vcpkg toolchain system, to configure your MSYS2-based CMake runs ensuring all meaningful native build system variables are translated from GNU-based Make projects, to the more universal CMake platform
 
 
 To use the toolchain, pass either;
