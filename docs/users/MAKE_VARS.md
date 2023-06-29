@@ -1,19 +1,7 @@
 
 #########################################################################
-# TOOLCHAIN ACQUISITION
+# MAKE -P
 #########################################################################
-
-MSYSTEM = MSYS
-MSYSTEM_PREFIX = /usr
-MSYSTEM_CARCH = x86_64
-MSYSTEM_CHOST = x86_64-pc-msys
-
-CARCH = x86_64
-CHOST = x86_64-pc-msys
-
-#-- Debugging flags
-DEBUG_CFLAGS= -ggdb -Og
-DEBUG_CXXFLAGS= -ggdb -Og
 
 CHECKOUT,v = +$(if $(wildcard $@),,$(CO) $(COFLAGS) $< $@)
 COMPILE.c = $(CC) $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c
