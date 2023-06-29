@@ -1,5 +1,39 @@
 #!/usr/bin/env sh
 
+##-- To activate windows native symlinks uncomment next line
+#MSYS=winsymlinks:nativestrict
+##-- Set debugging program for errors
+#MSYS=error_start:mingw64/bin/qtcreator.exe|-debug|<process-id>
+#CHERE_INVOKING=1
+##-- To export full current PATH from environment into MSYS2 use '-use-full-path' parameter
+##-- or uncomment next line
+#MSYS2_PATH_TYPE=inherit
+
+MSYSTEM=MINGW64
+
+MSYS2_PATH="/usr/local/bin:/usr/bin:/bin"
+MANPATH="/usr/local/man:/usr/share/man:/usr/man:/share/man"
+INFOPATH="/usr/local/info:/usr/share/info:/usr/info:/share/info"
+
+case "${MSYS2_PATH_TYPE:-minimal}" in
+  strict)
+    # Do not inherit any path configuration, and allow for full customization
+    # of external path. This is supposed to be used in special cases such as
+    # debugging without need to change this file, but not daily usage.
+    unset ORIGINAL_PATH
+    ;;
+  inherit)
+    # Inherit previous path. Note that this will make all of the Windows path
+    # available in current shell, with possible interference in project builds.
+    ORIGINAL_PATH="${ORIGINAL_PATH:-${PATH}}"
+    ;;
+  *)
+    # Do not inherit any path configuration but configure a default Windows path
+    # suitable for normal usage with minimal external interference.
+    WIN_ROOT="$(PATH=${MSYS2_PATH} exec cygpath -Wu)"
+    ORIGINAL_PATH="${WIN_ROOT}/System32:${WIN_ROOT}:${WIN_ROOT}/System32/Wbem:${WIN_ROOT}/System32/WindowsPowerShell/v1.0/"
+esac
+
 if [[ "$MSYSTEM" == "MINGW32" ]]; then
 
     CONTITLE="MinGW x32"
@@ -16,10 +50,6 @@ if [[ "$MSYSTEM" == "MINGW32" ]]; then
     MSYSTEM_PREFIX="/mingw32"
     MSYSTEM_CARCH="i686"
     MSYSTEM_CHOST="i686-w64-mingw32"
-
-    MSYS2_PATH="/usr/local/bin:/usr/bin:/bin"
-    MANPATH="/usr/local/man:/usr/share/man:/usr/man:/share/man"
-    INFOPATH="/usr/local/info:/usr/share/info:/usr/info:/share/info"
 
     PATH="${MINGW_MOUNT_POINT}/bin:${MSYS2_PATH}${ORIGINAL_PATH:+:${ORIGINAL_PATH}}"
     PKG_CONFIG_PATH="${MINGW_MOUNT_POINT}/lib/pkgconfig:${MINGW_MOUNT_POINT}/share/pkgconfig"
@@ -64,10 +94,6 @@ elif [[ "$MSYSTEM" == "MINGW64" ]]; then
     MSYSTEM_CARCH="x86_64"
     MSYSTEM_CHOST="x86_64-w64-mingw32"
 
-    MSYS2_PATH="/usr/local/bin:/usr/bin:/bin"
-    MANPATH="/usr/local/man:/usr/share/man:/usr/man:/share/man"
-    INFOPATH="/usr/local/info:/usr/share/info:/usr/info:/share/info"
-
     PATH="${MINGW_MOUNT_POINT}/bin:${MSYS2_PATH}${ORIGINAL_PATH:+:${ORIGINAL_PATH}}"
     PKG_CONFIG_PATH="${MINGW_MOUNT_POINT}/lib/pkgconfig:${MINGW_MOUNT_POINT}/share/pkgconfig"
     PKG_CONFIG_SYSTEM_INCLUDE_PATH="${MINGW_MOUNT_POINT}/include"
@@ -108,10 +134,6 @@ elif [[ "$MSYSTEM" == "UCRT64" ]]; then
     MSYSTEM_PREFIX="/ucrt64"
     MSYSTEM_CARCH="x86_64"
     MSYSTEM_CHOST="x86_64-w64-mingw32"
-
-    MSYS2_PATH="/usr/local/bin:/usr/bin:/bin"
-    MANPATH="/usr/local/man:/usr/share/man:/usr/man:/share/man"
-    INFOPATH="/usr/local/info:/usr/share/info:/usr/info:/share/info"
 
     PATH="${MINGW_MOUNT_POINT}/bin:${MSYS2_PATH}${ORIGINAL_PATH:+:${ORIGINAL_PATH}}"
     PKG_CONFIG_PATH="${MINGW_MOUNT_POINT}/lib/pkgconfig:${MINGW_MOUNT_POINT}/share/pkgconfig"
@@ -154,10 +176,6 @@ elif [[ "$MSYSTEM" == "CLANG64" ]]; then
     MSYSTEM_CARCH="x86_64"
     MSYSTEM_CHOST="x86_64-w64-mingw32"
 
-    MSYS2_PATH="/usr/local/bin:/usr/bin:/bin"
-    MANPATH="/usr/local/man:/usr/share/man:/usr/man:/share/man"
-    INFOPATH="/usr/local/info:/usr/share/info:/usr/info:/share/info"
-
     PATH="${MINGW_MOUNT_POINT}/bin:${MSYS2_PATH}${ORIGINAL_PATH:+:${ORIGINAL_PATH}}"
     PKG_CONFIG_PATH="${MINGW_MOUNT_POINT}/lib/pkgconfig:${MINGW_MOUNT_POINT}/share/pkgconfig"
     PKG_CONFIG_SYSTEM_INCLUDE_PATH="${MINGW_MOUNT_POINT}/include"
@@ -198,10 +216,6 @@ elif [[ "$MSYSTEM" == "CLANG32" ]]; then
     MSYSTEM_PREFIX="/clang32"
     MSYSTEM_CARCH="i686"
     MSYSTEM_CHOST="i686-w64-mingw32"
-
-    MSYS2_PATH="/usr/local/bin:/usr/bin:/bin"
-    MANPATH="/usr/local/man:/usr/share/man:/usr/man:/share/man"
-    INFOPATH="/usr/local/info:/usr/share/info:/usr/info:/share/info"
 
     PATH="${MINGW_MOUNT_POINT}/bin:${MSYS2_PATH}${ORIGINAL_PATH:+:${ORIGINAL_PATH}}"
     PKG_CONFIG_PATH="${MINGW_MOUNT_POINT}/lib/pkgconfig:${MINGW_MOUNT_POINT}/share/pkgconfig"
@@ -244,10 +258,6 @@ elif [[ "$MSYSTEM" == "CLANGARM64" ]]; then
     MSYSTEM_CARCH="x86_64"
     MSYSTEM_CHOST="x86_64-w64-mingw32"
 
-    MSYS2_PATH="/usr/local/bin:/usr/bin:/bin"
-    MANPATH="/usr/local/man:/usr/share/man:/usr/man:/share/man"
-    INFOPATH="/usr/local/info:/usr/share/info:/usr/info:/share/info"
-
     PATH="${MINGW_MOUNT_POINT}/bin:${MSYS2_PATH}${ORIGINAL_PATH:+:${ORIGINAL_PATH}}"
     PKG_CONFIG_PATH="${MINGW_MOUNT_POINT}/lib/pkgconfig:${MINGW_MOUNT_POINT}/share/pkgconfig"
     PKG_CONFIG_SYSTEM_INCLUDE_PATH="${MINGW_MOUNT_POINT}/include"
@@ -288,10 +298,6 @@ elif [[ "$MSYSTEM" == "MSYS2" ]]; then
     MSYSTEM_CARCH="$(/usr/bin/uname -m)"
     MSYSTEM_CHOST="${MSYSTEM_CARCH}-pc-msys"
 
-    MSYS2_PATH="/usr/local/bin:/usr/bin:/bin"
-    MANPATH="/usr/local/man:/usr/share/man:/usr/man:/share/man"
-    INFOPATH="/usr/local/info:/usr/share/info:/usr/info:/share/info"
-
     PATH="${MSYS2_PATH}:/opt/bin${ORIGINAL_PATH:+:${ORIGINAL_PATH}}" # There are some cross-compiler dirs to add...
     PKG_CONFIG_PATH="/usr/lib/pkgconfig:/usr/share/pkgconfig:/lib/pkgconfig"
 
@@ -317,3 +323,84 @@ else
     echo "Unsupported MSYSTEM: $MSYSTEM"
     exit 1
 fi
+
+CONFIG_SITE="/etc/config.site"
+
+SYSCONFDIR="${SYSCONFDIR:=/etc}"
+
+ORIGINAL_TMP="${ORIGINAL_TMP:-${TMP}}"
+ORIGINAL_TEMP="${ORIGINAL_TEMP:-${TEMP}}"
+TMP="/tmp"
+TEMP="/tmp"
+
+
+
+# Source: ./etc/makepkg.conf
+MAKEFLAGS="-j$(($(nproc)+1))"
+DEBUG_CFLAGS="-ggdb -Og"
+DEBUG_CXXFLAGS="-ggdb -Og"
+export MAKEFLAGS DEBUG_CFLAGS DEBUG_CXXFLAGS
+
+
+BUILDENV=(!distcc color !ccache check !sign)
+export BUILDENV
+#DISTCC_HOSTS=""
+#BUILDDIR=/tmp/makepkg
+
+OPTIONS=(strip docs !libtool staticlibs emptydirs zipman purge !debug !lto)
+export OPTIONS
+
+INTEGRITY_CHECK=(sha256)
+export INTEGRITY_CHECK
+
+STRIP_BINARIES="--strip-all"
+STRIP_SHARED="--strip-unneeded"
+STRIP_STATIC="--strip-debug"
+export STRIP_BINARIES STRIP_SHARED STRIP_STATIC
+
+#PACKAGER="John Doe <john@doe.com>"
+#GPGKEY=""
+
+# Sources:
+# ./etc/makepkg.conf
+# ./etc/makepkg-mingw.conf
+
+DLAGENTS=(
+'file::/usr/bin/curl -gqC - -o %o %u'
+'ftp::/usr/bin/curl -gqfC - --ftp-pasv --retry 3 --retry-delay 3 -o %o %u'
+'http::/usr/bin/curl -gqb "" -fLC - --retry 3 --retry-delay 3 -o %o %u'
+'https::/usr/bin/curl -gqb "" -fLC - --retry 3 --retry-delay 3 -o %o %u'
+'rsync::/usr/bin/rsync --no-motd -z %u %o'
+'scp::/usr/bin/scp -C %u %o'
+)
+export DLAGENTS
+# Other common tools:
+# /usr/bin/snarf
+# /usr/bin/lftpget -c
+# /usr/bin/wget
+
+VCSCLIENTS=(
+'bzr::bzr'
+'fossil::fossil'
+'git::git'
+'hg::mercurial'
+'svn::subversion'
+)
+export VSCLIENTS
+
+COMPRESSGZ=(gzip -c -f -n)
+COMPRESSBZ2=(bzip2 -c -f)
+COMPRESSXZ=(xz -c -z -T0 -)
+COMPRESSZST=(zstd -c -T0 --ultra -20 -)
+COMPRESSLRZ=(lrzip -q)
+COMPRESSLZO=(lzop -q)
+COMPRESSZ=(compress -c -f)
+COMPRESSLZ4=(lz4 -q)
+COMPRESSLZ=(lzip -c -f)
+export COMPRESSGZ COMPRESSBZ2 COMPRESSXZ COMPRESSZST COMPRESSLRZ COMPRESSLZO COMPRESSZ COMPRESSLZ4 COMPRESSLZ
+
+PKGEXT='.pkg.tar.zst'
+SRCEXT='.src.tar.zst'
+export PKGEXT SRCEXT
+
+PACMAN_AUTH=()
