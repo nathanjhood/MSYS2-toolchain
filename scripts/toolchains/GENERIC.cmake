@@ -1,6 +1,59 @@
-if()
+if(NOT _MSYS_GENERIC_TOOLCHAIN)
+    set(_MSYS_GENERIC_TOOLCHAIN 1)
+
+    set(ENABLE_GENERIC ON CACHE BOOL "Enable sub-system: Generic <GENERIC>." FORCE)
+
+    message(STATUS "Generic toolchain loading...")
+
+    #[===[.md
+
+    PATH="${MSYS2_PATH}:/opt/bin${ORIGINAL_PATH:+:${ORIGINAL_PATH}}"
+    PKG_CONFIG_PATH="/usr/lib/pkgconfig:/usr/share/pkgconfig:/lib/pkgconfig"
+
+    CONFIG_SITE="/etc/config.site"
+    SYSCONFDIR="${SYSCONFDIR:=/etc}"
+
+    ORIGINAL_TMP="${ORIGINAL_TMP:-${TMP}}"
+    ORIGINAL_TEMP="${ORIGINAL_TEMP:-${TEMP}}"
+
+    TMP="/tmp"
+    TEMP="/tmp"
+
+    In 'makepkg.conf' we find the standard MSYS defaults;
+
+    CARCH="x86_64"
+    CHOST="x86_64-pc-msys"
+
+    ##-- Compiler and Linker Flags
+    # -march (or -mcpu) builds exclusively for an architecture
+    # -mtune optimizes for an architecture, but builds for whole processor family
+    CC=gcc
+    CXX=g++
+    CPPFLAGS=
+    CFLAGS="-march=nocona -msahf -mtune=generic -O2 -pipe"
+    CXXFLAGS="-march=nocona -msahf -mtune=generic -O2 -pipe"
+    LDFLAGS="-pipe"
+    #-- Make Flags: change this for DistCC/SMP systems
+    MAKEFLAGS="-j$(($(nproc)+1))"
+    #-- Debugging flags
+    DEBUG_CFLAGS="-ggdb -Og"
+    DEBUG_CXXFLAGS="-ggdb -Og"
+
+    #]===]
+
+    #[===[.md
+
+    CPPFLAGS - is the variable name for flags to the C preprocessor.
+    CXXFLAGS - is the standard variable name for flags to the C++ compiler.
+    CFLAGS is - the standard name for a variable with compilation flags.
+    LDFLAGS - should be used for search flags/paths (-L) - i.e. -L/usr/lib (/usr/lib are library binaries).
+    LDLIBS - for linking libraries.
+
+    #]===]
+
     # <LD>
-    find_program(LD  "ld" NO_CACHE) # DOC "The full path to the compiler for <LD>.")
+    find_program(LD ld DOC "The full path to the compiler for <LD>.")
+    mark_as_advanced(LD)
     if(NOT DEFINED LDFLAGS)
         set(LDFLAGS "") # CACHE STRING "Flags for the 'C/C++' language linker utility, for all build types.")
         string(APPEND LDFLAGS "-pipe ")
@@ -20,6 +73,7 @@ if()
 
     # <CXX>
     find_program(CXX "c++" DOC "The full path to the compiler for <CXX>.")
+    mark_as_advanced(CXX)
     if(NOT DEFINED CXX_FLAGS)
         set(CXX_FLAGS "" CACHE STRING "Flags for the 'C++' language utility, for all build types.")
         string(APPEND CXX_FLAGS "-march=nocona ")
@@ -40,97 +94,32 @@ if()
     set(CXX_FLAGS_RELWITHDEBINFO "${CXX_FLAGS_RELWITHDEBINFO}") # CACHE STRING "Flags for the 'C++' language utility, for <RelWithDebInfo> builds.")
     set(CXX_COMMAND "${CXX} ${CXX_FLAGS}") # CACHE STRING "The 'C++' language utility command." FORCE)
 
-    ###########################################################################
+
     # <CC>
-    ###########################################################################
-    # Compiler defaults...
-    set(MINGW64_C_PLATFORM_ID "MinGW" CACHE STRING "" FORCE)
-    set(MINGW64_C_COMPILER_FRONTEND_VARIANT "GNU" CACHE STRING "Identification string of the compiler frontend variant." FORCE)
-    set(MINGW64_C_COMPILE_FEATURES "c_std_90;c_function_prototypes;c_std_99;c_restrict;c_variadic_macros;c_std_11;c_static_assert;c_std_17;c_std_23" CACHE STRING "List of features known to the <CC> compiler." FORCE)
-    set(MINGW64_C90_COMPILE_FEATURES "c_std_90;c_function_prototypes" CACHE STRING "List of features known to the <CC> compiler." FORCE)
-    set(MINGW64_C99_COMPILE_FEATURES "c_std_99;c_restrict;c_variadic_macros" CACHE STRING "List of features known to the <CC> compiler." FORCE)
-    set(MINGW64_C11_COMPILE_FEATURES "c_std_11;c_static_assert" CACHE STRING "List of features known to the <CC> compiler." FORCE)
-    set(MINGW64_C17_COMPILE_FEATURES "c_std_17" CACHE STRING "List of features known to the <CC> compiler." FORCE)
-    set(MINGW64_C23_COMPILE_FEATURES "c_std_23" CACHE STRING "List of features known to the <CC> compiler." FORCE)
-    set(MINGW64_C_SIZEOF_DATA_PTR "8" CACHE STRING "Size of pointer-to-data types for language <CC>." FORCE)
-    set(MINGW64_SIZEOF_VOID_P "${MINGW64_C_SIZEOF_DATA_PTR}" CACHE STRING "Size of a ``void`` pointer." FORCE)
-    # Implicit include dirs...
-    set(MINGW64_C_IMPLICIT_INCLUDE_DIRECTORIES
-        "${Z_MINGW64_ROOT_DIR}/include"
-        "${Z_MINGW64_ROOT_DIR}/lib/gcc/x86_64-w64-mingw32/13.1.0/include"
-        "${Z_MINGW64_ROOT_DIR}/lib/gcc/x86_64-w64-mingw32/13.1.0/include-fixed"
-        CACHE PATH "Directories implicitly searched by the compiler for header files for language <CC>." FORCE
-    )
-    # Implicit link dirs...
-    set(MINGW64_C_IMPLICIT_LINK_DIRECTORIES
-        "${Z_MINGW64_ROOT_DIR}/lib"
-        "${Z_MINGW64_ROOT_DIR}/lib/gcc"
-        "${Z_MINGW64_ROOT_DIR}/lib/gcc/x86_64-w64-mingw32/13.1.0"
-        "${Z_MINGW64_ROOT_DIR}/x86_64-w64-mingw32/lib"
-        CACHE PATH "Implicit linker search path detected for language <CC>." FORCE
-    )
-    # Implicit link libs...
-    set(MINGW64_C_IMPLICIT_LINK_LIBRARIES "" CACHE STRING "Implicit link libraries and flags detected for language <CC>.")
-    string(APPEND MINGW64_C_IMPLICIT_LINK_LIBRARIES
-        gcc
-        mingw32
-        mingwex
-        moldname
-        pthread
-        advapi32
-        kernel32
-        shell32
-        user32
-    )
-    set(MINGW64_C_IMPLICIT_LINK_FRAMEWORK_DIRECTORIES "" CACHE PATH "Implicit linker framework search path detected for language <CC>." FORCE)
-    # add_compile_definitions(__USE_MINGW_ANSI_STDIO=1)
-    # add_compile_definitions($<$<COMPILE_LANGUAGE:C>:_FORTIFY_SOURCE=2>)
-    # add_compile_options(-march=nocona -msahf -mtune=generic -pipe $<$<COMPILE_LANGUAGE:C>:-Wp,-D_FORTIFY_SOURCE=2> $<$<COMPILE_LANGUAGE:C>:-fstack-protector-strong>)
-    # set(MINGW64_C_SRCFILE_EXTENSIONS c m) # CACHE STRING "" FORCE)
+    find_program(CC "cc" DOC "The full path to the compiler for <CC>.")
+    mark_as_advanced(CC)
+    if(NOT DEFINED C_FLAGS)
+        set(C_FLAGS "")
+        string(APPEND C_FLAGS "-march=nocona ")
+        string(APPEND C_FLAGS "-mtune=generic ")
 
-    find_program(MINGW64_CC "cc" DOC "The full path to the compiler for <CC>.")
-    mark_as_advanced(MINGW64_CC)
-    if(NOT DEFINED MINGW64_C_FLAGS)
-        set(MINGW64_C_FLAGS "")
-        string(APPEND MINGW64_C_FLAGS "-march=nocona ")
-        string(APPEND MINGW64_C_FLAGS "-msahf ")
-        string(APPEND MINGW64_C_FLAGS "-mtune=generic ")
-        # string(APPEND C_FLAGS "-O2 ")
-        string(APPEND MINGW64_C_FLAGS "-pipe ")
-        string(APPEND MINGW64_C_FLAGS "-Wp,-D_FORTIFY_SOURCE=2 ")
-        string(APPEND MINGW64_C_FLAGS "-fstack-protector-strong ")
-
-        set(MINGW64_C_FLAGS_DEBUG "") # "-g" CACHE STRING "Flags for the 'C' language utility, for <Debug> builds.")
-        set(MINGW64_C_FLAGS_RELEASE "") # "-O3 -DNDEBUG" CACHE STRING "Flags for the 'C' language utility, for <Release> builds.")
-        set(MINGW64_C_FLAGS_MINSIZEREL "") # "-Os -DNDEBUG" CACHE STRING "Flags for the 'C' language utility, for <MinSizeRel> builds.")
-        set(MINGW64_C_FLAGS_RELWITHDEBINFO "") # "-O2 -g -DNDEBUG" CACHE STRING "Flags for the 'C' language utility, for <RelWithDebInfo> builds.")
+        set(C_FLAGS_DEBUG "") # "-g" CACHE STRING "Flags for the 'C' language utility, for <Debug> builds.")
+        set(C_FLAGS_RELEASE "") # "-O3 -DNDEBUG" CACHE STRING "Flags for the 'C' language utility, for <Release> builds.")
+        set(C_FLAGS_MINSIZEREL "") # "-Os -DNDEBUG" CACHE STRING "Flags for the 'C' language utility, for <MinSizeRel> builds.")
+        set(C_FLAGS_RELWITHDEBINFO "") # "-O2 -g -DNDEBUG" CACHE STRING "Flags for the 'C' language utility, for <RelWithDebInfo> builds.")
 
     endif()
-    set(MINGW64_C_FLAGS "${MINGW64_C_FLAGS}" CACHE STRING "Flags for the 'C' language utility." FORCE)
-    set(MINGW64_C_FLAGS_DEBUG "${MINGW64_C_FLAGS_DEBUG}" CACHE STRING "Flags for the 'C' language utility, for <Debug> builds.")
-    set(MINGW64_C_FLAGS_RELEASE "${MINGW64_C_FLAGS_RELEASE}" CACHE STRING "Flags for the 'C' language utility, for <Release> builds.")
-    set(MINGW64_C_FLAGS_MINSIZEREL "${MINGW64_C_FLAGS_MINSIZEREL}" CACHE STRING "Flags for the 'C' language utility, for <MinSizeRel> builds.")
-    set(MINGW64_C_FLAGS_RELWITHDEBINFO "${MINGW64_C_FLAGS_RELWITHDEBINFO}" CACHE STRING "Flags for the 'C' language utility, for <RelWithDebInfo> builds.")
-    set(MINGW64_C_COMMAND "${MINGW64_CC} ${MINGW64_C_FLAGS}" CACHE STRING "The 'C' language utility command." FORCE)
-
-    set(MINGW64_C_SOURCE_FILE_EXTENSIONS "" CACHE STRING "Extensions of source files for the given language <CC>." FORCE)
-    list(APPEND MINGW64_C_SOURCE_FILE_EXTENSIONS "c")
-    list(APPEND MINGW64_C_SOURCE_FILE_EXTENSIONS "m")
-    set(MINGW64_C_IGNORE_EXTENSIONS "" CACHE STRING "File extensions that should be ignored by the build." FORCE)
-    list(APPEND MINGW64_C_IGNORE_EXTENSIONS "h")
-    list(APPEND MINGW64_C_IGNORE_EXTENSIONS "H")
-    list(APPEND MINGW64_C_IGNORE_EXTENSIONS "o")
-    list(APPEND MINGW64_C_IGNORE_EXTENSIONS "O")
-    list(APPEND MINGW64_C_IGNORE_EXTENSIONS "obj")
-    list(APPEND MINGW64_C_IGNORE_EXTENSIONS "OBJ")
-    list(APPEND MINGW64_C_IGNORE_EXTENSIONS "def")
-    list(APPEND MINGW64_C_IGNORE_EXTENSIONS "DEF")
-    list(APPEND MINGW64_C_IGNORE_EXTENSIONS "rc")
-    list(APPEND MINGW64_C_IGNORE_EXTENSIONS "RC")
+    set(C_FLAGS "${C_FLAGS}" CACHE STRING "Flags for the 'C' language utility." FORCE)
+    set(C_FLAGS_DEBUG "${C_FLAGS_DEBUG}" CACHE STRING "Flags for the 'C' language utility, for <Debug> builds.")
+    set(C_FLAGS_RELEASE "${C_FLAGS_RELEASE}" CACHE STRING "Flags for the 'C' language utility, for <Release> builds.")
+    set(C_FLAGS_MINSIZEREL "${C_FLAGS_MINSIZEREL}" CACHE STRING "Flags for the 'C' language utility, for <MinSizeRel> builds.")
+    set(C_FLAGS_RELWITHDEBINFO "${C_FLAGS_RELWITHDEBINFO}" CACHE STRING "Flags for the 'C' language utility, for <RelWithDebInfo> builds.")
+    set(C_COMMAND "${CC} ${C_FLAGS}" CACHE STRING "The 'C' language utility command." FORCE)
 
     # <CPP>
-    find_program(CPP "cc" "c++" NO_CACHE)
-    set(CPP "${CPP} -E") # CACHE STRING "The full path to the pre-processor for <CC/CXX>." FORCE)
+    find_program(CPP cc c++ DOC "The full path to the pre-processor for <CC/CXX>.")
+    mark_as_advanced(CPP)
+    set(CPP "${CPP} -E")
     if(NOT DEFINED CPP_FLAGS)
         set(CPP_FLAGS "")
         string(APPEND CPP_FLAGS "-D__USE_MINGW_ANSI_STDIO=1 ")
@@ -139,10 +128,11 @@ if()
     set(CPP_COMMAND "${CC} ${CPP_FLAGS}") # CACHE STRING "The 'C' language pre-processor utility command." FORCE)
 
     # <RC>
-    find_program(RC "rc" NO_CACHE) # DOC "The full path to the compiler for <RC>.")
+    find_program(RC rc DOC "The full path to the compiler for <RC>.")
+    mark_as_advanced(RC)
     if(NOT DEFINED RC_FLAGS)
         set(RC_FLAGS "")
-        if(MSYS_VERBOSE)
+        if(VERBOSE)
             string(APPEND RC_FLAGS "--verbose")
         endif()
         set(RC_FLAGS_DEBUG "") # CACHE STRING "Flags for the 'C' language resource compiler utility, for <Debug> builds.")
@@ -238,4 +228,5 @@ if()
         string(APPEND CMAKE_EXE_LINKER_FLAGS_RELEASE_INIT " ${LDFLAGS_RELEASE} ")
 
     endif() # (NOT _MSYS_IN_TRY_COMPILE)
-endif()
+
+endif() # (MSYS_GENERIC_TOOLCHAIN)
