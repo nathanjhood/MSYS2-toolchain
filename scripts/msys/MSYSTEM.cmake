@@ -61,7 +61,7 @@ endif()
 find_program(BASH bash "${Z_MSYS_ROOT_DIR}/usr/bin" NO_SYSTEM_ENVIRONMENT_PATH)
 mark_as_advanced(BASH)
 set(LOGINSHELL "${BASH}")
-set(msys2_shiftCounter 0)
+#set(msys2_shiftCounter 0)
 
 find_program(MINTTY mintty "${Z_MSYS_ROOT_DIR}/usr/bin" NO_SYSTEM_ENVIRONMENT_PATH)
 mark_as_advanced(MINTTY)
@@ -230,8 +230,8 @@ function(startsh)
     endif()
 endfunction()
 
-set(MIRROR_URL "https://mirror.msys2.org")
-set(REPO_URL "https://repo.msys2.org/")
+set(MIRROR_URL "https://mirror.msys2.org") # geo redirection service for Tier 1 mirrors
+set(REPO_URL "https://repo.msys2.org/") # primary
 
 set(MSYS2_PATH)
 list(APPEND MSYS2_PATH "${Z_MSYS_ROOT_DIR}/usr/local/bin")
@@ -278,6 +278,8 @@ elseif(MSYS2_PATH_TYPE STREQUAL "-minimal")
 
 endif()
 
+set(MSYS_LIBRARY_LINKAGE "dynamic")
+
 if(MSYSTEM STREQUAL "MINGW32")
 
     set(CONTITLE "MinGW x32")
@@ -296,6 +298,7 @@ if(MSYSTEM STREQUAL "MINGW32")
     set(MSYSTEM_CHOST "i686-w64-mingw32")
 
     set(REPO_DB_URL "${MIRROR_URL}/mingw/i686/mingw32.db")
+    set(REPO_MIRROR_LIST "${Z_MSYS_ROOT_DIR}/etc/pacman.d/mirrorlist.mingw32")
     set(REPO_PACKAGE_COMMON_PREFIX "mingw-w64-i686-")
 
     #set(PATH "${MINGW_MOUNT_POINT}/bin:${MSYS2_PATH}${ORIGINAL_PATH:+:${ORIGINAL_PATH}}")
@@ -342,6 +345,7 @@ elseif (MSYSTEM STREQUAL "MINGW64")
     set(MSYSTEM_CHOST "x86_64-w64-mingw32")
 
     set(REPO_DB_URL "${MIRROR_URL}/mingw/x86_64/mingw64.db")
+    set(REPO_MIRROR_LIST "${Z_MSYS_ROOT_DIR}/etc/pacman.d/mirrorlist.mingw64")
     set(REPO_PACKAGE_COMMON_PREFIX "mingw-w64-x86_64-")
 
     # set(PATH "${MINGW_MOUNT_POINT}/bin:${MSYS2_PATH}${ORIGINAL_PATH:+:${ORIGINAL_PATH}}")
@@ -388,6 +392,7 @@ elseif (MSYSTEM STREQUAL "UCRT64")
     set(MSYSTEM_CHOST "x86_64-w64-mingw32")
 
     set(REPO_DB_URL "${MIRROR_URL}/mingw/ucrt64/ucrt64.db")
+    set(REPO_MIRROR_LIST "${Z_MSYS_ROOT_DIR}/etc/pacman.d/mirrorlist.ucrt64")
     set(REPO_PACKAGE_COMMON_PREFIX "mingw-w64-ucrt-x86_64-")
 
     # set(PATH "${MINGW_MOUNT_POINT}/bin:${MSYS2_PATH}${ORIGINAL_PATH:+:${ORIGINAL_PATH}}")
@@ -433,6 +438,7 @@ elseif (MSYSTEM STREQUAL "CLANG64")
     set(MSYSTEM_CHOST "x86_64-w64-mingw32")
 
     set(REPO_DB_URL "${MIRROR_URL}/mingw/clang64/clang64.db")
+    set(REPO_MIRROR_LIST "${Z_MSYS_ROOT_DIR}/etc/pacman.d/mirrorlist.clang64")
     set(REPO_PACKAGE_COMMON_PREFIX "mingw-w64-clang-x86_64-")
 
     # set(PATH "${MINGW_MOUNT_POINT}/bin" "${MSYS2_PATH}${ORIGINAL_PATH:+:${ORIGINAL_PATH}}")
@@ -478,6 +484,7 @@ elseif (MSYSTEM STREQUAL "CLANG32")
     set(MSYSTEM_CHOST "i686-w64-mingw32")
 
     set(REPO_DB_URL "${MIRROR_URL}/mingw/clang32/clang32.db")
+    set(REPO_MIRROR_LIST "${Z_MSYS_ROOT_DIR}/etc/pacman.d/mirrorlist.clang32")
     set(REPO_PACKAGE_COMMON_PREFIX "mingw-w64-clang-i686-")
 
     # set(PATH "${MINGW_MOUNT_POINT}/bin:${MSYS2_PATH}${ORIGINAL_PATH:+:${ORIGINAL_PATH}}")
@@ -523,6 +530,7 @@ elseif (MSYSTEM STREQUAL "CLANGARM64")
     set(MSYSTEM_CHOST "x86_64-w64-mingw32")
 
     set(REPO_DB_URL "${MIRROR_URL}/mingw/clangarm64/clangarm64.db")
+    set(REPO_MIRROR_LIST "${Z_MSYS_ROOT_DIR}/etc/pacman.d/mirrorlist.clangarm64")
     set(REPO_PACKAGE_COMMON_PREFIX "mingw-w64-clang-aarch64-")
 
     # set(PATH "${MINGW_MOUNT_POINT}/bin:${MSYS2_PATH}${ORIGINAL_PATH:+:${ORIGINAL_PATH}}")
@@ -568,6 +576,7 @@ elseif (MSYSTEM STREQUAL "MSYS2")
     set(MSYSTEM_CHOST "${MSYSTEM_CARCH}-pc-msys")
 
     set(REPO_DB_URL "${MIRROR_URL}/msys/x86_64/msys.db") # https://repo.msys2.org/msys/x86_64/msys.db
+    set(REPO_MIRROR_LIST "${Z_MSYS_ROOT_DIR}/etc/pacman.d/mirrorlist.msys")
     set(REPO_PACKAGE_COMMON_PREFIX "")
 
     # set(PATH="${MSYS2_PATH}:/opt/bin${ORIGINAL_PATH:+:${ORIGINAL_PATH}}" # There are some cross-compiler dirs to add...
@@ -666,77 +675,148 @@ set(SRCEXT ".src.tar.zst")
 
 set(PACMAN_AUTH "()")
 
+# Suffix of the package archives, such as `-any.pkg.tar.zst`. Can be "-any${PKGEXT}" if used carefully.
+# Can be a space-separated lists of such suffixes, those will be tried in the specified order when downloading packages.
+# At some point pacman switched from `.tar.zst` to `.tar.xz`, but MSYS2 repos still have `.tar.xz` around for old packages, so we have to support both.
+set(REPO_PACKAGE_ARCHIVE_SUFFIXES "-any.pkg.tar.zst" "-any.pkg.tar.xz")
 
-# function(startmintty)
-# if (NOT DEFINED MSYS2_NOSTART)
-#     set(_start "%CONTITLE%" "%WD%mintty" -i "/%CONICON%" -t "%CONTITLE%" "/usr/bin/%LOGINSHELL%" -l !SHELL_ARGS!)
-# else ()
-#   "%WD%mintty" -i "/%CONICON%" -t "%CONTITLE%" "/usr/bin/%LOGINSHELL%" -l !SHELL_ARGS!)
-# exit /b %ERRORLEVEL%
-# endfunction()
+# All these servers are registered with pacman under /etc/pacman.d/mirrorlist.*.
+# The first URL in those lists is the primary mirror, all others will be used as
+# a fallback. You can make another mirror the primary one by moving it to the top.
 
-if(MSYSCON STREQUAL "x-mintty")
-elseif(MSYSCON STREQUAL "x-conemu")
-elseif(MSYSCON STREQUAL "x-determ")
-endif()
+##-- Primary Server
+set(PRIMARY_SERVERS)
+list(APPEND PRIMARY_SERVERS "repo.msys2.org") # primary
+list(APPEND PRIMARY_SERVERS "mirror.msys2.org") # geo redirection service for Tier 1 mirrors
+set(PRIMARY_SERVERS "${PRIMARY_SERVERS}" CACHE STRING "" FORCE)
+
+set(PRIMARY_SERVERS_HTTPS) # <HTTPS>
+list(APPEND PRIMARY_SERVERS_HTTPS "https://repo.msys2.org/") # primary
+list(APPEND PRIMARY_SERVERS_HTTPS "https://mirror.msys2.org/") # geo redirection service for Tier 1 mirrors
+set(PRIMARY_SERVERS_HTTPS "${PRIMARY_SERVERS_HTTPS}" CACHE STRING "" FORCE)
+
+set(PRIMARY_SERVERS_RSYNC) # <RSYNC>
+list(APPEND PRIMARY_SERVERS_RSYNC "rsync://repo.msys2.org/builds/") # primary
+set(PRIMARY_SERVERS_RSYNC "${PRIMARY_SERVERS_RSYNC}" CACHE STRING "" FORCE)
 
 
-function(startsh)
-    set(MSYSCON "")
-    if(NOT DEFINED MSYS2_NOSTART)
-        start "%CONTITLE%" "%WD%\%LOGINSHELL%" -l !SHELL_ARGS!
-    else()
-        "%WD%\%LOGINSHELL%" -l !SHELL_ARGS!
-        exit /b %ERRORLEVEL%
-    endif()
-endfunction()
+##-- Tier 1 mirrors
+# Requirements: Reliable, 1GBit/s+ with enough free bandwidth, rsync server support (*), HTTPS support, synced at least once per day from the primary server.
+# Map: https://mirror.msys2.org/?mirrorstats
+set(MIRRORS_TIER_1) # <HTTPS|RSYNC>
+list(APPEND MIRRORS_TIER_1 "mirror.umd.edu") # https://mirror.umd.edu/
+list(APPEND MIRRORS_TIER_1 "ftp.acc.umu.se") # ftp-adm@acc.umu.se
+list(APPEND MIRRORS_TIER_1 "ftp.nluug.nl") # ftp-admin@nluug.nl
+list(APPEND MIRRORS_TIER_1 "ftp.osuosl.org") # hosting-request@osuosl.org
+list(APPEND MIRRORS_TIER_1 "mirror.internet.asn.au") # peering@ix.asn.au
+list(APPEND MIRRORS_TIER_1 "mirror.selfnet.de") # https://github.com/carrotIndustries
+list(APPEND MIRRORS_TIER_1 "mirror.yandex.ru") # -
+list(APPEND MIRRORS_TIER_1 "mirrors.dotsrc.org") # staff@dotsrc.org
+list(APPEND MIRRORS_TIER_1 "mirrors.tuna.tsinghua.edu.cn") # -
+list(APPEND MIRRORS_TIER_1 "mirrors.ustc.edu.cn") # lug@ustc.edu.cn
+list(APPEND MIRRORS_TIER_1 "mirror.nju.edu.cn") # https://github.com/msys2/msys2.github.io/issues/155
+list(APPEND MIRRORS_TIER_1 "mirrors.bfsu.edu.cn") # https://github.com/msys2/MSYS2-packages/issues/2775
+list(APPEND MIRRORS_TIER_1 "repo.extreme-ix.org") # sysadmin@x3me.net
+list(APPEND MIRRORS_TIER_1 "mirrors.hit.edu.cn") # https://github.com/msys2/msys2.github.io/issues/180
+list(APPEND MIRRORS_TIER_1 "mirror.clarkson.edu") # https://github.com/msys2/msys2.github.io/issues/185
+list(APPEND MIRRORS_TIER_1 "quantum-mirror.hu") # https://quantum-mirror.hu/web/contact_en.html
+list(APPEND MIRRORS_TIER_1 "fastmirror.pp.ua") # https://fastmirror.pp.ua/
+set(MIRRORS_TIER_1 "${MIRRORS_TIER_1}" CACHE STRING "Tier 1 mirrors <HTTPS|RSYNC>. Requirements: Reliable, 1GBit/s+ with enough free bandwidth, rsync server support (*), HTTPS support, synced at least once per day from the primary server. rsync is required by mirrorbits, which we use to auto-redirect users to a local mirror via mirror.msys2.org. Map: https://mirror.msys2.org/?mirrorstats" FORCE)
 
-#[===[.cmd
+set(MIRRORS_TIER_1_HTTPS) # <HTTPS>
+list(APPEND MIRRORS_TIER_1_HTTPS "https://mirror.umd.edu/msys2/") # https://mirror.umd.edu/
+list(APPEND MIRRORS_TIER_1_HTTPS "https://ftp.acc.umu.se/mirror/msys2.org/") # ftp-adm@acc.umu.se
+list(APPEND MIRRORS_TIER_1_HTTPS "https://ftp.nluug.nl/pub/os/windows/msys2/builds/") # ftp-admin@nluug.nl
+list(APPEND MIRRORS_TIER_1_HTTPS "https://ftp.osuosl.org/pub/msys2/") # hosting-request@osuosl.org
+list(APPEND MIRRORS_TIER_1_HTTPS "https://mirror.internet.asn.au/pub/msys2/") # peering@ix.asn.au
+list(APPEND MIRRORS_TIER_1_HTTPS "https://mirror.selfnet.de/msys2/") # https://github.com/carrotIndustries
+list(APPEND MIRRORS_TIER_1_HTTPS "https://mirror.yandex.ru/mirrors/msys2/") # -
+list(APPEND MIRRORS_TIER_1_HTTPS "https://mirrors.dotsrc.org/msys2/") # staff@dotsrc.org
+list(APPEND MIRRORS_TIER_1_HTTPS "https://mirrors.tuna.tsinghua.edu.cn/msys2/") # -
+list(APPEND MIRRORS_TIER_1_HTTPS "https://mirrors.ustc.edu.cn/msys2/") # lug@ustc.edu.cn
+list(APPEND MIRRORS_TIER_1_HTTPS "https://mirror.nju.edu.cn/msys2/") # https://github.com/msys2/msys2.github.io/issues/155
+list(APPEND MIRRORS_TIER_1_HTTPS "https://mirrors.bfsu.edu.cn/msys2/") # https://github.com/msys2/MSYS2-packages/issues/2775
+list(APPEND MIRRORS_TIER_1_HTTPS "https://repo.extreme-ix.org/msys2/") # sysadmin@x3me.net
+list(APPEND MIRRORS_TIER_1_HTTPS "https://mirrors.hit.edu.cn/msys2/") # https://github.com/msys2/msys2.github.io/issues/180
+list(APPEND MIRRORS_TIER_1_HTTPS "https://mirror.clarkson.edu/msys2/") # https://github.com/msys2/msys2.github.io/issues/185
+list(APPEND MIRRORS_TIER_1_HTTPS "https://quantum-mirror.hu/mirrors/pub/msys2/") # https://quantum-mirror.hu/web/contact_en.html
+list(APPEND MIRRORS_TIER_1_HTTPS "https://fastmirror.pp.ua/msys2/") # https://fastmirror.pp.ua/
+set(MIRRORS_TIER_1_HTTPS "${MIRRORS_TIER_1_HTTPS}" CACHE STRING "Tier 1 servers <HTTPS>. Requirements: Reliable, 1GBit/s+ with enough free bandwidth, synced at least once per day from the primary server." FORCE)
 
-## Console types <MSYSCON>
-if "x%~1" == "x-mintty" shift& set /a msys2_shiftCounter+=1& set MSYSCON=mintty.exe& goto :checkparams
-if "x%~1" == "x-conemu" shift& set /a msys2_shiftCounter+=1& set MSYSCON=conemu& goto :checkparams
-if "x%~1" == "x-defterm" shift& set /a msys2_shiftCounter+=1& set MSYSCON=defterm& goto :checkparams
+set(MIRRORS_TIER_1_RSYNC) # <RSYNC>
+list(APPEND MIRRORS_TIER_1_RSYNC "rsync://mirror.umd.edu/msys2/") # https://mirror.umd.edu/
+list(APPEND MIRRORS_TIER_1_RSYNC "rsync://ftp.acc.umu.se/mirror/msys2.org/") # ftp-adm@acc.umu.se
+list(APPEND MIRRORS_TIER_1_RSYNC "rsync://ftp.nluug.nl/msys2/builds/") # ftp-admin@nluug.nl
+list(APPEND MIRRORS_TIER_1_RSYNC "rsync://rsync.osuosl.org/msys2/") # hosting-request@osuosl.org
+list(APPEND MIRRORS_TIER_1_RSYNC "rsync://mirror.internet.asn.au/msys2/") # peering@ix.asn.au
+list(APPEND MIRRORS_TIER_1_RSYNC "rsync://mirror.selfnet.de/msys2/") # https://github.com/carrotIndustries
+list(APPEND MIRRORS_TIER_1_RSYNC "rsync://mirror.yandex.ru/mirrors/msys2/") # -
+list(APPEND MIRRORS_TIER_1_RSYNC "rsync://mirrors.dotsrc.org/msys2/") # staff@dotsrc.org
+list(APPEND MIRRORS_TIER_1_RSYNC "rsync://mirrors.tuna.tsinghua.edu.cn/msys2/") # -
+list(APPEND MIRRORS_TIER_1_RSYNC "rsync://rsync.mirrors.ustc.edu.cn/repo/msys2/") # lug@ustc.edu.cn
+list(APPEND MIRRORS_TIER_1_RSYNC "rsync://mirror.nju.edu.cn/msys2/") # https://github.com/msys2/msys2.github.io/issues/155
+list(APPEND MIRRORS_TIER_1_RSYNC "rsync://mirrors.bfsu.edu.cn/msys2/") # https://github.com/msys2/MSYS2-packages/issues/2775
+list(APPEND MIRRORS_TIER_1_RSYNC "rsync://repo.extreme-ix.org/msys2/") # sysadmin@x3me.net
+list(APPEND MIRRORS_TIER_1_RSYNC "rsync://mirrors.hit.edu.cn/msys2/") # https://github.com/msys2/msys2.github.io/issues/180
+list(APPEND MIRRORS_TIER_1_RSYNC "rsync://mirror.clarkson.edu/msys2/") # https://github.com/msys2/msys2.github.io/issues/185
+list(APPEND MIRRORS_TIER_1_RSYNC "rsync://quantum-mirror.hu/msys2/") # https://quantum-mirror.hu/web/contact_en.html
+list(APPEND MIRRORS_TIER_1_RSYNC "rsync://fastmirror.pp.ua/msys2/") # https://fastmirror.pp.ua/
+set(MIRRORS_TIER_1_RSYNC "${MIRRORS_TIER_1_RSYNC}" CACHE STRING "Tier 1 servers <RSYNC>. Requirements: Reliable, 1GBit/s+ with enough free bandwidth, synced at least once per day from the primary server." FORCE)
 
-if "x%MSYSCON%" == "xmintty.exe" goto startmintty
-if "x%MSYSCON%" == "xconemu" goto startconemu
-if "x%MSYSCON%" == "xdefterm" goto startsh
+##-- Tier 2 mirrors
+# Requirements: Synced regularly.
+set(MIRRORS_TIER_2) # <HTTPS>
+list(APPEND MIRRORS_TIER_2 "ftp.cc.uoc.gr") # mirrors@cc.uoc.gr
+list(APPEND MIRRORS_TIER_2 "mirrors.bit.edu.cn") # webmaster@bitnp.net
+list(APPEND MIRRORS_TIER_2 "mirror.jmu.edu") # mirrormaster@jmu.edu
+list(APPEND MIRRORS_TIER_2 "mirrors.piconets.webwerks.in") # mirrors@piconets.com
+list(APPEND MIRRORS_TIER_2 "mirrors.sjtug.sjtu.edu.cn") # -
+list(APPEND MIRRORS_TIER_2 "www2.futureware.at") # oe.nick@gmail.com
+list(APPEND MIRRORS_TIER_2 "repo.casualgamer.ca") # -
+list(APPEND MIRRORS_TIER_2 "mirrors.aliyun.com") # ali-yum@alibaba-inc.com
+list(APPEND MIRRORS_TIER_2 "mirror.iscas.ac.cn") # -
+list(APPEND MIRRORS_TIER_2 "mirrors.tencent.com") # petzhou@tencent.com
+list(APPEND MIRRORS_TIER_2 "mirror.ufro.cl") # jonathan.gutierrez@ufrontera.cl
+list(APPEND MIRRORS_TIER_2 "download.nus.edu.sg") # download@nus.edu.sg
+set(MIRRORS_TIER_2 "${MIRRORS_TIER_2}" CACHE STRING "Tier 2 mirrors <HTTPS>. Requirements: Reliable, 1GBit/s+ with enough free bandwidth, rsync server support (*), HTTPS support, synced at least once per day from the primary server. rsync is required by mirrorbits, which we use to auto-redirect users to a local mirror via mirror.msys2.org. Map: https://mirror.msys2.org/?mirrorstats" FORCE)
 
-if NOT EXIST "%WD%mintty.exe" goto startsh
-set MSYSCON=mintty.exe
+set(MIRRORS_TIER_2_HTTPS) # <HTTPS>
+list(APPEND MIRRORS_TIER_2_HTTPS "https://ftp.cc.uoc.gr/mirrors/msys2/") # # mirrors@cc.uoc.gr
+list(APPEND MIRRORS_TIER_2_HTTPS "https://mirrors.bit.edu.cn/msys2/") # webmaster@bitnp.net
+list(APPEND MIRRORS_TIER_2_HTTPS "https://mirror.jmu.edu/pub/msys2/") # mirrormaster@jmu.edu
+list(APPEND MIRRORS_TIER_2_HTTPS "https://mirrors.piconets.webwerks.in/msys2-mirror/") # mirrors@piconets.com
+list(APPEND MIRRORS_TIER_2_HTTPS "https://mirrors.sjtug.sjtu.edu.cn/msys2/") # -
+list(APPEND MIRRORS_TIER_2_HTTPS "https://www2.futureware.at/~nickoe/msys2-mirror/") # oe.nick@gmail.com
+list(APPEND MIRRORS_TIER_2_HTTPS "https://repo.casualgamer.ca/") # -
+list(APPEND MIRRORS_TIER_2_HTTPS "https://mirrors.aliyun.com/msys2/") # ali-yum@alibaba-inc.com
+list(APPEND MIRRORS_TIER_2_HTTPS "https://mirror.iscas.ac.cn/msys2/") # -
+list(APPEND MIRRORS_TIER_2_HTTPS "https://mirrors.tencent.com/msys2/") # petzhou@tencent.com
+list(APPEND MIRRORS_TIER_2_HTTPS "https://mirror.ufro.cl/msys2/") # jonathan.gutierrez@ufrontera.cl
+list(APPEND MIRRORS_TIER_2_HTTPS "https://download.nus.edu.sg/mirror/msys2/") # download@nus.edu.sg
+set(MIRRORS_TIER_2_HTTPS "${MIRRORS_TIER_2_HTTPS}" CACHE STRING "Tier 2 mirrors <HTTPS>. Requirements: Reliable, 1GBit/s+ with enough free bandwidth, synced at least once per day from the primary server." FORCE)
 
-if NOT EXIST "%WD%mintty.exe" goto startsh
-set MSYSCON=mintty.exe
-:startmintty
-if not defined MSYS2_NOSTART (
-  start "%CONTITLE%" "%WD%mintty" -i "/%CONICON%" -t "%CONTITLE%" "/usr/bin/%LOGINSHELL%" -l !SHELL_ARGS!
-) else (
-  "%WD%mintty" -i "/%CONICON%" -t "%CONTITLE%" "/usr/bin/%LOGINSHELL%" -l !SHELL_ARGS!
-)
-exit /b %ERRORLEVEL%
 
-:startconemu
-call :conemudetect || (
-  echo ConEmu not found. Exiting. 1>&2
-  exit /b 1
-)
-if not defined MSYS2_NOSTART (
-  start "%CONTITLE%" "%ComEmuCommand%" /Here /Icon "%WD%..\..\%CONICON%" /cmd "%WD%\%LOGINSHELL%" -l !SHELL_ARGS!
-) else (
-  "%ComEmuCommand%" /Here /Icon "%WD%..\..\%CONICON%" /cmd "%WD%\%LOGINSHELL%" -l !SHELL_ARGS!
-)
-exit /b %ERRORLEVEL%
+##-- May or may not be worth grouping the mirrors into some sort of class-like routine?
+# Could easily populate lists of mirrors with a function... But this suits C++ itself
+# more easily than CMake!
 
-:startsh
-set MSYSCON=
-if not defined MSYS2_NOSTART (
-  start "%CONTITLE%" "%WD%\%LOGINSHELL%" -l !SHELL_ARGS!
-) else (
-  "%WD%\%LOGINSHELL%" -l !SHELL_ARGS!
-)
-exit /b %ERRORLEVEL%
-#]===]
+# if(MIRROR_A)
+#     set(MIRROR_A_TYPES      HTTP RSYNC)
+#     set(MIRROR_A_LABEL      "mirror.umd.edu")
+#     set(MIRROR_A_URL_HTTPS  "https://mirror.umd.edu/msys2/")
+#     set(MIRROR_A_URL_RSYNC  "rsync://mirror.umd.edu/msys2/")
+#     set(MIRROR_A_NOTES      "https://mirror.umd.edu/")
+#     set(MIRROR_A_TIER       "1")
+# endif()
 
+# if(MIRROR_B)
+#     set(MIRROR_B_TYPES      HTTP RSYNC)
+#     set(MIRROR_B_LABEL      "mirror.umd.edu")
+#     set(MIRROR_B_URL_HTTPS  "https://mirror.umd.edu/msys2/")
+#     set(MIRROR_B_URL_RSYNC  "rsync://mirror.umd.edu/msys2/")
+#     set(MIRROR_B_NOTES      "https://mirror.umd.edu/")
+#     set(MIRROR_B_TIER       "1")
+# endif()
 
 #[===[.conf
 ###############################################################################
