@@ -5,17 +5,6 @@
 
 # message("Reading MSYS.cmake from the top...")
 
-# if(DEFINED ENV{MSYSTEM})
-#     set(MSYSTEM "$ENV{MSYSTEM}" CACHE STRING "The detected MSYS sub-system in use." FORCE)
-# elseif(DEFINED MSYSTEM)
-#     set(MSYSTEM "${MSYSTEM}" CACHE STRING "The detected MSYS sub-system in use." FORCE)
-# else()
-#     set(MSYSTEM "MSYS" CACHE STRING "The detected MSYS sub-system in use." FORCE)
-#     message(WARNING "Cannot find any valid msys2 subsystem specification...")
-#     message(WARNING "please try passing '-DMSYSTEM:STRING=UCRT64' on the CMake invocation.")
-#     message(WARNING "Attempting to use MSYS as a fallback.")
-# endif()
-
 # Mark variables as used so cmake doesn't complain about them
 mark_as_advanced(CMAKE_TOOLCHAIN_FILE)
 
@@ -38,9 +27,12 @@ since cmake prints a lot of nonsense if the toolchain errors out before it's fou
 This `Z_MSYS_HAS_FATAL_ERROR` must be checked before any filesystem operations are done,
 since otherwise you might be doing something with bad variables set up.
 #]===]
+
 # this is defined above everything else so that it can be used.
 set(Z_MSYS_FATAL_ERROR)
 set(Z_MSYS_HAS_FATAL_ERROR OFF)
+
+#Sensible error logging.
 function(z_msys_add_fatal_error ERROR)
     if(NOT Z_MSYS_HAS_FATAL_ERROR)
         set(Z_MSYS_HAS_FATAL_ERROR ON PARENT_SCOPE)
@@ -61,7 +53,6 @@ cmake_policy(VERSION 3.7.2)
 
 # Prevents multiple inclusions...
 if(MSYS_TOOLCHAIN)
-    # Must always come after 'cmake_policy(PUSH)'
     # message("Leaving MSYS.cmake at ${CMAKE_CURRENT_LIST_LINE}")
     cmake_policy(POP)
     return()
@@ -76,11 +67,6 @@ endif()
 option(MSYS_VERBOSE "Enables messages from the MSYS toolchain for debugging purposes." ON)
 mark_as_advanced(MSYS_VERBOSE)
 
-# if(MSYS_VERBOSE)
-#     message(":: [toolchain] :: [msys2] -- Build system loading...")
-# else()
-#     message(STATUS "Msys2 Build system loading...")
-# endif()
 message(STATUS "Msys2 Build system loading...")
 
 if(MSYS_VERBOSE)
@@ -209,7 +195,11 @@ option(ENABLE_IMPORTED_CONFIGS "If CMake does not have a mapping for MinSizeRel 
     endif()
 endif()
 
-set(MSYSTEM "MINGW64" CACHE STRING "The detected MSYS sub-system in use." FORCE)
+
+###############################################################################
+# HARDCODED TO MINGW64 TOOLCHAIN FOR NOW!
+###############################################################################
+set(MSYSTEM "MINGW64" CACHE STRING "The detected MSYS sub-system in use (currently hard-coded to MinGW64)." FORCE)
 
 if(MSYS_TARGET_TRIPLET)
     # This is required since a user might do: 'set(MSYS_TARGET_TRIPLET somevalue)' [no CACHE] before the first project() call
@@ -354,7 +344,7 @@ endif()
 set(MSYS_TARGET_TRIPLET "${Z_MSYS_TARGET_TRIPLET_ARCH}-${Z_MSYS_TARGET_TRIPLET_PLAT}" CACHE STRING "Msys target triplet (ex. x86-windows)")
 set(Z_MSYS_TOOLCHAIN_DIR "${CMAKE_CURRENT_LIST_DIR}")
 
-# Detect msys2.ico to figure MSYS_ROOT_DIR
+# Detect msys2.ini to figure MSYS_ROOT_DIR
 set(Z_MSYS_ROOT_DIR_CANDIDATE "${CMAKE_CURRENT_LIST_DIR}")
 while(NOT DEFINED Z_MSYS_ROOT_DIR)
     if(EXISTS "${Z_MSYS_ROOT_DIR_CANDIDATE}msys2.ini")
@@ -628,66 +618,6 @@ if(NOT DEFINED MSYS_ROOT)
     endif()
 endif()
 
-# if(EXISTS "$ENV{HOMEDRIVE}/cygwin64")
-#     set(CYGWIN64_ROOT "$ENV{HOMEDRIVE}/cygwin64") #CACHE PATH "Path to cygwin installation (64-bit)." FORCE)
-# endif()
-# if(EXISTS "$ENV{HOMEDRIVE}/cygwin32")
-#     set(CYGWIN32_ROOT "$ENV{HOMEDRIVE}/cygwin32") #CACHE PATH "Path to cygwin installation (32-bit)." FORCE)
-# endif()
-
-# # Create the standard MSYS2 filepath...
-# set(MSYS2_DEV_DIR "${MSYS_ROOT}/dev" CACHE PATH "")
-# set(MSYS2_ETC_DIR "${MSYS_ROOT}/etc" CACHE PATH "")
-# set(MSYS2_HOME_DIR "${MSYS_ROOT}/home" CACHE PATH "")
-# set(MSYS2_SHARE_DIR "${MSYS_ROOT}/share" CACHE PATH "")
-# set(MSYS2_TMP_DIR "${MSYS_ROOT}/tmp" CACHE PATH "")
-# set(MSYS2_USR_DIR "${MSYS_ROOT}/usr" CACHE PATH "")
-# set(MSYS2_VAR_DIR "${MSYS_ROOT}/var" CACHE PATH "")
-# # Additional cross-compiler toolchains are in here...
-# set(MSYS2_OPT_DIR "${MSYS_ROOT}/opt" CACHE PATH "")
-
-# set(MSYS2_PATH
-#     "${MSYS_ROOT}/usr/local/bin"
-#     "${MSYS_ROOT}/usr/bin"
-#     "${MSYS_ROOT}/bin"
-#     CACHE PATH "" FORCE
-# )
-# set(MSYS2_MANPATH
-#     "${MSYS_ROOT}/usr/local/man"
-#     "${MSYS_ROOT}/usr/share/man"
-#     "${MSYS_ROOT}/usr/man"
-#     "${MSYS_ROOT}/share/man"
-#     CACHE PATH "" FORCE
-# )
-# set(MSYS2_INFOPATH
-#     "${MSYS_ROOT}/usr/local/info"
-#     "${MSYS_ROOT}/usr/share/info"
-#     "${MSYS_ROOT}/usr/info"
-#     "${MSYS_ROOT}/share/info"
-#     CACHE PATH "" FORCE
-# )
-
-# if(MSYS2_PATH_TYPE STREQUAL "strict")
-#     # Do not inherit any path configuration, and allow for full customization
-#     # of external path. This is supposed to be used in special cases such as
-#     # debugging without need to change this file, but not daily usage.
-#     unset (ORIGINAL_PATH)
-
-# elseif(MSYS2_PATH_TYPE STREQUAL "inherit")
-#     # Inherit previous path. Note that this will make all of the Windows path
-#     # available in current shell, with possible interference in project builds.
-#     set(ORIGINAL_PATH "${ORIGINAL_PATH}" "${PATH}")
-
-# elseif(NOT DEFINED MSYS2_PATH_TYPE OR (MSYS2_PATH_TYPE STREQUAL "minimal"))
-#     # Do not inherit any path configuration but configure a default Windows path
-#     # suitable for normal usage with minimal external interference.
-#     set(WIN_ROOT "$(PATH=${MSYS2_PATH} exec cygpath -Wu)") # Using cygpath to turn Window's PATH to unix vals... needs CMake-ifying.
-#     set(ORIGINAL_PATH "${WIN_ROOT}/System32:${WIN_ROOT}:${WIN_ROOT}/System32/Wbem:${WIN_ROOT}/System32/WindowsPowerShell/v1.0/") # can use 'get_powershell_path()' here....
-
-# endif()
-
-# unset(MINGW_MOUNT_POINT)
-
 #########################################################################
 # ARCHITECTURE, COMPILE FLAGS
 #########################################################################
@@ -933,93 +863,6 @@ if ((MSYSTEM STREQUAL MINGW64) OR
     # set(PKG_CONFIG_PATH       "${Z_MSYS_ROOT_DIR}/${MINGW_PREFIX}/lib/pkgconfig" "${Z_MSYS_ROOT_DIR}/${MINGW_PREFIX}/share/pkgconfig" CACHE PATH "A colon-separated (on Windows, semicolon-separated) list of directories to search for .pc files. The default directory will always be searched after searching the path." FORCE)
 
 endif()
-
-# #########################################################################
-# # SOURCE ACQUISITION
-# #########################################################################
-# #
-# #-- The download utilities that makepkg should use to acquire sources
-# #
-# #########################################################################
-
-# option(ENABLE_FILE_DLAGENT "Enable the file download agent utility (curl)." ON)
-# # set(DLAGENT_FILE_COMMAND "file::${DLAGENT_FILE} ${DLAGENT_FILE_FLAGS}" CACHE STRING "The standard command for downloads (file)." FORCE)
-# if(ENABLE_FILE_DLAGENT)
-#     find_program(FILE_DLAGENT "${Z_MSYS_ROOT_DIR}/usr/bin/curl")
-#     if(NOT DEFINED FILE_DLAGENT_FLAGS)
-#         set(FILE_DLAGENT_FLAGS)
-#         # set(FILE_DLAGENT_FLAGS "-gqC - -o %o %u")
-#         string(APPEND FILE_DLAGENT_FLAGS "-gqC ")
-#         string(APPEND FILE_DLAGENT_FLAGS "- ")
-#         string(APPEND FILE_DLAGENT_FLAGS "-o ")
-#         string(APPEND FILE_DLAGENT_FLAGS "- ")
-#         # string(APPEND FILE_DLAGENT_FLAGS "${_output_file} ") # %o
-#         # string(APPEND FILE_DLAGENT_FLAGS "${_user} ") # %u
-#     endif() # (NOT DEFINED FILE_DLAGENT_FLAGS)
-#     set(FILE_DLAGENT_FLAGS "${FILE_DLAGENT_FLAGS}" CACHE STRING "Flags for the file download agent utility (curl)." FORCE)
-#     set(FILE_DLAGENT_COMMAND "${FILE_DLAGENT} ${FILE_DLAGENT_FLAGS}" CACHE STRING "The file download agent utility command (curl)." FORCE)
-#     set(DLAGENT_FILE "file::${FILE_DLAGENT_COMMAND}" CACHE STRING "The standard command for downloads (file)." FORCE)
-#     unset(FILE_DLAGENT_FLAGS)
-# endif() # (FILE_DLAGENT)
-
-# set(DLAGENT_FTP "${Z_MSYS_ROOT_DIR}/usr/bin/curl")
-# set(DLAGENT_HTTP "${Z_MSYS_ROOT_DIR}/usr/bin/curl")
-# set(DLAGENT_HTTPS "${Z_MSYS_ROOT_DIR}/usr/bin/curl")
-# set(DLAGENT_RSYNC "${Z_MSYS_ROOT_DIR}/usr/bin/rsync")
-# set(DLAGENT_SCP "${Z_MSYS_ROOT_DIR}/usr/bin/scp")
-# # Here were set the <agent> flags for each <protocol>
-
-# set(DLAGENT_FTP_FLAGS "-gqfC - --ftp-pasv --retry 3 --retry-delay 3 -o %o %u")
-# set(DLAGENT_HTTP_FLAGS "-gqb \"\" -fLC - --retry 3 --retry-delay 3 -o %o %u")
-# set(DLAGENT_HTTPS_FLAGS "-gqb \"\" -fLC - --retry 3 --retry-delay 3 -o %o %u")
-# set(DLAGENT_RSYNC_FLAGS "--no-motd -z %u %o")
-# set(DLAGENT_SCP_FLAGS "-C %u %o")
-# # Compile agents with their flags
-
-# set(DLAGENT_FTP_COMMAND  "ftp::${DLAGENT_FTP} ${DLAGENT_FTP_FLAGS}"    CACHE STRING "The standard command for downloads (ftp)." FORCE)
-# set(DLAGENT_HTTP_COMMAND "http::${DLAGENT_HTTP} ${DLAGENT_HTTP_FLAGS}" CACHE STRING "The standard command for downloads (http)." FORCE)
-# set(DLAGENT_HTTPS_COMMAND "https::${DLAGENT_HTTPS} ${DLAGENT_HTTPS_FLAGS}" CACHE STRING "The standard command for downloads (https)." FORCE)
-# set(DLAGENT_RSYNC_COMMAND "rsync::${DLAGENT_RSYNC} ${DLAGENT_RSYNC_FLAGS}" CACHE STRING "The standard command for downloads (rsync)." FORCE)
-# set(DLAGENT_SCP_COMMAND "scp::${DLAGENT_SCP} ${DLAGENT_SCP_FLAGS}" CACHE STRING "The standard command for downloads (scp)." FORCE)
-# #  Format: 'protocol::agent'
-# set(DLAGENTS)
-# list(APPEND DLAGENTS
-#     "${DLAGENT_FILE}"
-#     "${DLAGENT_FTP}"
-#     "${DLAGENT_HTTP}"
-#     "${DLAGENT_HTTPS}"
-#     "${DLAGENT_RSYNC}"
-#     "${DLAGENT_SCP}"
-# )
-# set(DLAGENTS "${DLAGENTS}" CACHE STRING "The standard agents for downloads. Format: 'protocol::agent [flags]'." FORCE)
-
-# In other words...
-# set(DLAGENTS
-#     "file::/usr/bin/curl -gqC - -o %o %u"
-#     "ftp::/usr/bin/curl -gqfC - --ftp-pasv --retry 3 --retry-delay 3 -o %o %u"
-#     "http::/usr/bin/curl -gqb \"\" -fLC - --retry 3 --retry-delay 3 -o %o %u"
-#     "https::/usr/bin/curl -gqb \"\" -fLC - --retry 3 --retry-delay 3 -o %o %u"
-#     "rsync::/usr/bin/rsync --no-motd -z %u %o"
-#     "scp::/usr/bin/scp -C %u %o"
-# )
-
-# Other common tools:
-# /usr/bin/snarf
-# /usr/bin/lftpget -c
-# /usr/bin/wget (instead of curl? Could be on a switch...)
-
-#-- The package required by makepkg to download VCS sources.
-# We can use vcpkg to fetch these for linking our packages with.
-# Format: 'protocol::package'
-# set(VCSCLIENTS)
-# list(APPEND VCSCLIENTS
-#     bzr::bzr
-#     fossil::fossil
-#     git::git
-#     hg::mercurial
-#     svn::subversion
-# )
-# set(VCSCLIENTS "${VCSCLIENTS}" CACHE STRING "The package(s) required by makepkg to download VCS sources." FORCE)
 
 #########################################################################
 # BUILD ENVIRONMENT
