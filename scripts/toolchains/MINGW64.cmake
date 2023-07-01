@@ -26,9 +26,11 @@ if(NOT _MSYS_MINGW64_TOOLCHAIN)
     if(MSYSTEM STREQUAL "MINGW64")
 
         # Need to override MinGW from MSYS_CMAKE_SYSTEM_NAME
-        set(CMAKE_SYSTEM Windows)
-        set(CMAKE_SYSTEM_NAME Windows CACHE STRING "The name of the operating system for which CMake is to build." FORCE)
+        set(CMAKE_SYSTEM "MINGW64" CACHE STRING "Composite name of operating system CMake is compiling for." FORCE)
+        set(CMAKE_SYSTEM_NAME "MINGW64" CACHE STRING "The name of the operating system for which CMake is to build." FORCE)
         set(CMAKE_SYSTEM_PROCESSOR x86_64 CACHE STRING "When not cross-compiling, this variable has the same value as the ``CMAKE_HOST_SYSTEM_PROCESSOR`` variable." FORCE)
+
+        # set(CMAKE_EFFECTIVE_SYSTEM_NAME "MINGW64")
 
         set(CARCH "x86_64")
         set(CHOST "x86_64-w64-mingw32")
@@ -194,7 +196,7 @@ if(NOT _MSYS_MINGW64_TOOLCHAIN)
         mark_as_advanced(MINGW64_C_COMPILER_RANLIB)
 
         set(MINGW64_C_PLATFORM_ID                   "MinGW")
-        set(MINGW64_C_COMPILER_ID                   "GNU")
+        set(MINGW64_C_COMPILER_ID                   "MINGW64")
         set(MINGW64_C_COMPILER_VERSION              "13.1.0")
         set(MINGW64_C_COMPILER_VERSION_INTERNAL     "")
         set(MINGW64_C_COMPILER_FRONTEND_VARIANT     "GNU")
@@ -606,6 +608,9 @@ if(NOT _MSYS_MINGW64_TOOLCHAIN)
     # # CMake vars...
     # ###########################################################################
 
+    set(CMAKE_C_COMPILER_ID "MINGW64" CACHE STRING "" FORCE)
+    set(CMAKE_CXX_COMPILER_ID "MINGW64" CACHE STRING "" FORCE)
+
     foreach(lang C CXX)
         set(CMAKE_${lang}_COMPILER_TARGET "x86_64-w64-mingw32" CACHE STRING "The target for cross-compiling, if supported. '--target=x86_64-w64-mingw32'")
     endforeach()
@@ -613,6 +618,9 @@ if(NOT _MSYS_MINGW64_TOOLCHAIN)
     find_program(CMAKE_C_COMPILER "${MINGW64_C_COMPILER}")
     find_program(CMAKE_CXX_COMPILER "${MINGW64_CXX_COMPILER}")
     find_program(CMAKE_RC_COMPILER "${MINGW64_RC_COMPILER}")
+
+    # get_filename_component(COMPILER_BASENAME "${CMAKE_CXX_COMPILER}" NAME)
+    # set(COMPILER_BASENAME        "MINGW64" CACHE STRING "" FORCE)
 
     if(NOT CMAKE_RC_COMPILER)
         find_program (CMAKE_RC_COMPILER "${Z_MINGW64_ROOT_DIR}/bin/windres")
