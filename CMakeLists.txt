@@ -1,5 +1,11 @@
 cmake_minimum_required(VERSION 3.14...3.27 FATAL_ERROR)
+message("Loading ${CMAKE_CURRENT_LIST_FILE}")
+# include("./scripts/ports.cmake")
 
+# set(MSYS_OUTPUT_FILE "${CMAKE_BINARY_DIR}/msys_out_file.cmake")
+
+# include("${CMAKE_CURRENT_LIST_DIR}/scripts/detect_compiler/CMakeLists.txt")
+# include("${CMAKE_CURRENT_LIST_DIR}/scripts/get_cmake_vars/CMakeLists.txt")
 
 project(application)
 
@@ -7,9 +13,9 @@ project(application)
 
 option(BUILD_TESTS " " ON)
 
-
 # Note that the output file automatically falls into the binary dir
-# configure_file ("${CMAKE_CURRENT_LIST_DIR}/vcpkg/vcpkg.template" "vcpkg.json" @ONLY)
+# configure_file ("./scripts/templates/vcpkg.in.json" "vcpkg.json" @ONLY)
+# configure_file ("./scripts/templates/portfile.in.cmake" "portfile.cmake" @ONLY)
 # configure_file ("${CMAKE_CURRENT_LIST_DIR}/vcpkg/varchecker.h" "${CMAKE_CURRENT_BINARY_DIR}/include/varchecker.h" @ONLY)
 
 ###############################################################################
@@ -59,7 +65,7 @@ endif ()
 # parts of our project to consume.
 add_library (configuration                                      INTERFACE)
 add_library (${PROJECT_NAME}::configuration                     ALIAS configuration)
-add_library (${PROJECT_NAME}::${PROJECT_NAME}::configuration    ALIAS configuration)
+# add_library (${PROJECT_VENDOR}::${PROJECT_NAME}::configuration    ALIAS configuration)
 
 target_include_directories (configuration
 
@@ -106,7 +112,7 @@ set_target_properties (configuration
 
 add_library (implementation                                         INTERFACE)
 add_library (${PROJECT_NAME}::implementation                        ALIAS implementation)
-add_library (${PROJECT_VENDOR}::${PROJECT_NAME}::implementation     ALIAS implementation)
+# add_library (${PROJECT_VENDOR}::${PROJECT_NAME}::implementation     ALIAS implementation)
 
 target_include_directories (implementation
 
@@ -155,7 +161,7 @@ set_target_properties (implementation
 
 add_library (static                                         STATIC)
 add_library (${PROJECT_NAME}::static                        ALIAS static)
-add_library (${PROJECT_NAME}::${PROJECT_NAME}::static       ALIAS static)
+# add_library (${PROJECT_NAME}::${PROJECT_NAME}::static       ALIAS static)
 
 target_include_directories (static
 
@@ -207,7 +213,7 @@ target_link_libraries (static
 
 add_library (shared                                         SHARED)
 add_library (${PROJECT_NAME}::shared                        ALIAS shared)
-add_library (${PROJECT_NAME}::${PROJECT_NAME}::shared       ALIAS shared)
+# add_library (${PROJECT_NAME}::${PROJECT_NAME}::shared       ALIAS shared)
 
 target_include_directories (shared
 
@@ -260,7 +266,7 @@ target_link_libraries (shared
 
 add_executable (executable)
 add_executable (${PROJECT_NAME}::executable ALIAS executable)
-add_executable (${PROJECT_VENDOR}::${PROJECT_NAME}::executable ALIAS executable)
+# add_executable (${PROJECT_VENDOR}::${PROJECT_NAME}::executable ALIAS executable)
 
 # Note that we *shouldn't* use ${PROJECT_BINARY_DIR} as the include directory
 # for user installations of your packages. Once configuration is complete, that
@@ -452,6 +458,12 @@ export(
 #     DESTINATION
 #         ${CMAKE_INSTALL_LIBDIR}/pkgconfig
 # )
+
+else()
+
+    # execute_process(
+    #     COMMAND
+    # )
 
 endif() # BUILD_TESTS
 
