@@ -1,6 +1,8 @@
 message("Loading ${CMAKE_CURRENT_LIST_FILE}")
 
 function(z_msys_setup_pkgconfig_path)
+    message("Calling ${CMAKE_CURRENT_FUNCTION}")
+
     cmake_parse_arguments(PARSE_ARGV 0 "arg" "" "" "BASE_DIRS")
 
     if(NOT DEFINED arg_BASE_DIRS OR "${arg_BASE_DIRS}" STREQUAL "")
@@ -34,6 +36,8 @@ function(z_msys_setup_pkgconfig_path)
 endfunction()
 
 function(z_msys_restore_pkgconfig_path)
+    message("Calling ${CMAKE_CURRENT_FUNCTION}")
+
     cmake_parse_arguments(PARSE_ARGV 0 "arg" "" "" "")
     if(DEFINED arg_UNPARSED_ARGUMENTS)
         message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION} was passed extra arguments: ${arg_UNPARSED_ARGUMENTS}")

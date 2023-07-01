@@ -1,6 +1,8 @@
 message("Loading ${CMAKE_CURRENT_LIST_FILE}")
 
 function(z_msys_get_cmake_vars out_file)
+    message("Calling ${CMAKE_CURRENT_FUNCTION}")
+
     cmake_parse_arguments(PARSE_ARGV 1 arg "" "" "")
 
     if(DEFINED arg_UNPARSED_ARGUMENTS)

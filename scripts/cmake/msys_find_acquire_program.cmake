@@ -1,6 +1,8 @@
 message("Loading ${CMAKE_CURRENT_LIST_FILE}")
 
 function(z_msys_find_acquire_program_version_check out_var)
+    message("Calling ${CMAKE_CURRENT_FUNCTION}")
+
     cmake_parse_arguments(PARSE_ARGV 1 arg
         "EXACT_VERSION_MATCH"
         "MIN_VERSION;PROGRAM_NAME"
@@ -8,7 +10,7 @@ function(z_msys_find_acquire_program_version_check out_var)
     )
     msys_execute_in_download_mode(
         COMMAND ${arg_COMMAND}
-        WORKING_DIRECTORY "${Z_MSYS_ROOT_DIR}"
+        WORKING_DIRECTORY "${MSYS_ROOT_DIR}"
         OUTPUT_VARIABLE program_version_output
     )
     string(STRIP "${program_version_output}" program_version_output)
@@ -29,6 +31,8 @@ function(z_msys_find_acquire_program_version_check out_var)
 endfunction()
 
 function(z_msys_find_acquire_program_find_external program)
+    message("Calling ${CMAKE_CURRENT_FUNCTION}")
+
     cmake_parse_arguments(PARSE_ARGV 1 arg
         "EXACT_VERSION_MATCH"
         "INTERPRETER;MIN_VERSION;PROGRAM_NAME"
@@ -69,6 +73,7 @@ function(z_msys_find_acquire_program_find_external program)
 endfunction()
 
 function(z_msys_find_acquire_program_find_internal program)
+    message("Calling ${CMAKE_CURRENT_FUNCTION}")
     cmake_parse_arguments(PARSE_ARGV 1 arg
         ""
         "INTERPRETER"
@@ -93,6 +98,7 @@ function(z_msys_find_acquire_program_find_internal program)
 endfunction()
 
 function(msys_find_acquire_program program)
+    message("Calling ${CMAKE_CURRENT_FUNCTION}(${program})")
     if(${program})
         return()
     endif()

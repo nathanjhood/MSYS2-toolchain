@@ -1,6 +1,8 @@
 message("Loading ${CMAKE_CURRENT_LIST_FILE}")
 
 function(msys_backup_env_variables)
+    message("Calling ${CMAKE_CURRENT_FUNCTION}")
+
     cmake_parse_arguments(PARSE_ARGV 0 arg "" "" "VARS")
     if(NOT DEFINED arg_VARS)
         message(FATAL_ERROR "VARS must be defined.")
@@ -19,6 +21,8 @@ function(msys_backup_env_variables)
 endfunction()
 
 function(msys_restore_env_variables)
+    message("Calling ${CMAKE_CURRENT_FUNCTION}")
+
     cmake_parse_arguments(PARSE_ARGV 0 arg "" "" "VARS")
     if(NOT DEFINED arg_VARS)
         message(FATAL_ERROR "VARS must be defined.")

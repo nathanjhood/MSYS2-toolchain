@@ -1,6 +1,8 @@
 message("Loading ${CMAKE_CURRENT_LIST_FILE}")
 
 function(z_msys_configure_cmake_both_or_neither_set var1 var2)
+    # message("Calling ${CMAKE_CURRENT_FUNCTION}")
+
     if(DEFINED "${var1}" AND NOT DEFINED "${var2}")
         message(FATAL_ERROR "If ${var1} is set, ${var2} must be set.")
     endif()
@@ -10,6 +12,8 @@ function(z_msys_configure_cmake_both_or_neither_set var1 var2)
 endfunction()
 
 function(z_msys_configure_cmake_build_cmakecache out_var whereat build_type)
+    # message("Calling ${CMAKE_CURRENT_FUNCTION}")
+
     set(line "build ${whereat}/CMakeCache.txt: CreateProcess\n")
     string(APPEND line "  process = \"${CMAKE_COMMAND}\" -E chdir \"${whereat}\"")
     foreach(arg IN LISTS "${build_type}_command")
@@ -19,6 +23,8 @@ function(z_msys_configure_cmake_build_cmakecache out_var whereat build_type)
 endfunction()
 
 function(z_msys_get_visual_studio_generator)
+    message("Calling ${CMAKE_CURRENT_FUNCTION}")
+
     cmake_parse_arguments(PARSE_ARGV 0 arg "" "OUT_GENERATOR;OUT_ARCH" "")
 
     if (NOT DEFINED arg_OUT_GENERATOR)
@@ -62,6 +68,8 @@ function(z_msys_get_visual_studio_generator)
 endfunction()
 
 function(z_msys_select_default_msys_chainload_toolchain)
+    message("Calling ${CMAKE_CURRENT_FUNCTION}")
+
     # Try avoiding adding more defaults here.
     # Set MSYS_CHAINLOAD_TOOLCHAIN_FILE explicitly in the triplet.
     if(DEFINED Z_MSYS_CHAINLOAD_TOOLCHAIN_FILE)
@@ -88,11 +96,14 @@ endfunction()
 
 
 function(msys_configure_cmake)
+
     cmake_parse_arguments(PARSE_ARGV 0 arg
         "PREFER_NINJA;DISABLE_PARALLEL_CONFIGURE;NO_CHARSET_FLAG;Z_GET_CMAKE_VARS_USAGE"
         "SOURCE_PATH;GENERATOR;LOGNAME"
         "OPTIONS;OPTIONS_DEBUG;OPTIONS_RELEASE;MAYBE_UNUSED_VARIABLES"
     )
+
+    message("Calling ${CMAKE_CURRENT_FUNCTION}")
 
     if(NOT arg_Z_GET_CMAKE_VARS_USAGE AND Z_MSYS_CMAKE_CONFIGURE_GUARD)
         message(FATAL_ERROR "The ${PORT} port already depends on vcpkg-cmake; using both vcpkg-cmake and vcpkg_configure_cmake in the same port is unsupported.")
@@ -238,7 +249,7 @@ function(msys_configure_cmake)
         "-DMSYS_C_FLAGS=${MSYS_C_FLAGS}"
         "-DMSYS_C_FLAGS_RELEASE=${MSYS_C_FLAGS_RELEASE}"
         "-DMSYS_C_FLAGS_DEBUG=${MSYS_C_FLAGS_DEBUG}"
-        "-DMSYS_CRT_LINKAGE=${MSYS_CRT_LINKAGE}"
+        "-DCRT_LINKAGE=${CRT_LINKAGE}"
         "-DMSYS_LINKER_FLAGS=${MSYS_LINKER_FLAGS}"
         "-DMSYS_LINKER_FLAGS_RELEASE=${MSYS_LINKER_FLAGS_RELEASE}"
         "-DMSYS_LINKER_FLAGS_DEBUG=${MSYS_LINKER_FLAGS_DEBUG}"
@@ -246,7 +257,7 @@ function(msys_configure_cmake)
         "-DCMAKE_INSTALL_LIBDIR:STRING=lib"
         "-DCMAKE_INSTALL_BINDIR:STRING=bin"
         "-D_MSYS_ROOT_DIR=${MSYS_ROOT_DIR}"
-        "-DZ_MSYS_ROOT_DIR=${MSYS_ROOT_DIR}"
+        "-DZ_MSYS_ROOT_DIR=${Z_MSYS_ROOT_DIR}"
         "-D_MSYS_INSTALLED_DIR=${_MSYS_INSTALLED_DIR}"
         "-DMSYS_MANIFEST_INSTALL=OFF"
     )
@@ -315,7 +326,7 @@ function(msys_configure_cmake)
 
         message(STATUS "${configuring_message}")
         msys_execute_required_process(
-            COMMAND "${NINJA}" -v
+            COMMAND "${NINJA}" --version
             WORKING_DIRECTORY "${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-rel/msys-parallel-configure"
             LOGNAME "${arg_LOGNAME}"
             SAVE_LOG_FILES

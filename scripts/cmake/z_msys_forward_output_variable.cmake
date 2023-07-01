@@ -1,6 +1,8 @@
 message("Loading ${CMAKE_CURRENT_LIST_FILE}")
 
 macro(z_msys_forward_output_variable ptr_to_parent_var var_to_forward)
+    message("Calling ${CMAKE_CURRENT_FUNCTION}")
+
     if("${ARGC}" GREATER "2")
         message(FATAL_ERROR "z_msys_forward_output_variable was passed extra arguments: ${ARGN}")
     endif()

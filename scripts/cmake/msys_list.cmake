@@ -100,7 +100,7 @@ function(msys_list)
 
         list(LENGTH list length)
         if(ARGV2 LESS "-{$length}" OR ARGV2 GREATER length)
-            message(FATAL_ERROR "vcpkg_list index: ${ARGV2} out of range")
+            message(FATAL_ERROR "msys_list index: ${ARGV2} out of range")
         endif()
         if(ARGC GREATER 3)
             # list(LENGTH) is one of the few subcommands that's fine

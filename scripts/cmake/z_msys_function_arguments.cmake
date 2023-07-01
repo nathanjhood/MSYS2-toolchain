@@ -3,6 +3,8 @@ message("Loading ${CMAKE_CURRENT_LIST_FILE}")
 # NOTE: this function definition is copied directly to scripts/buildsystems/MSYS2.cmake
 # do not make changes here without making the same change there.
 macro(z_msys_function_arguments OUT_VAR)
+    message("Calling ${CMAKE_CURRENT_FUNCTION}")
+
     if("${ARGC}" EQUAL 1)
         set(z_msys_function_arguments_FIRST_ARG 0)
     elseif("${ARGC}" EQUAL 2)

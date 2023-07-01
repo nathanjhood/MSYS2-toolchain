@@ -1,7 +1,7 @@
 message("Loading ${CMAKE_CURRENT_LIST_FILE}")
 
 set(program_name ninja)
-set(program_version 1.10.2)
+set(program_version 1.11.1)
 set(supported_on_unix ON)
 set(version_command --version)
 if(CMAKE_HOST_WIN32)

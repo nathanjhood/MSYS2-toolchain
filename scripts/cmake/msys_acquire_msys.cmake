@@ -13,6 +13,8 @@ set(Z_MSYS_ACQUIRE_MSYS_MIRRORS
 
 # Downloads the given package
 function(z_msys_acquire_msys_download_package out_archive)
+    message("Calling ${CMAKE_CURRENT_FUNCTION}")
+
     cmake_parse_arguments(PARSE_ARGV 1 "arg" "" "URL;SHA512;FILENAME" "")
     if(DEFINED arg_UNPARSED_ARGUMENTS)
         message(FATAL_ERROR "internal error: z_msys_acquire_msys_download_package passed extra args: ${arg_UNPARSED_ARGUMENTS}")
@@ -45,6 +47,8 @@ endfunction()
 #   - Z_msys_MSYS_${arg_NAME}_PROVIDES
 #   - Z_msys_MSYS_${alias}_PROVIDED_BY
 function(z_msys_acquire_msys_declare_package)
+    message("Calling ${CMAKE_CURRENT_FUNCTION}")
+
     cmake_parse_arguments(PARSE_ARGV 0 arg "DIRECT" "NAME;URL;SHA512" "DEPS;PATCHES;PROVIDES")
 
     if(DEFINED arg_UNPARSED_ARGUMENTS)
@@ -95,6 +99,8 @@ endfunction()
 # Writes to the following cache variables:
 #   - Z_MSYS_<name>_ARCHIVE
 function(z_msys_acquire_msys_download_packages)
+    message("Calling ${CMAKE_CURRENT_FUNCTION}")
+
     cmake_parse_arguments(PARSE_ARGV 0 "arg" "" "OUT_UNKNOWN;OUT_RESOLVED" "PACKAGES")
     set(backlog "${arg_PACKAGES}")
     list(REMOVE_DUPLICATES backlog)
@@ -140,6 +146,8 @@ endfunction()
 
 # Returns a stable collection of hashes, regardless of package order
 function(z_msys_acquire_msys_collect_hashes out_hash)
+    message("Calling ${CMAKE_CURRENT_FUNCTION}")
+
     cmake_parse_arguments(PARSE_ARGV 1 "arg" "" "" "PACKAGES")
     list(SORT arg_PACKAGES)
     set(result "")
@@ -157,6 +165,8 @@ function(z_msys_acquire_msys_collect_hashes out_hash)
 endfunction()
 
 function(msys_acquire_msys out_msys_root)
+    message("Calling ${CMAKE_CURRENT_FUNCTION}")
+
     cmake_parse_arguments(PARSE_ARGV 1 "arg"
         "NO_DEFAULT_PACKAGES;Z_ALL_PACKAGES"
         ""
@@ -253,6 +263,8 @@ endfunction()
 
 
 macro(z_msys_acquire_msys_declare_all_packages)
+    message("Calling ${CMAKE_CURRENT_FUNCTION}")
+
     set(Z_MSYS_PACKAGES_AVAILABLE "" CACHE INTERNAL "")
 
     # The following list can be updated via test port msys-ci-msys2[update-all]. (not yet!)

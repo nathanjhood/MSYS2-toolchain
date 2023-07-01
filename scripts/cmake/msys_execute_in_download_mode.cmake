@@ -1,8 +1,11 @@
 message("Loading ${CMAKE_CURRENT_LIST_FILE}")
 
 function(msys_execute_in_download_mode)
+
     # this allows us to grab the value of the output variables, but pass through the rest of the arguments
     cmake_parse_arguments(PARSE_ARGV 0 arg "" "RESULT_VARIABLE;RESULTS_VARIABLE;OUTPUT_VARIABLE;ERROR_VARIABLE" "")
+
+    message("Calling ${CMAKE_CURRENT_FUNCTION}")
 
     set(output_and_error_same OFF)
     set(output_variable_param "")
