@@ -523,9 +523,10 @@ function(add_executable)
     z_msys_function_arguments(ARGS)
     _add_executable(${ARGS})
     set(target_name "${ARGV0}")
-    if(MSYS_VERBOSE)
-        message(STATUS "${PROJECT_NAME}: Calling ${CMAKE_CURRENT_FUNCTION}(${target_name})")
-    endif()
+
+    # if(MSYS_VERBOSE)
+    #     message(STATUS "${PROJECT_NAME}: Calling ${CMAKE_CURRENT_FUNCTION}(${target_name})")
+    # endif()
 
     list(FIND ARGV "IMPORTED" IMPORTED_IDX)
     list(FIND ARGV "ALIAS" ALIAS_IDX)
@@ -573,9 +574,9 @@ function(add_library)
     _add_library(${ARGS})
     set(target_name "${ARGV0}")
 
-    if(MSYS_VERBOSE)
-        message(STATUS "${PROJECT_NAME}: Calling ${CMAKE_CURRENT_FUNCTION}(${target_name})")
-    endif()
+    # if(MSYS_VERBOSE)
+    #     message(STATUS "${PROJECT_NAME}: Calling ${CMAKE_CURRENT_FUNCTION}(${target_name})")
+    # endif()
 
     list(FIND ARGS "IMPORTED" IMPORTED_IDX)
     list(FIND ARGS "INTERFACE" INTERFACE_IDX)
@@ -1510,7 +1511,7 @@ set(Z_MSYS_UNUSED "${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_SKIP}")
 if(NOT Z_MSYS_CMAKE_IN_TRY_COMPILE)
     list(APPEND CMAKE_TRY_COMPILE_PLATFORM_VARIABLES
         MSYS_TARGET_TRIPLET
-        MSYS_TARGET_ARCHITECTURE
+        Z_MSYS_TARGET_TRIPLET_ARCH
         MSYS_APPLOCAL_DEPS
         MSYS_CHAINLOAD_TOOLCHAIN_FILE
         Z_MSYS_ROOT_DIR
