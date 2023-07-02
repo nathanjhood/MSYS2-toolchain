@@ -11,11 +11,11 @@
         "MSYS Makefiles"
     ],
     "cmake.configureSettings": {
-        // "CMAKE_TOOLCHAIN_FILE": "${workspaceFolder}/scripts/toolchains/MINGW64.cmake"
+        // "CMAKE_TOOLCHAIN_FILE": "${workspaceFolder}/scripts/msys/MSYSTEM.cmake"
 
-        // "MSYSTEM": "MINGW64", - ideally, we'd rather/also like to be able to pass this to control things :)
+        "MSYSTEM": "MINGW64", // ideally, we'd rather/also like to be able to pass this to control things :)
         "CMAKE_TOOLCHAIN_FILE": "${workspaceFolder}/scripts/buildsystems/MSYS2.cmake",
-        "MSYS_CHAINLOAD_TOOLCHAIN_FILE": "${workspaceFolder}/scripts/toolchains/MINGW64.cmake"
+        // "MSYS_CHAINLOAD_TOOLCHAIN_FILE": "${workspaceFolder}/scripts/toolchains/MINGW64.cmake"
     },
     "cmake.configureOnEdit": false,
     "cmake.configureOnOpen": false,
