@@ -255,6 +255,15 @@ if(MSYS_TARGET_TRIPLET)
     # configure call will see the user value as the more recent value. The same logic must be applied to all cache values within this file!
     # The FORCE keyword is required to ALWAYS lift the user provided/previously set value into a CACHE value.
     set(MSYS_TARGET_TRIPLET "${MSYS_TARGET_TRIPLET}" CACHE STRING "msys2 target triplet (ex. x86_64-msys-pc)" FORCE)
+elseif(CMAKE_GENERATOR_PLATFORM MATCHES "^[Ii]386$")
+    set(Z_MSYS_TARGET_TRIPLET_ARCH x86)
+elseif(CMAKE_GENERATOR_PLATFORM MATCHES "^[Xx]86_64$")
+    set(Z_MSYS_TARGET_TRIPLET_ARCH x64)
+elseif(CMAKE_GENERATOR_PLATFORM MATCHES "^[Aa][Rr][Mm]$")
+    set(Z_MSYS_TARGET_TRIPLET_ARCH arm)
+elseif(CMAKE_GENERATOR_PLATFORM MATCHES "^[Aa][Aa][Rr][Cc][Hh]64$")
+    set(Z_MSYS_TARGET_TRIPLET_ARCH arm64)
+
 elseif(CMAKE_GENERATOR_PLATFORM MATCHES "^[Ww][Ii][Nn]32$")
     set(Z_MSYS_TARGET_TRIPLET_ARCH x86)
 elseif(CMAKE_GENERATOR_PLATFORM MATCHES "^[Xx]64$")
@@ -367,8 +376,8 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin" OR (NOT CMAKE_SYSTEM_NAME AND CMAKE_H
     set(Z_MSYS_TARGET_TRIPLET_PLAT osx)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "iOS")
     set(Z_MSYS_TARGET_TRIPLET_PLAT ios)
-elseif(MINGW)
-    set(Z_MSYS_TARGET_TRIPLET_PLAT mingw-dynamic)
+elseif(MINGW OR (CMAKE_SYSTEM_NAME STREQUAL "MINGW64"))
+    set(Z_MSYS_TARGET_TRIPLET_PLAT mingw)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows" OR (NOT CMAKE_SYSTEM_NAME AND CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows"))
     if(XBOX_CONSOLE_TARGET STREQUAL "scarlett")
         set(Z_MSYS_TARGET_TRIPLET_PLAT xbox-scarlett)
@@ -386,7 +395,7 @@ if(EMSCRIPTEN)
     set(Z_MSYS_TARGET_TRIPLET_PLAT emscripten)
 endif()
 
-set(MSYS_TARGET_TRIPLET "${Z_MSYS_TARGET_TRIPLET_ARCH}-${Z_MSYS_TARGET_TRIPLET_PLAT}" CACHE STRING "Msys target triplet (ex. x86-windows)")
+set(MSYS_TARGET_TRIPLET "${Z_MSYS_TARGET_TRIPLET_ARCH}-${Z_MSYS_TARGET_TRIPLET_PLAT}" CACHE STRING "Msys target triplet (ex. x86-windows)" FORCE)
 set(Z_MSYS_TOOLCHAIN_DIR "${CMAKE_CURRENT_LIST_DIR}")
 
 # Detect msys2.ini to figure MSYS_ROOT_DIR
@@ -508,15 +517,9 @@ endif()
 
 message(STATUS "Msys2 Build system loaded")
 
-# message("Leaving MSYS.cmake at ${CMAKE_CURRENT_LIST_LINE}")
 cmake_policy(POP)
 
-# Any policies applied to the below macros and functions appear to leak into consumers
-
-# function(_add_executable)
-#     message("Calling ${CMAKE_CURRENT_FUNCTION}")
-#     add_executable(${ARGS})
-# endfunction()
+##-- Any policies applied to the below macros and functions appear to leak into consumers
 
 function(add_executable)
 
@@ -563,10 +566,6 @@ function(add_executable)
         set_target_properties("${target_name}" PROPERTIES VS_GLOBAL_MsysEnabled false)
     endif()
 endfunction()
-
-# function(_add_library)
-#     add_library(${ARGS})
-# endfunction()
 
 function(add_library)
 
@@ -708,85 +707,6 @@ if(X_MSYS_APPLOCAL_DEPS_INSTALL)
     endfunction()
 endif()
 
-
-# # Find your msys64 installation root '<MSYS_ROOT>'...
-# if(NOT DEFINED MSYS_ROOT)
-
-#     if(EXISTS "$ENV{HOMEDRIVE}/msys64")
-
-#         set(MSYS_ROOT "$ENV{HOMEDRIVE}/msys64" CACHE PATH "Msys2 installation root directory." FORCE)
-
-#         #[===[.md
-
-#         # cygpath
-
-#         Convert Unix and Windows format paths, or output system path information.
-
-#         Usage: cygpath (-d|-m|-u|-w|-t TYPE) [-f FILE] [OPTION]... NAME...
-#         cygpath [-c HANDLE]
-#         cygpath [-ADHOPSW]
-#         cygpath [-F ID]
-
-#         Output type options:
-
-#         -d, --dos             print DOS (short) form of NAMEs (C:\PROGRA~1\)
-#         -m, --mixed           like --windows, but with regular slashes (C:/WINNT)
-#         -M, --mode            report on mode of file (binmode or textmode)
-#         -u, --unix            (default) print Unix form of NAMEs (/cygdrive/c/winnt)
-#         -w, --windows         print Windows form of NAMEs (C:\WINNT)
-#         -t, --type TYPE       print TYPE form: 'dos', 'mixed', 'unix', or 'windows'
-
-#         Path conversion options:
-
-#         -a, --absolute        output absolute path
-#         -l, --long-name       print Windows long form of NAMEs (with -w, -m only)
-#         -p, --path            NAME is a PATH list (i.e., '/bin:/usr/bin')
-#         -U, --proc-cygdrive   Emit /proc/cygdrive path instead of cygdrive prefix when converting Windows path to UNIX path.
-#         -s, --short-name      print DOS (short) form of NAMEs (with -w, -m only)
-#         -C, --codepage CP     print DOS, Windows, or mixed pathname in Windows codepage CP. CP can be a numeric codepage identifier, or one of the reserved words ANSI, OEM, or UTF8. If this option is missing, cygpath defaults to the character set defined by the current locale.
-
-#         System information:
-
-#         -A, --allusers        use `All Users' instead of current user for -D, -O, -P
-#         -D, --desktop         output `Desktop' directory and exit
-#         -H, --homeroot        output `Profiles' directory (home root) and exit
-#         -O, --mydocs          output `My Documents' directory and exit
-#         -P, --smprograms      output Start Menu `Programs' directory and exit
-#         -S, --sysdir          output system directory and exit
-#         -W, --windir          output `Windows' directory and exit
-#         -F, --folder ID       output special folder with numeric ID and exit
-
-#         Other options:
-
-#         -f, --file FILE       read FILE for input; use - to read from STDIN
-#         -o, --option          read options from FILE as well (for use with --file)
-#         -c, --close HANDLE    close HANDLE (for use in captured process)
-#         -i, --ignore          ignore missing argument
-#         -h, --help            output usage information and exit
-#         -V, --version         output version information and exit
-
-#         #]===]
-#         # find_program(CYGPATH "${MSYS_ROOT}/usr/bin/cygpath" DOC "Convert Unix and Windows format paths, or output system path information.")
-
-#         # execute_process(
-#         #     COMMAND "${CYGPATH}" -u "${CMAKE_SOURCE_DIR}"
-#         #     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-#         #     OUTPUT_VARIABLE CMAKE_SOURCE_DIR_UNIX
-#         # )
-#         # set(CMAKE_SOURCE_DIR_WIN "${CMAKE_SOURCE_DIR}" CACHE PATH "" FORCE)
-#         # set(CMAKE_SOURCE_DIR_UNIX "${CMAKE_SOURCE_DIR_UNIX}" CACHE PATH "" FORCE)
-#         # message(STATUS "CMAKE_SOURCE_DIR_WIN = ${CMAKE_SOURCE_DIR}")
-#         # message(STATUS "CMAKE_SOURCE_DIR_UNIX = ${CMAKE_SOURCE_DIR_UNIX}")
-
-#     else()
-#         # message("Leaving MSYS.cmake at ${CMAKE_CURRENT_LIST_LINE}")
-#         message(FATAL_ERROR "Cannot find any valid msys2 installation..."
-#         "please try passing '-DMSYS_ROOT:PATH=<path/to/msys64>' on the CMake invocation."
-#         )
-#         cmake_policy(POP)
-#         return()
-#     endif()
-# endif()
 
 #########################################################################
 # ARCHITECTURE, COMPILE FLAGS
@@ -965,44 +885,6 @@ Could look into some other variations on this...
 #     set(UCRT64_ROOT              "${Z_MSYS_ROOT_DIR}${UCRT64_PREFIX}"         CACHE PATH      "ucrt x64: Root of the build system." FORCE)
 # endif()
 
-
-# # Note that some packages cannot be mixed together, likely to prevent setting
-# # linkage between mixed C runtimes (which is widely unsupported and not recommended).
-# set(MINGW_W64_CROSS_CLANG_TOOLCHAIN_PACKAGES
-#     mingw-w64-cross-clang
-#     mingw-w64-cross-clang-crt
-#     mingw-w64-cross-clang-headers
-#     CACHE STRING "Packages from command: 'pacman -S mingw-w64-cross-clang-toolchain'."
-# )
-# set(MINGW_W64_CROSS_UCRT_TOOLCHAIN_PACKAGES
-#     mingw-w64-cross-ucrt-ucrt
-#     mingw-w64-cross-ucrt-headers
-#     CACHE STRING "Packages from command: 'pacman -S mingw-w64-cross-ucrt-toolchain'."
-# )
-# set(MINGW_W64_CROSS_TOOLCHAIN_PACKAGES
-#     mingw-w64-cross-binutils
-#     mingw-w64-cross-crt
-#     mingw-w64-cross-gcc
-#     mingw-w64-cross-headers
-#     mingw-w64-cross-tools
-#     mingw-w64-cross-windows-default-manifest
-#     mingw-w64-cross-winpthreads
-#     mingw-w64-cross-winstorecompat
-#     mingw-w64-cross-zlib
-#     CACHE STRING "Packages from command: 'pacman -S mingw-w64-cross-toolchain'."
-# )
-# set(MINGW_W64_CROSS_PACKAGES
-#     mingw-w64-cross-binutils
-#     mingw-w64-cross-crt
-#     mingw-w64-cross-gcc
-#     mingw-w64-cross-headers
-#     mingw-w64-cross-tools
-#     mingw-w64-cross-windows-default-manifest
-#     mingw-w64-cross-winpthreads
-#     mingw-w64-cross-winstorecompat
-#     mingw-w64-cross-zlib
-#     CACHE STRING "Packages from command: 'pacman -S mingw-w64-cross'."
-# ) # Actually identical to the previous var...
 
 # if ((MSYSTEM STREQUAL MINGW64) OR
 #     (MSYSTEM STREQUAL MINGW32) OR
