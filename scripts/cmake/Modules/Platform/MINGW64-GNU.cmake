@@ -7,8 +7,7 @@ endif()
 set(__MINGW64_COMPILER_GNU 1)
 # TODO: Is -Wl,--enable-auto-import now always default?
 string(APPEND CMAKE_EXE_LINKER_FLAGS_INIT " -Wl,--enable-auto-import")
-set(CMAKE_GNULD_IMAGE_VERSION
-"-Wl,--major-image-version,<TARGET_VERSION_MAJOR>,--minor-image-version,<TARGET_VERSION_MINOR>")
+set(CMAKE_GNULD_IMAGE_VERSION "-Wl,--major-image-version,<TARGET_VERSION_MAJOR>,--minor-image-version,<TARGET_VERSION_MINOR>")
 set(CMAKE_GENERATOR_RC windres)
 # Features for LINK_LIBRARY generator expression
 ## check linker capabilities
