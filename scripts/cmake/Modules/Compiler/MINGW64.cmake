@@ -55,12 +55,22 @@ macro(__compiler_mingw64 lang)
     endif()
 
     # Initial configuration flags.
-    string(APPEND CMAKE_${lang}_FLAGS_INIT " -march=nocona")
-    string(APPEND CMAKE_${lang}_FLAGS_INIT " -msahf")
-    string(APPEND CMAKE_${lang}_FLAGS_INIT " -mtune=generic")
-    string(APPEND CMAKE_${lang}_FLAGS_INIT " -pipe")
-    string(APPEND CMAKE_${lang}_FLAGS_INIT " -Wp,-D_FORTIFY_SOURCE=2")
-    string(APPEND CMAKE_${lang}_FLAGS_INIT " -fstack-protector-strong")
+    if(${lang} STREQUAL CXX OR ${lang} STREQUAL C)
+        string(APPEND CMAKE_${lang}_FLAGS_INIT " -march=nocona")
+        string(APPEND CMAKE_${lang}_FLAGS_INIT " -msahf")
+        string(APPEND CMAKE_${lang}_FLAGS_INIT " -mtune=generic")
+        string(APPEND CMAKE_${lang}_FLAGS_INIT " -pipe")
+    endif()
+
+    if(${lang} STREQUAL C)
+        string(APPEND CMAKE_${lang}_FLAGS_INIT " -Wp,-D_FORTIFY_SOURCE=2")
+        string(APPEND CMAKE_${lang}_FLAGS_INIT " -fstack-protector-strong")
+    endif()
+
+    if(${lang} STREQUAL CPP)
+        string(APPEND CMAKE_${lang}_FLAGS_INIT " -D__USE_MINGW_ANSI_STDIO=1")
+    endif()
+
     string(APPEND CMAKE_${lang}_FLAGS_DEBUG_INIT " -Og")
     string(APPEND CMAKE_${lang}_FLAGS_DEBUG_INIT " -ggdb")
     string(APPEND CMAKE_${lang}_FLAGS_RELEASE_INIT " -O2")
