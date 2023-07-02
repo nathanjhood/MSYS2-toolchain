@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.14...3.27 FATAL_ERROR)
 message("Loading ${CMAKE_CURRENT_LIST_FILE}")
+set(CMAKE_MODULE_PATH)
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/scripts/cmake/Modules")
 # include("./scripts/ports.cmake")
 
 # set(MSYS_OUTPUT_FILE "${CMAKE_BINARY_DIR}/msys_out_file.cmake")
