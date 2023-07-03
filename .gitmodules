@@ -1,3 +1,6 @@
 [submodule "clang-format-presets"]
 	path = clang-format-presets
 	url = ../../cmodules/clang-format-presets.git
+[submodule "toolsrc"]
+	path = toolsrc
+	url = ../../microsoft/vcpkg-tool.git
