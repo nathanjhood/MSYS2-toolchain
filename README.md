@@ -2,17 +2,17 @@
 
 For CMake/vcpkg integration.
 
-*CURRENTLY ONLY SUPPORTING MINGW64 FOR DEVELOPMENT PURPOSES!*
+Eventual intended usage would be to supercede Msys's native Arch-Linux style "Pacman" package manager, for Microsoft's "vcpkg-tool" - or a customization of it - to enable much greater interoperability between Msys's MinGW-based sub-systems (including the Clang toolchain variants and their tools), and the native development environment (IDE integration, etc); as well as integrating a much larger package registry for third-party libraries (vcpkg's "ports"), cross-compiling support, and driven by a finely-tuned CMake configuration, tailored to tap into each subsystem's entire toolchain with ease.
+
+The project shall eventually attempt to resort to as minimal a fileset as possible, for maximal portability, by hooking back into processes already implemented in typical CMake installations on any system. During development however, it is necessary to deeply examine these native CMake processes and probably overwrite them (intended as temporary measures) until the most efficient solution presents itself. When CMake runs its' configuration stage, there is a great deal of "file-hopping" going on under the hood where all of the system- and compiler- critical vars get set. In order to better understand this process, it is sometimes necessary to write out the intended "story" all in one big long file, leaving ourselves breadcrumbs here and there to find the way back to the "file-hopping" take on the cprovided configuration. The scale of the final project can be greatly reduced once our base implementation is fully realized and optimized. Until then, apologies for the masoleum of source code :)
+
+*CURRENTLY ONLY SUPPORTING MSYSTEM=MINGW64 FOR DEVELOPMENT PURPOSES!*
 
 ## Example usage:
 
 ```
 $ cmake -S "<path/to/project>" -B "<path/to/project>/build" -DCMAKE_TOOLCHAIN_FILE:FILEPATH=<path/to/this/repo>/scripts/buildsystems/MSYS2.cmake -DMSYSTEM:STRING=MINGW64 -G "Ninja Multi-Config"
 ```
-
-*Dev latest:* So it turns out that the adopted approach from vcpkg relies on falling back to settings found and defined in your actual CMake installation files (typically, the ones found in "cmake\<version\>"/share/Modules/Platform" and "cmake\<version\>"/share/Modules/Compiler"). In here, there are many default definitions covering GNU, Clang, MSYS (falling back to Cygwin, which is no good for any of the actual sub-systems), and various other buildsystem/toolchain variants. These are selected according to your project settings for vars such as "\<CMAKE_SYSTEM_NAME\>" and "\<CMAKE_\<LANG\>_COMPILER_ID\>", which get looked up in the CMake files "CMakeSystemSpecificInformation", and "CMake\<LANG\>Information", and are used to populate some strings that are used for file names for inclusion. In practice it's a pretty clever system, but unfortunately leaves it pretty clear why there is no fully-supported MSYS sub-system toolchain as such. We're faced with creating a couple of CMake modules to be imported into your project which define each new "Platform/\<CMAKE_SYSTEM\>" and "Compiler/\<CMAKE_\<LANG\>_COMPILER\>", *or* calling the expected defaults bringing all of the necessary over-rides into the sub-system toolchain files. There isn't too much in the way of either approach being successful; but it would be absolutely ideal to fallback to Kitware's files as much as possible, where design and testing will be far more thorough than that of a one-man independent project.Granted, somebody somewhere has thus far refrained from putting the pieces together to unlock all of the subsystems, and the further I get, the more I can see why. However, with this project so far running very successfully during dev, I fully intend to follow through, with a view to hooking back in to the native CMake process and curbing back on the independently-maintained over-rides, once this project is solid. Ideally even the vcpkg won't be overwritten come the end of the project; we'll just supplement the existing processes whereever/whenever needed.
-
-I won't set up a dev branch, proper doc files, git flows, PR/issue templates or anything else until I mark the actual source code to be out of development, but please consider this repo very much public and the author more than happy to investigate any further findings, take questions, etc. Thanks for reading!
 
 ## Description
 
@@ -37,7 +37,7 @@ MSYS2-toolchain uses a direct translation of the MSYS-provided Makefile config v
 
 * The 'MSYS2.cmake' buildsystem file (which is actually passed in as a toolchain file) is akin to loading an Msys64 shell using the default, cygwin-based MSYSTEM called "MSYS". This file aims to provide CMake with access to the entire set of Msys sub-systems (simultaneously, if possible) and configure your CMake project to use the native "MSYS" build tools in your build run, if you wish.
 
-* The 'buildsystem' file therefore acts as a kind of (optional) 'master' file - it provides a wide range of optional extras such as download agents for ftp, http(s), scp and more; compression and archiving utilities with GPG signature capabilites; direct access to <b>pacman</b> commands and entire package group downloads in simple CMake function form... and more!
+* The 'buildsystem' file therefore acts as a kind of (optional) 'master' file - it provides a wide range of optional extras such as download agents for ftp, http(s), scp and more; compression and archiving utilities with GPG signature capabilites; direct access to <b>pacman</b> commands and entire package group downloads in simple CMake function form... and more (most of this is currently half-implemented and quite low on the priority list for now).
 
 * This 'buildsystem' file can act as a base that can be easily extended, simply by loading the usual Msys sub-systems as 'chainload' files, which fetch the entire build tool chain for the given sub-system, *alongisde* the "MSYS" buildsystem. This will also populate your toolchain with additional goodies found in each sub-system, such as linting tools like '.clang-format' and friends (for the Clang-based systems).
 
@@ -49,27 +49,34 @@ MSYS2-toolchain uses a direct translation of the MSYS-provided Makefile config v
 
 * Lastly, it's important to note that the 'buildsystem' file - that is, "MSYS2.cmake", *also* over-writes the standard CMake 'add_library()' and 'add_executable()' functions in order to append important flag variables, copy and move your project dependency binaries to where they are needed (great when packing for distribution), and provide deeper integration into the build process for an Msys64 'chainloaded' sub-system. These extended functions are what gives the file the definition of being a 'buildsystem'. That being said, there is in fact support for loading the sub-system files as the primary toolchains themselves; they *should* still populate your build configuration with their build tools and settings appropriately without any further adjusting. One of the main restrictions of doing this is having potentially some quite useful tools (and those CMake function re-definitions) from the native "MSYS" environment unavailable, but this may not prevent a successful build.
 
-To use the toolchain, pass either;
+To use the toolchain, pass these vars to your CMake invocation;
 
 * <b>-DCMAKE_TOOLCHAIN_FILE</b>:FILEPATH=<i>"\<path/to/this/repo\>/scripts/buildsystem/MSYS2.cmake"</i>
 
+* <b>-DMSYSTEM</b>:STRING=<i>"\<MINGW64\>"</i>
+
 or to use a sub-system without the encasing buildsystem;
 
-* <b>-DCMAKE_TOOLCHAIN_FILE</b>:FILEPATH=<i>"\<VCPKG_ROOT\>/scripts/buildsystems/MSYS2.cmake"</i>
+* <b>-DCMAKE_TOOLCHAIN_FILE</b>:FILEPATH=<i>"\<path/to/this/repo\>/scripts/toolchains/MINGW64.cmake"</i>
 
-* <b>-DMSYS_CHAINLOAD_TOOLCHAIN_FILE</b>:FILEPATH=<i>"\<path/to/this/repo\>/scripts/toolchains/CLANG64.cmake"</i>
 
-The 'chainload' toolchain files are named identically to the chosen <b>'\<MSYSTEM\>'</b> and provide more thorough default behaviours for invoked <b>'\<MSYSTEM\>'</b> settings. Use in tandem for best results. However, there is *some* experimental support for passing a 'chainload' file directly, outside of the Msys build system:
+The 'chainload' toolchain files ('scripts/toolchains') are named identically to the chosen <b>'\<MSYSTEM\>'</b> and provide more thorough default behaviours for invoked <b>'\<MSYSTEM\>'</b> settings. Use in tandem for best results. However, there is *some* experimental support for passing just the 'buildsystem' file without any '\<MSYSTEM\>':
 
-* <b>-DCMAKE_TOOLCHAIN_FILE</b>:FILEPATH=<i>"\<VCPKG_ROOT\>/scripts/toolchains/UCRT64.cmake"</i>
+* <b>-DCMAKE_TOOLCHAIN_FILE</b>:FILEPATH=<i>"\<path/to/this/repo\>/scripts/buildsystem/MSYS2.cmake"</i>
 
-Results may vary in these cases, in some parts due to differing levels of interoperability between the subsystems and the Windows environment itself. It *should* therefore be quite suitable to use a 'chainload' file as the primary toolchain file, if the project is invoked directly from inside the <b>'\<MSYSTEM\>'</b> bash shell itself (i.e., the relevant command line app in your Msys installation). This needs much more thorough testing, but initial results have been quite positive thus far.
+I should probably provide something like an '\<MSYSTEM_DEFAULT_SUSBSYSTEM\>' for fallback cases... but meanwhile, only MINGW64 has even minimal support, so this is not implemented yet.
 
-<b>\'<CMAKE_TOOLCHAIN_FILE\>'</b> and <b>\'<MSYS_CHAINLOAD_TOOLCHAIN_FILE\>'</b> can often also be set in your IDE's CMake integration extension's settings, and/or a <i>'CMakePresets.json'</i> in the project root folder.
+<b>\'<CMAKE_TOOLCHAIN_FILE\>'</b> and <b>\'<MSYSTEM\>'</b> can often also be set in your IDE's CMake integration extension's settings, and/or a <i>'CMakePresets.json'</i> in the project root folder.
 
 For best results, it is recommended to use either <i>'Ninja'</i> or <i>'Ninja Multi-Config'</i> as a generator, with the 'preferred' generator set to one of the Makefile generators - <i>'Unix/MinGW/MSYS Makefiles'</i> etc.
 
 Some useful settings are provided in <i>'.vscode/settings.json'</i>.
+
+## Current Status
+
+While support will depend on the day you check the repo until this comes out of development, I can report that I've had the MinGW x64 subsystem compiling C, C++, ASM, Fortran, and Objective C/C++ using the GNU Buildtools and GCC native to that environment. There is also a little trick to getting the correct RC compiler (i.e., 'windres' for GCC). It seems to run happily being invoked from anywhere (Powershell command line as Windows user, Msys command line under any shell, IDE integrated tools...) just as long as the CMAKE_TOOLCHAIN_FILE and MSYSTEM are set per the examples given. The underlying CMake is always the one installed under the MinGW x64 subsystem - thus, CMake is basically running "natively" under MinGW x64, no matter where I invoke it from. I consider this to be a huge marker that the concept is a working one, and full credit seems to fall toward the vcpkg team's buildsystem mechanism. It is quite encouraging to find that all the groundwork exists within these excellent tools to fully realize the concept of this project; there exists a lot of repeatability within CMake in how each language is activated and configured, and also each platform (i.e., Msys sub-system). However, anything approaching 'full support' for *all* languages on *all* sub-systems, is a *lot* of work to do no matter which way I slice it. Throw in the additional layer of support for Msys installations being *either* 32-bit or 64-bit, this would seem to double our entire workload again, as if the project didn't already seem unattainable without further hands on deck. However, the "repeatability" factor is something to heaviliy lean into. With this in mind, once the C/C++ toolset is well-defined and optimized for MinGW x64, this should -  yes, in theory! - be fairly easy to 'port' over to the remaining language toolsets for MinGW 64, and then a very simple and small set of changes gives us MinGW x32... As for Clang, it is very plug-and-play with CMake, we can fortify some additional tools such as clang-format and clang-tidy to our heart's content, but these are still for all practical purposes 'MinGW xXX' environments, meaning that there will again be far less unique code generation required by that point. Setting some extra paths, flags, maybe wrapping some commands... he says :)
+
+Again the most critical aspect of the concept requirements is already proven to be working, which is having CMake invocation running inside the requested subsystem, no matter where we call it from, just supplying the buildsystem file. Deep breath, please stay tuned!
 
 ## Development
 
@@ -222,3 +229,10 @@ Available <b>'\<MSYSTEM\>'</b> options...
 * <b>'\<MINGW32\>'</b>
 * <b>'\<UCRT64\>'</b>
 * <b>'\<MSYS\>'</b>
+
+
+*Dev latest:* So it turns out that the adopted approach from vcpkg relies on falling back to settings found and defined in your actual CMake installation files (typically, the ones found in "cmake\<version\>"/share/Modules/Platform" and "cmake\<version\>"/share/Modules/Compiler"). In here, there are many default definitions covering GNU, Clang, MSYS (falling back to Cygwin, which is no good for any of the actual sub-systems), and various other buildsystem/toolchain variants. These are selected according to your project settings for vars such as "\<CMAKE_SYSTEM_NAME\>" and "\<CMAKE_\<LANG\>_COMPILER_ID\>", which get looked up in the CMake files "CMakeSystemSpecificInformation", and "CMake\<LANG\>Information", and are used to populate some strings that are used for file names for inclusion. In practice it's a pretty clever system, but unfortunately leaves it pretty clear why there is no fully-supported MSYS sub-system toolchain as such. We're faced with creating a couple of CMake modules to be imported into your project which define each new "Platform/\<CMAKE_SYSTEM\>" and "Compiler/\<CMAKE_\<LANG\>_COMPILER\>", *or* calling the expected defaults bringing all of the necessary over-rides into the sub-system toolchain files. There isn't too much in the way of either approach being successful; but it would be absolutely ideal to fallback to Kitware's files as much as possible, where design and testing will be far more thorough than that of a one-man independent project.Granted, somebody somewhere has thus far refrained from putting the pieces together to unlock all of the subsystems, and the further I get, the more I can see why. However, with this project so far running very successfully during dev, I fully intend to follow through, with a view to hooking back in to the native CMake process and curbing back on the independently-maintained over-rides, once this project is solid. Ideally even the vcpkg won't be overwritten come the end of the project; we'll just supplement the existing processes whereever/whenever needed.
+
+I won't set up a dev branch, proper doc files, git flows, PR/issue templates or anything else until I mark the actual source code to be out of development, but please consider this repo very much public and the author more than happy to investigate any further findings, take questions, etc.
+
+Thanks for reading!
