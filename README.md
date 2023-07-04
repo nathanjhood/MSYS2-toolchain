@@ -7,8 +7,12 @@ For CMake/vcpkg integration.
 ## Example usage:
 
 ```
-$ cmake -S "<path/to/project>" -B "<path/to/project>/build" -DCMAKE_TOOLCHAIN_FILE:FILEPATH=<path/to/this/repo>/scripts/buildsystems/MSYS2.cmake -DMSYS_CHAINLOAD_TOOLCHAIN_FILE:FILEPATH=<path/to/this/repo>/scripts/toolchains/MINGW64.cmake -DMSYSTEM:STRING=MINGW64 -G Ninja
+$ cmake -S "<path/to/project>" -B "<path/to/project>/build" -DCMAKE_TOOLCHAIN_FILE:FILEPATH=<path/to/this/repo>/scripts/buildsystems/MSYS2.cmake -DMSYSTEM:STRING=MINGW64 -G "Ninja Multi-Config"
 ```
+
+*Dev latest:* So it turns out that the adopted approach from vcpkg relies on falling back to settings found and defined in your actual CMake installation files (typically, the ones found in "cmake\<version\>"/share/Modules/Platform" and "cmake\<version\>"/share/Modules/Compiler"). In here, there are many default definitions covering GNU, Clang, MSYS (falling back to Cygwin, which is no good for any of the actual sub-systems), and various other buildsystem/toolchain variants. These are selected according to your project settings for vars such as "\<CMAKE_SYSTEM_NAME\>" and "\<CMAKE_\<LANG\>_COMPILER_ID\>", which get looked up in the CMake files "CMakeSystemSpecificInformation", and "CMake\<LANG\>Information", and are used to populate some strings that are used for file names for inclusion. In practice it's a pretty clever system, but unfortunately leaves it pretty clear why there is no fully-supported MSYS sub-system toolchain as such. We're faced with creating a couple of CMake modules to be imported into your project which define each new "Platform/\<CMAKE_SYSTEM\>" and "Compiler/\<CMAKE_\<LANG\>_COMPILER\>", *or* calling the expected defaults bringing all of the necessary over-rides into the sub-system toolchain files. There isn't too much in the way of either approach being successful; but it would be absolutely ideal to fallback to Kitware's files as much as possible, where design and testing will be far more thorough than that of a one-man independent project.Granted, somebody somewhere has thus far refrained from putting the pieces together to unlock all of the subsystems, and the further I get, the more I can see why. However, with this project so far running very successfully during dev, I fully intend to follow through, with a view to hooking back in to the native CMake process and curbing back on the independently-maintained over-rides, once this project is solid. Ideally even the vcpkg won't be overwritten come the end of the project; we'll just supplement the existing processes whereever/whenever needed.
+
+I won't set up a dev branch, proper doc files, git flows, PR/issue templates or anything else until I mark the actual source code to be out of development, but please consider this repo very much public and the author more than happy to investigate any further findings, take questions, etc. Thanks for reading!
 
 ## Description
 
@@ -49,7 +53,7 @@ To use the toolchain, pass either;
 
 * <b>-DCMAKE_TOOLCHAIN_FILE</b>:FILEPATH=<i>"\<path/to/this/repo\>/scripts/buildsystem/MSYS2.cmake"</i>
 
-or to use in tandem with a (supported!) sub-system;
+or to use a sub-system without the encasing buildsystem;
 
 * <b>-DCMAKE_TOOLCHAIN_FILE</b>:FILEPATH=<i>"\<VCPKG_ROOT\>/scripts/buildsystems/MSYS2.cmake"</i>
 
