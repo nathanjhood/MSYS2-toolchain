@@ -1,12 +1,10 @@
 # MSYS2 toolchain
 
-For CMake/vcpkg integration.
+For CMake integration and vcpkg support.
 
 Eventual intended usage would be to supercede Msys's native Arch-Linux style "Pacman" package manager, for Microsoft's "vcpkg-tool" - or a customization of it - to enable much greater interoperability between Msys's MinGW-based sub-systems (including the Clang toolchain variants and their tools), and the native development environment (IDE integration, etc); as well as integrating a much larger package registry for third-party libraries (vcpkg's "ports"), cross-compiling support, and driven by a finely-tuned CMake configuration, tailored to tap into each subsystem's entire toolchain with ease.
 
 The project shall eventually attempt to resort to as minimal a fileset as possible, for maximal portability, by hooking back into processes already implemented in typical CMake installations on any system. During development however, it is necessary to deeply examine these native CMake processes and probably overwrite them (intended as temporary measures) until the most efficient solution presents itself. When CMake runs its' configuration stage, there is a great deal of "file-hopping" going on under the hood where all of the system- and compiler- critical vars get set. In order to better understand this process, it is sometimes necessary to write out the intended "story" all in one big long file, leaving ourselves breadcrumbs here and there to find the way back to the "file-hopping" take on the cprovided configuration. The scale of the final project can be greatly reduced once our base implementation is fully realized and optimized. Until then, apologies for the masoleum of source code :)
-
-*CURRENTLY ONLY SUPPORTING MSYSTEM=MINGW64 FOR DEVELOPMENT PURPOSES!*
 
 ## Example usage:
 
@@ -88,13 +86,15 @@ The main files at the core of the project are:
 
 * 'scripts/buildsystems/MSYS2.cmake'
 
-* 'scripts/toolchains/MINGW64.cmake'
+* 'scripts/toolchains/\<MSYSTEM\>.cmake'
 
-It should be noted that the first file, the 'buildsystem' file, actually contains and 'include()' directive for the second file - the 'toolchain' file, where the sub-system's toolchain is specified. This inclusion happens as a result of comparing the '\<MSYSTEM\>' variable against their usual shell names. However, as mentioned several times, this is currently hardcoded for MinGW x64 until that single example is passing with full marks. Thus, the MinGW x64 toolchain file is where the working development is happening.
+* 'scripts/cmake/Modules/Platform/MSYSTEM-\<COMPILER_ID\>.cmake'
+
+It should be noted that the first file, the 'buildsystem' file, actually contains and 'include()' directive for the second file - the 'toolchain' file, where the sub-system's toolchain is specified. This inclusion happens as a result of comparing the '\<MSYSTEM\>' variable against their usual shell names.
 
 It is well worth noting that both files are pretty much direct clones of corresponding files found in <a href="https://github.com/microsoft/vcpkg.git">microsoft's excellent vcpkg package manager</a>.
 
-While these have currently been overwritten for project development purposes, the intention is to fall back to the files supplied by a conventional vcpkg installation, probably just supplemented with a few additional CMake scripts. There is a clear attempt here at unifying much of the processes between vcpkg and CMake under the name of msys, but aside from clearly having no affiliation with any said parties, this purely a development stage artefact exposed in the hope of providing better insight into project status, providing a more successful experience for any passers-by, and hopefully providing more opportunity for understanding that which I've no time to document here in this development journal, realistically speaking. The eventual project on conclusion will more or less "just work" without so much borrowed code ;)
+While these have currently been overwritten for project development purposes, the intention is to fall back to the files supplied by a conventional vcpkg installation, probably just supplemented with a few additional CMake Platform Modules. There is a clear attempt here at unifying much of the processes between vcpkg and CMake under the name of msys, but aside from clearly having no affiliation with any said parties, this purely a development stage artefact exposed in the hope of providing better insight into project status, providing a more successful experience for any passers-by, and hopefully providing more opportunity for understanding that which I've no time to document here in this development journal, realistically speaking. The eventual project on conclusion will more or less "just work" without so much borrowed code ;)
 
 In practice, I'm trying to define multiple 'sets' of CMake variables, each 'set' given the prefix of "${MSYSTEM}_". This allows, for example, that we might have access to, and control over, multiple different sub-systems at the same time, without naming clashes.
 
@@ -230,12 +230,6 @@ Lastly, the LLVM project contains some interesting CMake functions that run some
 
 ## Supported Subsystems
 
-As of writing, I've hard-coded <b>'\<MSYSTEM\>'</b> to be set to the <b>'\<MINGW64\>'</b> environment/toolchain, to narrow down a single working environment before copying the successful design pattern over to enable the remaining environments. It's a pretty simple fix away if you know CMake and would like to poke around with the differing <b>'\<MSYSTEM\>'</b>'s in it's current state. Make sure you 'pacman -S mingw-w64-x86_64-toolchain' as well as get the CMake/Ninja/etc packages for the default MSYS shell, for the best experience.
-
-Eventually, we shall simply pass an <b>'\<MSYSTEM\>'</b> to easily pick up a config using familiar Msys64 commands, just like when invoking msys64 from a command line (example);
-
-* <b>-DMSYSTEM</b>:STRING=<i>"CLANG64"</i>
-
 Available <b>'\<MSYSTEM\>'</b> options...
 
 * <b>'\<CLANGARM64\>'</b>
@@ -246,9 +240,11 @@ Available <b>'\<MSYSTEM\>'</b> options...
 * <b>'\<UCRT64\>'</b>
 * <b>'\<MSYS\>'</b>
 
+Main development is happening on the MinGW x64 variant, closely followed by the Clang x64 and then MinGW x86 varieties. The '\<MSYS2\>' subsystem mostly falls back on CMake's platform defaults for Cygwin, whereas the others require more tailoring to take full advantage of the buildsystem and create rigidly-defined behaviour. If something doesn't appear to be working, please keep in mind the priority order above. The ucrt64 case I believe will require a bit further effort, then even more so for Clang arm64 cases. The MinGW-based GNU/Clang subsystems are where most of the working proof can be seen.
+
 ## Dev latest
 
-So it turns out that the adopted approach from vcpkg relies on falling back to settings found and defined in your actual CMake installation files (typically, the ones found in "cmake\<version\>"/share/Modules/Platform" and "cmake\<version\>"/share/Modules/Compiler"). In here, there are many default definitions covering GNU, Clang, MSYS (falling back to Cygwin, which is no good for any of the actual sub-systems), and various other buildsystem/toolchain variants. These are selected according to your project settings for vars such as "\<CMAKE_SYSTEM_NAME\>" and "\<CMAKE_\<LANG\>_COMPILER_ID\>", which get looked up in the CMake files "CMakeSystemSpecificInformation", and "CMake\<LANG\>Information", and are used to populate some strings that are used for file names for inclusion. In practice it's a pretty clever system, but unfortunately leaves it pretty clear why there is no fully-supported MSYS sub-system toolchain as such. We're faced with creating a couple of CMake modules to be imported into your project which define each new "Platform/\<CMAKE_SYSTEM\>" and "Compiler/\<CMAKE_\<LANG\>_COMPILER\>", *or* calling the expected defaults bringing all of the necessary over-rides into the sub-system toolchain files. There isn't too much in the way of either approach being successful; but it would be absolutely ideal to fallback to Kitware's files as much as possible, where design and testing will be far more thorough than that of a one-man independent project.Granted, somebody somewhere has thus far refrained from putting the pieces together to unlock all of the subsystems, and the further I get, the more I can see why. However, with this project so far running very successfully during dev, I fully intend to follow through, with a view to hooking back in to the native CMake process and curbing back on the independently-maintained over-rides, once this project is solid. Ideally even the vcpkg won't be overwritten come the end of the project; we'll just supplement the existing processes whereever/whenever needed.
+So it turns out that the adopted approach from vcpkg relies on falling back to settings found and defined in your actual CMake installation files (typically, the ones found in "cmake\<version\>"/share/Modules/Platform" and "cmake\<version\>"/share/Modules/Compiler"). In here, there are many default definitions covering GNU, Clang, MSYS (falling back to Cygwin, which is no good for any of the actual sub-systems), and various other buildsystem/toolchain variants. These are selected according to your project settings for vars such as "\<CMAKE_SYSTEM_NAME\>" and "\<CMAKE_\<LANG\>_COMPILER_ID\>", which get looked up in the CMake files "CMakeSystemSpecificInformation", and "CMake\<LANG\>Information", and are used to populate some strings that are used for file names for inclusion. In practice it's a pretty clever system - just a little long-winded to reverse-engineer, due to some file-hopping and tricky resetting of vars during config runs. The working proof is however now well under way, and moving forward there is a strong view to hooking back in to the native CMake process and curbing back as far as possible on the independently-maintained over-rides of Kitware and Microsoft source code, once this project is solidly defined beyond it's current form. Ideally even the vcpkg won't be overwritten come the end of the project; we'll just supplement the existing processes whereever/whenever needed.
 
 I won't set up a dev branch, proper doc files, git flows, PR/issue templates or anything else until I mark the actual source code to be out of development, but please consider this repo very much public and the author more than happy to investigate any further findings, take questions, etc.
 
