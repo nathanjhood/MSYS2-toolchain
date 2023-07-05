@@ -1,0 +1,13 @@
+mingw-w64-x86_64-binutils
+mingw-w64-x86_64-crt
+mingw-w64-x86_64-gcc-libs =13.1.0-7
+mingw-w64-x86_64-gmp
+mingw-w64-x86_64-headers
+mingw-w64-x86_64-isl
+mingw-w64-x86_64-libiconv
+mingw-w64-x86_64-mpc
+mingw-w64-x86_64-mpfr
+mingw-w64-x86_64-windows-default-manifest
+mingw-w64-x86_64-winpthreads
+mingw-w64-x86_64-zlib
+mingw-w64-x86_64-zstd
