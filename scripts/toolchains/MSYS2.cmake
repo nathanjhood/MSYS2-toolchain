@@ -85,9 +85,9 @@ if(NOT _MSYS_MSYS2_TOOLCHAIN)
 
     # Targets for vars
 
-    set(CMAKE_SYSTEM "MSYS" CACHE STRING "Composite name of operating system CMake is compiling for." FORCE)
+    ##set(CMAKE_SYSTEM "MSYSTEM" CACHE STRING "Composite name of operating system CMake is compiling for." FORCE)
     # Need to override MinGW from MSYS_CMAKE_SYSTEM_NAME
-    set(CMAKE_SYSTEM_NAME "MSYS" CACHE STRING "The name of the operating system for which CMake is to build." FORCE)
+    set(CMAKE_SYSTEM_NAME "MSYSTEM" CACHE STRING "The name of the operating system for which CMake is to build." FORCE)
 
     foreach(lang C CXX ASM Fortran OBJC OBJCXX)
         ##-- CMakeCXXInformation: include(Compiler/<CMAKE_CXX_COMPILER_ID>-<LANG>)

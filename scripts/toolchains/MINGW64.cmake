@@ -57,7 +57,7 @@ if(NOT _MSYS_MINGW64_TOOLCHAIN)
 
     #set(CMAKE_SYSTEM "MINGW64" CACHE STRING "Composite name of operating system CMake is compiling for." FORCE)
     # Need to override MinGW from MSYS_CMAKE_SYSTEM_NAME
-    set(CMAKE_SYSTEM_NAME "MINGW64" CACHE STRING "The name of the operating system for which CMake is to build." FORCE)
+    set(CMAKE_SYSTEM_NAME "MSYSTEM" CACHE STRING "The name of the operating system for which CMake is to build." FORCE)
 
     if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
         set(CMAKE_CROSSCOMPILING OFF CACHE BOOL "")
