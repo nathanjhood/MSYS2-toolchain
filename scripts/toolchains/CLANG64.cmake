@@ -56,21 +56,9 @@ if(NOT _MSYS_CLANG64_TOOLCHAIN)
     # # CMake vars...
     # ###########################################################################
 
-    ## set(MSYS_TARGET_TRIPLET "x64-mingw-dynamic") ############## One more time!
-
-    set(Z_MSYS_TARGET_TRIPLET_PLAT mingw-dynamic)
-    set(Z_MSYS_TARGET_TRIPLET_ARCH x64)
-
-    set(MSYS_TARGET_ARCHITECTURE x64)
-    set(MSYS_CRT_LINKAGE dynamic)
-    set(MSYS_LIBRARY_LINKAGE dynamic)
-    set(MSYS_ENV_PASSTHROUGH PATH)
-
-    set(MSYS_CMAKE_SYSTEM_NAME MinGW)
-    set(MSYS_POLICY_DLLS_WITHOUT_LIBS enabled)
-
-    set(MSYS_TARGET_TRIPLET "${Z_MSYS_TARGET_TRIPLET_ARCH}-${Z_MSYS_TARGET_TRIPLET_PLAT}" CACHE STRING "Msys target triplet (ex. x86-windows)" FORCE)
-
+    #set(CMAKE_SYSTEM "CLANG64" CACHE STRING "Composite name of operating system CMake is compiling for." FORCE)
+    # Need to override MinGW from MSYS_CMAKE_SYSTEM_NAME
+    set(CMAKE_SYSTEM_NAME "Windows" CACHE STRING "The name of the operating system for which CMake is to build." FORCE)
 
     if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
         set(CMAKE_CROSSCOMPILING OFF CACHE BOOL "")
@@ -87,13 +75,99 @@ if(NOT _MSYS_CLANG64_TOOLCHAIN)
     endif()
     #set(CMAKE_SYSTEM_PROCESSOR "x86_64" CACHE STRING "When not cross-compiling, this variable has the same value as the ``CMAKE_HOST_SYSTEM_PROCESSOR`` variable." FORCE) # include(Platform/${CMAKE_EFFECTIVE_SYSTEM_NAME}-${CMAKE_CXX_COMPILER_ID}-CXX-${CMAKE_SYSTEM_PROCESSOR} OPTIONAL RESULT_VARIABLE _INCLUDED_FILE)                             #CACHE STRING "When not cross-compiling, this variable has the same value as the ``CMAKE_HOST_SYSTEM_PROCESSOR`` variable." FORCE)
 
-    # Targets for vars
+    # find_program(CMAKE_MAKE_PROGRAM "${Z_CLANG64_ROOT_DIR}/bin/mingw32-make.exe"
+    #     # PATHS
+    #     # # Typical install path for 64-bit MSYS2 MINGW64 toolchain (https://repo.msys2.org/distrib/msys2-x86_64-latest.sfx.exe)
+    #     # "${Z_MINGW64_ROOT_DIR}/bin"
+    #     # "C:/msys64/mingw64/bin"
+    #     # "/mingw64/bin"
+    #     # "/c/msys64/mingw64/bin"
+    #     # DOC "Makefile generator."
+    # )
 
-    set(CMAKE_SYSTEM "CLANG64" CACHE STRING "Composite name of operating system CMake is compiling for." FORCE)
-    # Need to override MinGW from MSYS_CMAKE_SYSTEM_NAME
-    set(CMAKE_SYSTEM_NAME "CLANG64" CACHE STRING "The name of the operating system for which CMake is to build." FORCE)
+    # mark_as_advanced(CMAKE_MAKE_PROGRAM)
 
-    foreach(lang C CXX ASM Fortran OBJC OBJCXX)
+    foreach(lang C CXX Fortran OBJC OBJCXX ASM)
+
+        if(NOT DEFINED lang OR lang STREQUAL "")
+            message(FATAL_ERROR "Internal error: lang is not set")
+        endif()
+
+        # Ubuntu:
+        # * /usr/bin/llvm-ar-9
+        # * /usr/bin/llvm-ranlib-9
+        string(REGEX MATCH "^([0-9]+)" __version_x "${CMAKE_${lang}_COMPILER_VERSION}")
+
+        # Debian:
+        # * /usr/bin/llvm-ar-4.0
+        # * /usr/bin/llvm-ranlib-4.0
+        string(REGEX MATCH "^([0-9]+\\.[0-9]+)" __version_x_y "${CMAKE_${lang}_COMPILER_VERSION}")
+
+        # Try to find tools in the same directory as Clang itself
+        get_filename_component(__clang_hint_1 "${CMAKE_${lang}_COMPILER}" REALPATH)
+        get_filename_component(__clang_hint_1 "${__clang_hint_1}" DIRECTORY)
+        get_filename_component(__clang_hint_2 "${CMAKE_${lang}_COMPILER}" DIRECTORY)
+
+        set(__clang_hints ${__clang_hint_1} ${__clang_hint_2})
+
+        # http://manpages.ubuntu.com/manpages/precise/en/man1/llvm-ar.1.html
+        find_program(CMAKE_${lang}_COMPILER_AR NAMES
+            "${_CMAKE_TOOLCHAIN_PREFIX}llvm-ar-${__version_x_y}"
+            "${_CMAKE_TOOLCHAIN_PREFIX}llvm-ar-${__version_x}"
+            "${_CMAKE_TOOLCHAIN_PREFIX}llvm-ar"
+            "llvm-ar-${__version_x_y}"
+            "llvm-ar-${__version_x}"
+            "llvm-ar"
+            HINTS ${__clang_hints}
+            NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH
+            DOC "LLVM archiver"
+        )
+        mark_as_advanced(CMAKE_${lang}_COMPILER_AR)
+
+        # http://manpages.ubuntu.com/manpages/precise/en/man1/llvm-ranlib.1.html
+        find_program(CMAKE_${lang}_COMPILER_RANLIB NAMES
+            "${_CMAKE_TOOLCHAIN_PREFIX}llvm-ranlib-${__version_x_y}"
+            "${_CMAKE_TOOLCHAIN_PREFIX}llvm-ranlib-${__version_x}"
+            "${_CMAKE_TOOLCHAIN_PREFIX}llvm-ranlib"
+            "llvm-ranlib-${__version_x_y}"
+            "llvm-ranlib-${__version_x}"
+            "llvm-ranlib"
+            HINTS ${__clang_hints}
+            NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH
+            DOC "Generate index for LLVM archive"
+        )
+        mark_as_advanced(CMAKE_${lang}_COMPILER_RANLIB)
+
+        # clang-scan-deps
+        find_program(CMAKE_${lang}_COMPILER_CLANG_SCAN_DEPS NAMES
+            "${_CMAKE_TOOLCHAIN_PREFIX}clang-scan-deps-${__version_x_y}"
+            "${_CMAKE_TOOLCHAIN_PREFIX}clang-scan-deps-${__version_x}"
+            "${_CMAKE_TOOLCHAIN_PREFIX}clang-scan-deps"
+            "clang-scan-deps-${__version_x_y}"
+            "clang-scan-deps-${__version_x}"
+            "clang-scan-deps"
+            HINTS ${__clang_hints}
+            NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH
+            DOC "`clang-scan-deps` dependency scanner"
+        )
+        mark_as_advanced(CMAKE_${lang}_COMPILER_CLANG_SCAN_DEPS)
+
+        # clang-tidy
+        find_program(CMAKE_${lang}_CLANG_TIDY NAMES
+            "${_CMAKE_TOOLCHAIN_PREFIX}clang-tidy-${__version_x_y}"
+            "${_CMAKE_TOOLCHAIN_PREFIX}clang-tidy-${__version_x}"
+            "${_CMAKE_TOOLCHAIN_PREFIX}clang-tidy"
+            "clang-tidy-${__version_x_y}"
+            "clang-tidy-${__version_x}"
+            "clang-tidy"
+            HINTS ${__clang_hints}
+            NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH
+            DOC "`clang-tidy` code formatter."
+        )
+        mark_as_advanced(CMAKE_${lang}_CLANG_TIDY)
+    endforeach()
+
+    foreach(lang C CXX Fortran OBJC OBJCXX ASM)
         ##-- CMakeCXXInformation: include(Compiler/<CMAKE_CXX_COMPILER_ID>-<LANG>)
         #set(CMAKE_${lang}_COMPILER_ID "MINGW64 13.1.0" CACHE STRING "" FORCE) # - actually, let's fallback to Kitware's GNU
         ##-- 'TARGET' tells the compiler in question what it's '--target:' is.
@@ -102,27 +176,8 @@ if(NOT _MSYS_CLANG64_TOOLCHAIN)
     endforeach()
     set(CMAKE_RC_COMPILER_TARGET "${CMAKE_SYSTEM_PROCESSOR}-w64-mingw32" CACHE STRING "The target for cross-compiling, if supported. '--target=x86_64-w64-mingw32'")
 
-    find_program(CMAKE_C_COMPILER "${Z_CLANG64_ROOT_DIR}/bin/x86_64-w64-mingw32-clang.exe")
-    mark_as_advanced(CMAKE_C_COMPILER)
-
-    find_program(CMAKE_CXX_COMPILER "${Z_CLANG64_ROOT_DIR}/bin/x86_64-w64-mingw32-clang++.exe")
-    mark_as_advanced(CMAKE_CXX_COMPILER)
-
-    find_program(CMAKE_RC_COMPILER "${Z_CLANG64_ROOT_DIR}/bin/windres.exe")
+    find_program(CMAKE_RC_COMPILER "${Z_CLANG64_ROOT_DIR}/bin/llvm-rc.exe")
     mark_as_advanced(CMAKE_RC_COMPILER)
-
-    find_program(CMAKE_ASM_COMPILER "${Z_CLANG64_ROOT_DIR}/bin/as.exe")
-    mark_as_advanced(CMAKE_ASM_COMPILER)
-
-    find_program(CMAKE_OBJCXX_COMPILER "${Z_CLANG64_ROOT_DIR}/bin/x86_64-w64-mingw32-clang.exe")
-    mark_as_advanced(CMAKE_OBJC_COMPILER)
-
-    find_program(CMAKE_OBJCXX_COMPILER "${Z_CLANG64_ROOT_DIR}/bin/x86_64-w64-mingw32-clang++.exe")
-    mark_as_advanced(CMAKE_OBJCXX_COMPILER)
-
-    find_program(CMAKE_RC_COMPILER "${Z_CLANG64_ROOT_DIR}/bin/windres.exe")
-    mark_as_advanced(CMAKE_RC_COMPILER)
-
     if(NOT CMAKE_RC_COMPILER)
         find_program (CMAKE_RC_COMPILER "${Z_CLANG64_ROOT_DIR}/bin/windres" NO_CACHE)
         if(NOT CMAKE_RC_COMPILER)
@@ -130,6 +185,25 @@ if(NOT _MSYS_CLANG64_TOOLCHAIN)
         endif()
     endif()
 
+    find_program(CMAKE_C_COMPILER "${Z_CLANG64_ROOT_DIR}/bin/x86_64-w64-mingw32-clang.exe")
+    mark_as_advanced(CMAKE_C_COMPILER)
+
+    find_program(CMAKE_CXX_COMPILER "${Z_CLANG64_ROOT_DIR}/bin/x86_64-w64-mingw32-clang++.exe")
+    mark_as_advanced(CMAKE_CXX_COMPILER)
+
+    find_program(CMAKE_Fortran_COMPILER "${Z_CLANG64_ROOT_DIR}/bin/flang.exe")
+    mark_as_advanced(CMAKE_Fortran_COMPILER)
+
+    find_program(CMAKE_OBJC_COMPILER "${Z_CLANG64_ROOT_DIR}/bin/x86_64-w64-mingw32-clang.exe")
+    mark_as_advanced(CMAKE_OBJC_COMPILER)
+
+    find_program(CMAKE_OBJCXX_COMPILER "${Z_CLANG64_ROOT_DIR}/bin/x86_64-w64-mingw32-clang++.exe")
+    mark_as_advanced(CMAKE_OBJCXX_COMPILER)
+
+    if(NOT DEFINED CMAKE_ASM_COMPILER)
+        find_program(CMAKE_ASM_COMPILER "${Z_CLANG64_ROOT_DIR}/bin/as.exe")
+        mark_as_advanced(CMAKE_ASM_COMPILER)
+    endif()
 
     get_property(_CMAKE_IN_TRY_COMPILE GLOBAL PROPERTY IN_TRY_COMPILE )
 

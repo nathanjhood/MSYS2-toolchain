@@ -51,26 +51,13 @@ if(NOT _MSYS_MINGW64_TOOLCHAIN)
     #set(__USE_MINGW_ANSI_STDIO  "1")                                   # CACHE STRING   "Use the MinGW ANSI definition for 'stdio.h'." FORCE)
     #set(_FORTIFY_SOURCE         "2")                                   # CACHE STRING   "Fortify source definition." FORCE)
 
-
     # ###########################################################################
     # # CMake vars...
     # ###########################################################################
 
-    ## set(MSYS_TARGET_TRIPLET "x64-mingw-dynamic") ############## One more time!
-
-    set(Z_MSYS_TARGET_TRIPLET_PLAT mingw-dynamic)
-    set(Z_MSYS_TARGET_TRIPLET_ARCH x64)
-
-    set(MSYS_TARGET_ARCHITECTURE x64)
-    set(MSYS_CRT_LINKAGE dynamic)
-    set(MSYS_LIBRARY_LINKAGE dynamic)
-    set(MSYS_ENV_PASSTHROUGH PATH)
-
-    set(MSYS_CMAKE_SYSTEM_NAME MinGW)
-    set(MSYS_POLICY_DLLS_WITHOUT_LIBS enabled)
-
-    set(MSYS_TARGET_TRIPLET "${Z_MSYS_TARGET_TRIPLET_ARCH}-${Z_MSYS_TARGET_TRIPLET_PLAT}" CACHE STRING "Msys target triplet (ex. x86-windows)" FORCE)
-
+    #set(CMAKE_SYSTEM "MINGW64" CACHE STRING "Composite name of operating system CMake is compiling for." FORCE)
+    # Need to override MinGW from MSYS_CMAKE_SYSTEM_NAME
+    set(CMAKE_SYSTEM_NAME "MINGW64" CACHE STRING "The name of the operating system for which CMake is to build." FORCE)
 
     if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
         set(CMAKE_CROSSCOMPILING OFF CACHE BOOL "")
@@ -85,47 +72,17 @@ if(NOT _MSYS_MINGW64_TOOLCHAIN)
     elseif(MSYS_TARGET_ARCHITECTURE STREQUAL "arm64")
         set(CMAKE_SYSTEM_PROCESSOR aarch64 CACHE STRING "When not cross-compiling, this variable has the same value as the ``CMAKE_HOST_SYSTEM_PROCESSOR`` variable.")
     endif()
-    #set(CMAKE_SYSTEM_PROCESSOR "x86_64" CACHE STRING "When not cross-compiling, this variable has the same value as the ``CMAKE_HOST_SYSTEM_PROCESSOR`` variable." FORCE) # include(Platform/${CMAKE_EFFECTIVE_SYSTEM_NAME}-${CMAKE_CXX_COMPILER_ID}-CXX-${CMAKE_SYSTEM_PROCESSOR} OPTIONAL RESULT_VARIABLE _INCLUDED_FILE)                             #CACHE STRING "When not cross-compiling, this variable has the same value as the ``CMAKE_HOST_SYSTEM_PROCESSOR`` variable." FORCE)
 
+    foreach(lang RC C CXX Fortran OBJC OBJCXX ASM)
 
-    # Targets for vars
-
-    set(CMAKE_SYSTEM "MINGW64" CACHE STRING "Composite name of operating system CMake is compiling for." FORCE)
-    # Need to override MinGW from MSYS_CMAKE_SYSTEM_NAME
-    set(CMAKE_SYSTEM_NAME "MINGW64" CACHE STRING "The name of the operating system for which CMake is to build." FORCE)
-
-
-
-    foreach(lang C CXX ASM Fortran OBJC OBJCXX)
-        ##-- CMakeCXXInformation: include(Compiler/<CMAKE_CXX_COMPILER_ID>-<LANG>)
-        #set(CMAKE_${lang}_COMPILER_ID "MINGW64 13.1.0" CACHE STRING "" FORCE) # - actually, let's fallback to Kitware's GNU
-        ##-- 'TARGET' tells the compiler in question what it's '--target:' is.
         set(CMAKE_${lang}_COMPILER_TARGET "x86_64-w64-mingw32" CACHE STRING "The target for cross-compiling, if supported. '--target=x86_64-w64-mingw32'")
+        #set(CMAKE_USER_MAKE_RULES_OVERRIDE_${lang} Compiler/MINGW64-FindBinUtils)
 
     endforeach()
-    set(CMAKE_RC_COMPILER_TARGET "${CMAKE_SYSTEM_PROCESSOR}-w64-mingw32" CACHE STRING "The target for cross-compiling, if supported. '--target=x86_64-w64-mingw32'")
-
-    find_program(CMAKE_C_COMPILER "${Z_MINGW64_ROOT_DIR}/bin/x86_64-w64-mingw32-gcc.exe")
-    mark_as_advanced(CMAKE_C_COMPILER)
-
-    find_program(CMAKE_CXX_COMPILER "${Z_MINGW64_ROOT_DIR}/bin/x86_64-w64-mingw32-g++.exe")
-    mark_as_advanced(CMAKE_CXX_COMPILER)
+    #set(CMAKE_RC_COMPILER_TARGET "${CMAKE_SYSTEM_PROCESSOR}-w64-mingw32" CACHE STRING "The target for cross-compiling, if supported. '--target=x86_64-w64-mingw32'")
 
     find_program(CMAKE_RC_COMPILER "${Z_MINGW64_ROOT_DIR}/bin/windres.exe")
     mark_as_advanced(CMAKE_RC_COMPILER)
-
-    find_program(CMAKE_ASM_COMPILER "${Z_MINGW64_ROOT_DIR}/bin/as.exe")
-    mark_as_advanced(CMAKE_ASM_COMPILER)
-
-    find_program(CMAKE_OBJCXX_COMPILER "${Z_MINGW64_ROOT_DIR}/bin/x86_64-w64-mingw32-gcc.exe")
-    mark_as_advanced(CMAKE_OBJC_COMPILER)
-
-    find_program(CMAKE_OBJCXX_COMPILER "${Z_MINGW64_ROOT_DIR}/bin/x86_64-w64-mingw32-g++.exe")
-    mark_as_advanced(CMAKE_OBJCXX_COMPILER)
-
-    find_program(CMAKE_RC_COMPILER "${Z_MINGW64_ROOT_DIR}/bin/windres.exe")
-    mark_as_advanced(CMAKE_RC_COMPILER)
-
     if(NOT CMAKE_RC_COMPILER)
         find_program (CMAKE_RC_COMPILER "${Z_MINGW64_ROOT_DIR}/bin/windres" NO_CACHE)
         if(NOT CMAKE_RC_COMPILER)
@@ -133,6 +90,29 @@ if(NOT _MSYS_MINGW64_TOOLCHAIN)
         endif()
     endif()
 
+    find_program(CMAKE_C_COMPILER "${Z_MINGW64_ROOT_DIR}/bin/x86_64-w64-mingw32-gcc.exe")
+    mark_as_advanced(CMAKE_C_COMPILER)
+
+    find_program(CMAKE_CXX_COMPILER "${Z_MINGW64_ROOT_DIR}/bin/x86_64-w64-mingw32-g++.exe")
+    mark_as_advanced(CMAKE_CXX_COMPILER)
+
+    find_program(CMAKE_Fortran_COMPILER "${Z_MINGW64_ROOT_DIR}/bin/x86_64-w64-mingw32-gfortran.exe")
+    mark_as_advanced(CMAKE_Fortran_COMPILER)
+
+    if(NOT DEFINED CMAKE_OBJC_COMPILER)
+        find_program(CMAKE_OBJC_COMPILER "${Z_MINGW64_ROOT_DIR}/bin/x86_64-w64-mingw32-gcc.exe")
+        mark_as_advanced(CMAKE_OBJC_COMPILER)
+    endif()
+
+    if(NOT DEFINED CMAKE_OBJCXX_COMPILER)
+        find_program(CMAKE_OBJCXX_COMPILER "${Z_MINGW64_ROOT_DIR}/bin/x86_64-w64-mingw32-g++.exe")
+        mark_as_advanced(CMAKE_OBJCXX_COMPILER)
+    endif()
+
+    if(NOT DEFINED CMAKE_ASM_COMPILER)
+        find_program(CMAKE_ASM_COMPILER "${Z_MINGW64_ROOT_DIR}/bin/as.exe")
+        mark_as_advanced(CMAKE_ASM_COMPILER)
+    endif()
 
     get_property(_CMAKE_IN_TRY_COMPILE GLOBAL PROPERTY IN_TRY_COMPILE )
 
@@ -221,17 +201,17 @@ if(NOT _MSYS_MINGW64_TOOLCHAIN)
         string(APPEND CMAKE_MODULE_LINKER_FLAGS_INIT            " ${MSYS_LINKER_FLAGS} ")
         string(APPEND CMAKE_EXE_LINKER_FLAGS_INIT               " ${MSYS_LINKER_FLAGS} ")
 
-        if(OPTION_STRIP_BINARIES)
-            string(APPEND CMAKE_EXE_LINKER_FLAGS_INIT               " --strip-all")
-        endif()
+        # if(OPTION_STRIP_BINARIES)
+        #     string(APPEND CMAKE_EXE_LINKER_FLAGS_INIT               " --strip-all")
+        # endif()
 
-        if(OPTION_STRIP_SHARED)
-            string(APPEND CMAKE_SHARED_LINKER_FLAGS_INIT            " --strip-unneeded")
-        endif()
+        # if(OPTION_STRIP_SHARED)
+        #     string(APPEND CMAKE_SHARED_LINKER_FLAGS_INIT            " --strip-unneeded")
+        # endif()
 
-        if(OPTION_STRIP_STATIC)
-            string(APPEND CMAKE_STATIC_LINKER_FLAGS_INIT            " --strip-debug")
-        endif()
+        # if(OPTION_STRIP_STATIC)
+        #     string(APPEND CMAKE_STATIC_LINKER_FLAGS_INIT            " --strip-debug")
+        # endif()
 
         if(MSYS_CRT_LINKAGE STREQUAL "static")
             string(APPEND CMAKE_SHARED_LINKER_FLAGS_INIT        " -static")

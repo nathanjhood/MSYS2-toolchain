@@ -85,9 +85,9 @@ if(NOT _MSYS_MSYS2_TOOLCHAIN)
 
     # Targets for vars
 
-    set(CMAKE_SYSTEM "MSYS2" CACHE STRING "Composite name of operating system CMake is compiling for." FORCE)
+    set(CMAKE_SYSTEM "MSYS" CACHE STRING "Composite name of operating system CMake is compiling for." FORCE)
     # Need to override MinGW from MSYS_CMAKE_SYSTEM_NAME
-    set(CMAKE_SYSTEM_NAME "MSYS2" CACHE STRING "The name of the operating system for which CMake is to build." FORCE)
+    set(CMAKE_SYSTEM_NAME "MSYS" CACHE STRING "The name of the operating system for which CMake is to build." FORCE)
 
     foreach(lang C CXX ASM Fortran OBJC OBJCXX)
         ##-- CMakeCXXInformation: include(Compiler/<CMAKE_CXX_COMPILER_ID>-<LANG>)
@@ -110,7 +110,7 @@ if(NOT _MSYS_MSYS2_TOOLCHAIN)
     find_program(CMAKE_ASM_COMPILER "${Z_MSYS2_ROOT_DIR}/bin/as.exe")
     mark_as_advanced(CMAKE_ASM_COMPILER)
 
-    find_program(CMAKE_OBJCXX_COMPILER "${Z_MSYS2_ROOT_DIR}/bin/x86_64-w64-mingw32-gcc.exe")
+    find_program(CMAKE_OBJC_COMPILER "${Z_MSYS2_ROOT_DIR}/bin/x86_64-w64-mingw32-gcc.exe")
     mark_as_advanced(CMAKE_OBJC_COMPILER)
 
     find_program(CMAKE_OBJCXX_COMPILER "${Z_MSYS2_ROOT_DIR}/bin/x86_64-w64-mingw32-g++.exe")

@@ -56,21 +56,9 @@ if(NOT _MSYS_UCRT64_TOOLCHAIN)
     # # CMake vars...
     # ###########################################################################
 
-    ## set(MSYS_TARGET_TRIPLET "x64-mingw-dynamic") ############## One more time!
-
-    set(Z_MSYS_TARGET_TRIPLET_PLAT mingw-dynamic)
-    set(Z_MSYS_TARGET_TRIPLET_ARCH x64)
-
-    set(MSYS_TARGET_ARCHITECTURE x64)
-    set(MSYS_CRT_LINKAGE dynamic)
-    set(MSYS_LIBRARY_LINKAGE dynamic)
-    set(MSYS_ENV_PASSTHROUGH PATH)
-
-    set(MSYS_CMAKE_SYSTEM_NAME MinGW)
-    set(MSYS_POLICY_DLLS_WITHOUT_LIBS enabled)
-
-    set(MSYS_TARGET_TRIPLET "${Z_MSYS_TARGET_TRIPLET_ARCH}-${Z_MSYS_TARGET_TRIPLET_PLAT}" CACHE STRING "Msys target triplet (ex. x86-windows)" FORCE)
-
+    #set(CMAKE_SYSTEM "CLANG64" CACHE STRING "Composite name of operating system CMake is compiling for." FORCE)
+    # Need to override MinGW from MSYS_CMAKE_SYSTEM_NAME
+    set(CMAKE_SYSTEM_NAME "Windows" CACHE STRING "The name of the operating system for which CMake is to build." FORCE)
 
     if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
         set(CMAKE_CROSSCOMPILING OFF CACHE BOOL "")
@@ -86,12 +74,6 @@ if(NOT _MSYS_UCRT64_TOOLCHAIN)
         set(CMAKE_SYSTEM_PROCESSOR aarch64 CACHE STRING "When not cross-compiling, this variable has the same value as the ``CMAKE_HOST_SYSTEM_PROCESSOR`` variable.")
     endif()
     #set(CMAKE_SYSTEM_PROCESSOR "x86_64" CACHE STRING "When not cross-compiling, this variable has the same value as the ``CMAKE_HOST_SYSTEM_PROCESSOR`` variable." FORCE) # include(Platform/${CMAKE_EFFECTIVE_SYSTEM_NAME}-${CMAKE_CXX_COMPILER_ID}-CXX-${CMAKE_SYSTEM_PROCESSOR} OPTIONAL RESULT_VARIABLE _INCLUDED_FILE)                             #CACHE STRING "When not cross-compiling, this variable has the same value as the ``CMAKE_HOST_SYSTEM_PROCESSOR`` variable." FORCE)
-
-    # Targets for vars
-
-    set(CMAKE_SYSTEM "UCRT64" CACHE STRING "Composite name of operating system CMake is compiling for." FORCE)
-    # Need to override MinGW from MSYS_CMAKE_SYSTEM_NAME
-    set(CMAKE_SYSTEM_NAME "UCRT64" CACHE STRING "The name of the operating system for which CMake is to build." FORCE)
 
     foreach(lang C CXX ASM Fortran OBJC OBJCXX)
         ##-- CMakeCXXInformation: include(Compiler/<CMAKE_CXX_COMPILER_ID>-<LANG>)
