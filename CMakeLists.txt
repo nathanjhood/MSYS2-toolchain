@@ -13,10 +13,10 @@ project(application)
 
 enable_language(C)
 enable_language(CXX)
-enable_language(ASM)
 enable_language(Fortran)
 enable_language(OBJC)
 enable_language(OBJCXX)
+enable_language(ASM)
 
 # include(GNUInstallDirs)
 
