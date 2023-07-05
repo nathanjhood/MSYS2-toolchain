@@ -89,6 +89,10 @@ option(MSYS_PREFER_SYSTEM_LIBS "Appends the msys paths to CMAKE_PREFIX_PATH, CMA
 #     message(WARNING "MSYS_PREFER_SYSTEM_LIBS has been deprecated. Use empty overlay ports instead.")
 # endif()
 
+option(OPTION_STRIP_BINARIES "Appends '--strip-all' to <CMAKE_EXE_LINKER_FLAGS>" ON)
+option(OPTION_STRIP_SHARED "Appends '--strip-unneeded' to <CMAKE_SHARED_LINKER_FLAGS>" ON)
+option(OPTION_STRIP_STATIC "Appends '--strip-debug' to <CMAKE_STATIC_LINKER_FLAGS>" ON)
+
 # CMake helper utilities
 
 function(z_msys_select_default_msys_chainload_toolchain)
