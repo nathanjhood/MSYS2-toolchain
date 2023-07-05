@@ -228,11 +228,6 @@ endfunction()
 # Determine whether the toolchain is loaded during a try-compile configuration
 get_property(Z_MSYS_CMAKE_IN_TRY_COMPILE GLOBAL PROPERTY IN_TRY_COMPILE)
 
-###############################################################################
-# HARDCODED TO MINGW64 TOOLCHAIN FOR NOW!
-###############################################################################
-# set(MSYSTEM "MINGW64" CACHE STRING "The detected MSYS sub-system in use (currently hard-coded to MinGW64)." FORCE)
-# mark_as_advanced(MSYSTEM)
 z_msys_select_default_msys_chainload_toolchain()
 
 if(MSYS_CHAINLOAD_TOOLCHAIN_FILE)
@@ -264,8 +259,44 @@ option(ENABLE_IMPORTED_CONFIGS "If CMake does not have a mapping for MinSizeRel 
     endif()
 endif()
 
-if(MSYSTEM STREQUAL "MINGW64")
-    set(MSYS_TARGET_TRIPLET x64-mingw-dynamic)
+
+set(MSYS_TARGET_TRIPLET "x64-mingw-dynamic" CACHE STRING " " FORCE)
+
+if(MSYS_TARGET_TRIPLET STREQUAL "x86-mingw-static")
+    set(MSYS_TARGET_ARCHITECTURE x86)
+    set(MSYS_CRT_LINKAGE dynamic)
+    set(MSYS_LIBRARY_LINKAGE static)
+    set(MSYS_ENV_PASSTHROUGH PATH)
+
+    set(MSYS_CMAKE_SYSTEM_NAME MinGW)
+
+elseif(MSYS_TARGET_TRIPLET STREQUAL "x86-mingw-dynamic")
+    set(MSYS_TARGET_ARCHITECTURE x86)
+    set(MSYS_CRT_LINKAGE dynamic)
+    set(MSYS_LIBRARY_LINKAGE dynamic)
+    set(MSYS_ENV_PASSTHROUGH PATH)
+
+    set(MSYS_CMAKE_SYSTEM_NAME MinGW)
+    set(MSYS_POLICY_DLLS_WITHOUT_LIBS enabled)
+
+elseif(MSYS_TARGET_TRIPLET STREQUAL "x64-mingw-static")
+    set(MSYS_TARGET_ARCHITECTURE x64)
+    set(MSYS_CRT_LINKAGE dynamic)
+    set(MSYS_LIBRARY_LINKAGE static)
+    set(MSYS_ENV_PASSTHROUGH PATH)
+
+    set(MSYS_CMAKE_SYSTEM_NAME MinGW)
+
+elseif(MSYS_TARGET_TRIPLET STREQUAL "x64-mingw-dynamic")
+    set(MSYS_TARGET_ARCHITECTURE x64)
+    set(MSYS_CRT_LINKAGE dynamic)
+    set(MSYS_LIBRARY_LINKAGE dynamic)
+    set(MSYS_ENV_PASSTHROUGH PATH)
+
+    set(MSYS_CMAKE_SYSTEM_NAME MinGW)
+    set(MSYS_POLICY_DLLS_WITHOUT_LIBS enabled)
+else()
+    message(WARNING "No MSYSTEM triplet detected...")
 endif()
 
 if(MSYS_TARGET_TRIPLET)
@@ -279,14 +310,14 @@ if(MSYS_TARGET_TRIPLET)
     # The FORCE keyword is required to ALWAYS lift the user provided/previously set value into a CACHE value.
     set(MSYS_TARGET_TRIPLET "${MSYS_TARGET_TRIPLET}" CACHE STRING "msys2 target triplet (ex. x86_64-msys-pc)" FORCE)
 
-elseif(CMAKE_GENERATOR_PLATFORM MATCHES "^[Ii]386$")
-    set(Z_MSYS_TARGET_TRIPLET_ARCH x86)
-elseif(CMAKE_GENERATOR_PLATFORM MATCHES "^[Xx]86_64$")
-    set(Z_MSYS_TARGET_TRIPLET_ARCH x64)
-elseif(CMAKE_GENERATOR_PLATFORM MATCHES "^[Aa][Rr][Mm]$")
-    set(Z_MSYS_TARGET_TRIPLET_ARCH arm)
-elseif(CMAKE_GENERATOR_PLATFORM MATCHES "^[Aa][Aa][Rr][Cc][Hh]64$")
-    set(Z_MSYS_TARGET_TRIPLET_ARCH arm64)
+# elseif(CMAKE_GENERATOR_PLATFORM MATCHES "^[Ii]386$")
+#     set(Z_MSYS_TARGET_TRIPLET_ARCH x86)
+# elseif(CMAKE_GENERATOR_PLATFORM MATCHES "^[Xx]86_64$")
+#     set(Z_MSYS_TARGET_TRIPLET_ARCH x64)
+# elseif(CMAKE_GENERATOR_PLATFORM MATCHES "^[Aa][Rr][Mm]$")
+#     set(Z_MSYS_TARGET_TRIPLET_ARCH arm)
+# elseif(CMAKE_GENERATOR_PLATFORM MATCHES "^[Aa][Aa][Rr][Cc][Hh]64$")
+#     set(Z_MSYS_TARGET_TRIPLET_ARCH arm64)
 
 elseif(CMAKE_GENERATOR_PLATFORM MATCHES "^[Ww][Ii][Nn]32$")
     set(Z_MSYS_TARGET_TRIPLET_ARCH x86)
@@ -425,47 +456,10 @@ endif()
 set(MSYS_TARGET_TRIPLET "${Z_MSYS_TARGET_TRIPLET_ARCH}-${Z_MSYS_TARGET_TRIPLET_PLAT}" CACHE STRING "Msys target triplet (ex. x86-windows)" FORCE)
 set(Z_MSYS_TOOLCHAIN_DIR "${CMAKE_CURRENT_LIST_DIR}")
 
-set(MSYS_TARGET_TRIPLET "x64-mingw-dynamic" CACHE STRING "Msys target triplet (ex. x86-windows)" FORCE) ############################## FORCE IT!!!
+#set(MSYS_TARGET_TRIPLET "x64-mingw-dynamic" CACHE STRING "Msys target triplet (ex. x86-windows)" FORCE) ############################## FORCE IT!!!
 # ##--MSYS triplets
 # if(NOT DEFINED MSYS_TARGET_ARCHITECTURE)
 #     # message(STATUS "Using MSYSTEM triplet ${MSYS_TARGET_TRIPLET}")
-
-#     if(MSYS_TARGET_TRIPLET STREQUAL "x86-mingw-static")
-#         set(MSYS_TARGET_ARCHITECTURE x86)
-#         set(MSYS_CRT_LINKAGE dynamic)
-#         set(MSYS_LIBRARY_LINKAGE static)
-#         set(MSYS_ENV_PASSTHROUGH PATH)
-
-#         set(MSYS_CMAKE_SYSTEM_NAME MinGW)
-
-#     elseif(MSYS_TARGET_TRIPLET STREQUAL "x86-mingw-dynamic")
-#         set(MSYS_TARGET_ARCHITECTURE x86)
-#         set(MSYS_CRT_LINKAGE dynamic)
-#         set(MSYS_LIBRARY_LINKAGE dynamic)
-#         set(MSYS_ENV_PASSTHROUGH PATH)
-
-#         set(MSYS_CMAKE_SYSTEM_NAME MinGW)
-#         set(MSYS_POLICY_DLLS_WITHOUT_LIBS enabled)
-
-#     elseif(MSYS_TARGET_TRIPLET STREQUAL "x64-mingw-static")
-#         set(MSYS_TARGET_ARCHITECTURE x64)
-#         set(MSYS_CRT_LINKAGE dynamic)
-#         set(MSYS_LIBRARY_LINKAGE static)
-#         set(MSYS_ENV_PASSTHROUGH PATH)
-
-#         set(MSYS_CMAKE_SYSTEM_NAME MinGW)
-
-#     elseif(MSYS_TARGET_TRIPLET STREQUAL "x64-mingw-dynamic")
-#         set(MSYS_TARGET_ARCHITECTURE x64)
-#         set(MSYS_CRT_LINKAGE dynamic)
-#         set(MSYS_LIBRARY_LINKAGE dynamic)
-#         set(MSYS_ENV_PASSTHROUGH PATH)
-
-#         set(MSYS_CMAKE_SYSTEM_NAME MinGW)
-#         set(MSYS_POLICY_DLLS_WITHOUT_LIBS enabled)
-#     else()
-#         message(WARNING "No MSYSTEM triplet detected...")
-#     endif()
 # endif()
 
 # Detect msys2.ini to figure MSYS_ROOT_DIR
