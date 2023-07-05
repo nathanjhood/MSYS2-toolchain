@@ -1,15 +1,15 @@
-/usr/local
-/usr
-
-/docs
+/usr/local/*
+/usr/*
+/packages/*
+/docs/*
 
 .env
 
-.vscode
-!.vscode/settings.json
+/.vscode/*
+!/.vscode/settings.json
 
-*/scripts/templates
+*/scripts/templates/*
 !./scripts/templates/portfile.in.cmake
 !./scripts/templates/vcpkg.in.json
 
-/etc/pacman.d/gnupg
+/etc/pacman.d/gnupg/*
