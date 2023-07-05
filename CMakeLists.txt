@@ -11,6 +11,13 @@ message("Loading ${CMAKE_CURRENT_LIST_FILE}")
 
 project(application)
 
+enable_language(C)
+enable_language(CXX)
+enable_language(ASM)
+enable_language(Fortran)
+enable_language(OBJC)
+enable_language(OBJCXX)
+
 # include(GNUInstallDirs)
 
 option(BUILD_TESTS " " ON)
@@ -472,7 +479,7 @@ endif() # BUILD_TESTS
 # set(MINGW64_INSTALL_PREFIX      "${MINGW64_ROOT}/usr/local"         CACHE PATH "" FORCE)
 
 # include("c:/Users/natha/Development/StoneyDSP/MSYS2-toolchain/scripts/cmake/Modules/_MinGW64/MINGW64InstallDirs.cmake")
-include(CMakePrintSystemInformation)
+#include(CMakePrintSystemInformation)
 
 
 set(OUT_FILE_PATH "${CMAKE_BINARY_DIR}/OUT_INFO.sh")
