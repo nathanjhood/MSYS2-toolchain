@@ -1,9 +1,15 @@
 /usr/local
 /usr
 
+/docs
+
 .env
 
 .vscode
 !.vscode/settings.json
+
+*/scripts/templates
+!./scripts/templates/portfile.in.cmake
+!./scripts/templates/vcpkg.in.json
 
 /etc/pacman.d/gnupg
