@@ -124,15 +124,13 @@ Here's what building with each of the sub-systems offers, as per the <a href="">
 * 'Cygwin' C Standard Library with 'MSYS2' Runtimes
 * 'libstdc++' C++ Standard Library
 
-<br>
+</br>
 <i><b>*</b> Microsoft Visual C++ Runtime (<b>MSVCRT</b>)</i>
 
 <i><b>**</b> Universal C Runtime (<b>UCRT</b>)</i>
 
-We don't want build-system configs to be baked into our project source code (because they contain variables relevant only to the machine used to build with), so one common working method is to specify a '<b>toolchain file</b>' that configures the end-user/developer's build system appropriately, based on what is available on their specific build system, come build time. A well-designed implementation is a balance of machine-based file lookup and user-specification, coupled with very thoughtful design patterns for fall-through cases, where something important might not have been (possible to have been) specified at a certain point in the build process. Since each MSYS2 sub-system has it's own compiler toolchain, runtime libraries, and architecture, there are many environmental variants among each sub-system that require critical attention in order to be correctly utilized in custom builds and projects - *and* in sync with both latest CMake release and compiler toolchain installed on your system.
-
-(to better understand this last paragraph, please see the files under your CMake installation directory; 'share/cmake/Modules/Platform/', 'share/cmake/Modules/Compiler/', 'share/cmake/Modules/CMakeCLanguageInformation.cmake', and 'share/cmake/Modules/CMakeSystemSpecificInformation.cmake' ...)
-
+</br>
+</br>
 To use the toolchain and buildsystem, first install your MSYSTEM toolchain using pacman as usual, then pass these vars to your CMake invocation when building;
 
 * "-D<b>CMAKE_TOOLCHAIN_FILE</b>=<i>\<path/to/this/repo\></i>/scripts/buildsystem/MSYS2.cmake"
@@ -155,8 +153,6 @@ The 'chainload' toolchain files ('scripts/toolchains') are named identically to 
 
 For best results, it is recommended to use either '<b>Ninja</b>' or '<b>Ninja Multi-Config</b>' as a generator, with the 'preferred' generator set to one of the Makefile generators - '<b>Unix</b>/<b>MinGW</b>/<b>MSYS Makefiles</b>' etc.
 
-Some useful settings are provided in <i>'.vscode/settings.json'</i>.
-
 # <b>Options</b>
 
 ## "<b>MSYS2_PATH_TYPE</b>"
@@ -175,29 +171,30 @@ Provides a minimal set of paths from the Windows environment's system folder; no
 
 Do not inherit any paths from the Windows environment, and allow for full customization of external paths. This is supposed to be used in special cases such as debugging without need to change this file, but not daily usage.
 
-<br>
+</br>
 Note that in all cases above, the paths in question are *appended* to the list of paths for the selected MSYSTEM. There exists some experimental behaviour for *prepending* any inherited Windows paths, which means that they would be scanned first when CMake is searching for tools during its' run (in cases where the tool(s) in question haven't (yet) been specified in the current process).
 
-<br>
+## <b>USE_DSX_COMPATIBLE_BINUTILS</b> (coming soon!)
+
 Also very much worth noting is that several sub-systems offer "DSX-compatibility" GNU Bin Utils, located various differently-named directories here and there. It seems at least a fun idea to leverage a ```cmake_option(USE_DSX_COMPATIBLE_BINUTILS)``` or similar, which likewise would favour these directories during file lookups for the tools in question. Again, this is actually all *pretty much* made possible, in fact quite easy, in CMake's design. Currently there are so very many features, permutations, varieties across the entire project that this concept hasn't yet been explored further, but stay tuned.
 
 ## <b>OPTION_STRIP_BINARIES</b>
 
-Appends '<b>--strip-all</b>' to "<b>CMAKE_EXE_LINKER_FLAGS</b>".
+Appends <i>'<b>--strip-all</b>'</i> to "<b>CMAKE_EXE_LINKER_FLAGS</b>".
 
-Defaults to "<b>ON</b>".
+Accepts a Boolean value. Defaults to "<b>ON</b>".
 
 ## <b>OPTION_STRIP_SHARED</b>
 
-Appends '<b>--strip-unneeded</b>' to "<b>CMAKE_SHARED_LINKER_FLAGS</b>"
+Appends <i>'<b>--strip-unneeded</b>'</i> to "<b>CMAKE_SHARED_LINKER_FLAGS</b>"
 
-Defaults to "<b>ON</b>".
+Accepts a Boolean value. Defaults to "<b>ON</b>".
 
 ## OPTION_STRIP_STATIC
 
-Appends '<b>--strip-debug</b>' to "<b>CMAKE_STATIC_LINKER_FLAGS</b>"
+Appends <i>'<b>--strip-debug</b>'</i> to "<b>CMAKE_STATIC_LINKER_FLAGS</b>"
 
-defaults to "<b>ON</b>".
+Accepts a Boolean value. Defaults to "<b>ON</b>".
 
 
 </br>
@@ -221,25 +218,46 @@ The main files at the core of the project are:
 
 </br>
 
-It should be noted that the first file, the 'buildsystem' file, actually contains and 'include()' directive for the second file - the 'toolchain' file, where the sub-system's toolchain is specified. This inclusion happens as a result of comparing the '\<MSYSTEM\>' variable against their usual shell names.
+It should be noted that the first file, the 'buildsystem' file, actually contains and 'include()' directive for the second file - the 'toolchain' file, where the sub-system's toolchain is specified. This inclusion happens as a result of comparing the "<b>MSYSTEM</b>" variable against their usual shell names.
 
 It is well worth noting that both files are pretty much direct clones of corresponding files found in <a href="https://github.com/microsoft/vcpkg.git">microsoft's excellent vcpkg package manager</a>.
 
 Please be aware that a prefix of just "MSYS_" is referring to vars coming from the 'buildsystem' file, if loaded. The vars with prefix of "MSYS<u>2</u>_" refer to what you would usually get from Msys64 if entering the "MSYS2" subsystem. It's a close call, but I think it's ok!?
 
 </br>
+
+## Motivations
+
+We don't want build-system configs to be baked into our project source code (because they contain variables relevant only to the machine used to build with), so one common working method is to specify a '<b>toolchain file</b>' that configures the end-user/developer's build system appropriately, based on what is available on their specific build system, come build time. A well-designed implementation is a balance of machine-based file lookup and user-specification, coupled with very thoughtful design patterns for fall-through cases, where something important might not have been (possible to have been) specified at a certain point in the build process. Since each MSYS2 sub-system has it's own compiler toolchain, runtime libraries, and architecture, there are many environmental variants among each sub-system that require critical attention in order to be correctly utilized in custom builds and projects - *and* in sync with both latest CMake release and compiler toolchain installed on your system.
+
+To better understand this last paragraph, please see the files under your CMake installation directory;
+
+* 'share/cmake/Modules/Platform/',
+
+* 'share/cmake/Modules/Compiler/',
+
+* 'share/cmake/Modules/CMakeCLanguageInformation.cmake', and
+
+* 'share/cmake/Modules/CMakeSystemSpecificInformation.cmake' ...)
+
 </br>
 
-## Todo
+# <b>Todo</b>
 
-Lots of paths to fix, test, etc. Lots of cleanup. Potentially a re-write in store to compile more variable strings from other variable strings (<b><i>'\<MINGW_PACKAGE_PREFIX\>-\<TOOLCHAIN_TO_USE\>'</i></b>, etc...), however I don't personally prefer this approach because it requires a CMake run in order to fetch these compiled variables, compared to just having them defined at-a-glance in the toolchain file, and tells us (less than) nothing about the variables that we *haven't* selected for that run. Preferring verbosity during dev/debug, meanwhile.
+Potential for another refactor to boil the entire set of toolchain file source code into one file (with the "MSYSTEM" switch internally swapping out less and less changes), however I don't personally prefer this approach because it requires a CMake run in order to fetch these compiled variables, compared to just having them defined at-a-glance in the toolchain file, and tells us (less than) nothing about the variables that we *haven't* selected for that run.
+
+The second drawback to clumping all toolchain files into one is that we lose seperation of states that we might otherwise be able to harness simultaneously - for example, it wouldn't be possible (well, not as easily conceivable) to load vars from more than one toolchain file...
+
+Preferring verbosity during dev/debug, meanwhile.
 
 Consider adding in some of the switching logic from the excellent 'fougas.msys2' VSCode extension.
 
-Considering extending the available <b>'\<MSYSTEM>\'</b> list by adding the following:
+## Clang-CL support?
 
-* <b>\<CLANGCL64\></b>
-* <b>\<CLANGCL32\></b>
+Considering extending the available "<b>MSYSTEM</b>" list by adding the following:
+
+* "<b>CLANGCL64</b>"
+* "<b>CLANGCL32</b>"
 
 The idea would be to call the MSVC-style 'cl' compiler frontend executables (<i>'clang-cl.exe'</i>) for Clang toolchains, to ease interoperability with MSBuild-style compile flags and command lines.
 
@@ -247,7 +265,7 @@ Everything besides the C/C++ compiler paths would be as per their non-CL counter
 
 Note that there is actually a git <i>'.patch'</i> file for MSYS that ships with vcpkg, which attempts to add <i>'clang-cl.exe'</i> to the compiler search path for the 'autotools-1-16' package.
 
-To do this manually instead, using any editor, go to <b><i>'<MSYS_ROOT>/usr/share/automake-1.16/compile'</i></b> line number 256, where you should see this:
+To do this manually instead, using any editor, go to <b><i>'\<MSYS_ROOT\>/usr/share/automake-1.16/compile'</i></b> line number 256, where you should see this:
 
 ```
     cl | *[/\\]cl | cl.exe | *[/\\]cl.exe | \
@@ -266,11 +284,11 @@ Add in the new line below (the one with 'clang-cl' in it);
 
 And save the file. Done.
 
-## Package management
+## Package management?
 
-Eventual intended usage would be to supercede Msys's native Arch-Linux style "Pacman" package manager, for Microsoft's "vcpkg-tool" - or a customization of it - to enable much greater interoperability between Msys's MinGW-based sub-systems (including the Clang toolchain variants and their tools), and the native development environment (IDE integration, etc); as well as integrating a much larger package registry for third-party libraries (vcpkg's "ports"), cross-compiling support, and driven by a finely-tuned CMake configuration, tailored to tap into each subsystem's entire toolchain with ease.
+Eventual intended usage would be to supercede Msys's native Arch-Linux style "<b>pacman</b>" package manager, for Microsoft's "<a href="https://github.com/microsoft/vcpkg-tool.git">vcpkg-tool</a>" - or a customization of it - to enable much greater interoperability between Msys's MinGW-based sub-systems (including the Clang toolchain variants and their tools), and the native development environment (IDE integration, etc); as well as integrating a much larger package registry for third-party libraries (vcpkg's "ports"), cross-compiling support, and driven by a finely-tuned CMake configuration, tailored to tap into each subsystem's entire toolchain with ease.
 
-Many vars will be translated (back!) over to their <b>'\<VCPKG_*\>'</b> origins in order to work as a drop-in toolchain for vcpkg. However, this is of particular interest as it opens up a lot more interoperability, which appeals to the core nature of the project itself.
+Many vars will be translated (back!) over to their "<b>VCPKG_*</b>" origins in order to work as a drop-in toolchain for vcpkg. However, this is of particular interest as it opens up a lot more interoperability, which appeals to the core nature of the project itself.
 
 Note that vcpkg also has the foundations of an MSYS installation in it's package registries, which it often uses to pull and patch <i>'*.pc'</i> files for build system variables. There are definitions of functions to pull varieties of MSYS packages (directly from Git/mirrors instead of via pacman) - there seems to be enough foundation there almost to spin vcpkg into some super-package-manager for a custom MSYS-based system, if wanted. Perhaps some of this can be leveraged later on...
 
@@ -308,27 +326,36 @@ I won't set up a dev branch, proper doc files, git flows, PR/issue templates or 
 
 # Legal
 
-This Git repo, named "MSYS2-toolchain", is an independant project, created and maintained by @StoneyDSP as a project of interest. By "independant", the author specifies that they have no relation to any of the parties further outlined below in this section of the page.
+This Git repo, named "MSYS2-toolchain", is an independant project, created and maintained by <a href="https://github.com/StoneyDSP">StoneyDSP</a> as a project of interest. By "independant", the author specifies that they have no relation to any of the parties further outlined below in this section of the page.
 
 ## MSYS2
 
-MSYS2 is a software distribution consisting of several independent parts, each with their own licenses, comparable to a Linux distribution.
+<i>The below is quoted from <a href="https://www.msys2.org/license/">https://www.msys2.org/license/</a></i>
+
+"MSYS2 is a software distribution consisting of several independent parts, each with their own licenses, comparable to a Linux distribution.
 
 The installer, for example, is based on the qt-installer-framework and pre-packs the direct and indirect dependencies of the base meta package. Each package has its own licenses.
 
 The "pacman" package manager in MSYS2 allows users to install other packages available in our repository, each with their own licenses.
 
-The license information for each package as visible on https://packages.msys2.org is maintained on a best effort basis and we make no guarantee that it is accurate or complete.
+The license information for each package as visible on <a href="https://www.msys2.org/license/">https://packages.msys2.org</a> is maintained on a best effort basis and "we" (quote) make no guarantee that it is accurate or complete."
 
 ## vcpkg
 
 vcpkg - C++ Library Manager for Windows, Linux, and MacOS
+
 Copyright (c) Microsoft Corporation
+
 vcpkg is distributed under the MIT License
+
+All rights reserved.
 
 ## CMake
 
 CMake - Cross Platform Makefile Generator
+
 Copyright 2000-2023 Kitware, Inc. and Contributors
+
 CMake is distributed under the OSI-approved BSD 3-clause License
+
 All rights reserved.
