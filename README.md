@@ -107,11 +107,11 @@ Here's what building with each of the sub-systems offers, as per the <a href="">
 
 <i><b>**</b> Universal C Runtime (<b>UCRT</b>)</i>
 
-We don't want build-system configs to be baked into our project source code (because they contain variables relevant only to the machine used to build with), so one common working method is to specify a '<b>toolchain file</b>' that configures the end-user/developer's build system appropriately, based on what is available on their specific build system, come build time. A well-designed implementation is a balance of machine-based file lookup, coupled with very careful design patterns for fall-through cases, where something important might not have been (possible to have been) specified at a certain point in the build process. Since each MSYS2 sub-system has it's own compiler toolchain, runtime libraries, and architecture, there are many environmental variants among each sub-system that require critical attention in order to be correctly utilized in custom builds and projects.
+We don't want build-system configs to be baked into our project source code (because they contain variables relevant only to the machine used to build with), so one common working method is to specify a '<b>toolchain file</b>' that configures the end-user/developer's build system appropriately, based on what is available on their specific build system, come build time. A well-designed implementation is a balance of machine-based file lookup and user-specification, coupled with very thoughtful design patterns for fall-through cases, where something important might not have been (possible to have been) specified at a certain point in the build process. Since each MSYS2 sub-system has it's own compiler toolchain, runtime libraries, and architecture, there are many environmental variants among each sub-system that require critical attention in order to be correctly utilized in custom builds and projects.
 
-Fortunately, for this project to achieve it's targets, much of the required configurations are already available within CMake (and vcpkg), and we have simply a process of directing the flow of file-hopping that CMake does under the hood when configuring/building/etc to pick up combinations of native CMake files that otherwise aren't currently available at the time of this project's creation.
+Fortunately, for this project to achieve it's targets, much of the required configurations are already available within a standard CMake (and optionally vcpkg) installation, and we have simply a process of directing the flow of file-hopping that CMake does under the hood when configuring/building/etc to pick up combinations of native CMake files that otherwise wouldn't be specified together, using the provided configs alone.
 
-(to better understand this last paragraph, please see the files under your CMake installation directory; 'share/cmake/Modules/Platform/', ...)
+(to better understand this last paragraph, please see the files under your CMake installation directory; 'share/cmake/Modules/Platform/', 'share/cmake/Modules/Compiler/', 'share/cmake/Modules/CMakeCLanguageInformation.cmake', and 'share/cmake/Modules/CMakeSystemSpecificInformation.cmake' ...)
 
 To use the toolchain and buildsystem, pass these vars to your CMake invocation;
 
@@ -158,6 +158,25 @@ Note that in all cases above, the paths in question are *appended* to the list o
 <br>
 Also very much worth noting is that several sub-systems offer "DSX-compatibility" GNU Bin Utils, located various differently-named directories here and there. It seems at least a fun idea to leverage a ```cmake_option(USE_DSX_COMPATIBLE_BINUTILS)``` or similar, which likewise would favour these directories during file lookups for the tools in question. Again, this is actually all *pretty much* made possible, in fact quite easy, in CMake's design. Currently there are so very many features, permutations, varieties across the entire project that this concept hasn't yet been explored further, but stay tuned.
 
+## <b>OPTION_STRIP_BINARIES</b>
+
+Appends '<b>--strip-all</b>' to "<b>CMAKE_EXE_LINKER_FLAGS</b>".
+
+Defaults to "<b>ON</b>".
+
+## <b>OPTION_STRIP_SHARED</b>
+
+Appends '<b>--strip-unneeded</b>' to "<b>CMAKE_SHARED_LINKER_FLAGS</b>"
+
+Defaults to "<b>ON</b>".
+
+## OPTION_STRIP_STATIC
+
+Appends '<b>--strip-debug</b>' to "<b>CMAKE_STATIC_LINKER_FLAGS</b>"
+
+defaults to "<b>ON</b>".
+
+
 </br>
 </br>
 
@@ -183,30 +202,10 @@ It should be noted that the first file, the 'buildsystem' file, actually contain
 
 It is well worth noting that both files are pretty much direct clones of corresponding files found in <a href="https://github.com/microsoft/vcpkg.git">microsoft's excellent vcpkg package manager</a>.
 
-</br>
-</br>
-
-While these have currently been overwritten for project development purposes, the intention is to fall back to the files supplied by a conventional vcpkg installation, probably just supplemented with a few additional CMake Platform Modules. There is a clear attempt here at unifying much of the processes between vcpkg and CMake under the name of msys, but aside from clearly having no affiliation with any said parties, this purely a development stage artefact exposed in the hope of providing better insight into project status, providing a more successful experience for any passers-by, and hopefully providing more opportunity for understanding that which I've no time to document here in this development journal, realistically speaking. The eventual project on conclusion will more or less "just work" without so much borrowed code ;)
-
 Please be aware that a prefix of just "MSYS_" is referring to vars coming from the 'buildsystem' file, if loaded. The vars with prefix of "MSYS<u>2</u>_" refer to what you would usually get from Msys64 if entering the "MSYS2" subsystem. It's a close call, but I think it's ok!?
 
-## How does it work?
-
-MSYS2-toolchain uses a direct translation of the MSYS-provided Makefile config variables and Microsoft's vcpkg toolchain system, to configure your MSYS2-based CMake runs ensuring all meaningful native build system variables are translated from GNU-based Make projects, to the more universal CMake platform. The inspiration from vcpkg (though obvious) is especially useful in context of the over-arching "buildsystem/toolchain";
-
-* The 'MSYS2.cmake' buildsystem file (which is actually passed in as a toolchain file) is akin to loading an Msys64 shell using the default, cygwin-based MSYSTEM called "MSYS". This file aims to provide CMake with access to the entire set of Msys sub-systems (simultaneously, if possible) and configure your CMake project to use the native "MSYS" build tools in your build run, if you wish.
-
-* The 'buildsystem' file therefore acts as a kind of (optional) 'master' file - it provides a wide range of optional extras such as download agents for ftp, http(s), scp and more; compression and archiving utilities with GPG signature capabilites; direct access to <b>pacman</b> commands and entire package group downloads in simple CMake function form... and more (most of this is currently half-implemented and quite low on the priority list for now).
-
-* This 'buildsystem' file can act as a base that can be easily extended, simply by loading the usual Msys sub-systems as 'chainload' files, which fetch the entire build tool chain for the given sub-system, *alongisde* the "MSYS" buildsystem. This will also populate your toolchain with additional goodies found in each sub-system, such as linting tools like '.clang-format' and friends (for the Clang-based systems).
-
-* In the case of 'chainloading' a subsystem, *both* the default "MSYS" *and* the chosen sub-system (MINGW32, CLANGARM64, etc) are "live" in your CMake runs, with options to specify whether your builds should favour the native "MSYS" tools, or those of the given sub-system (experimental!).
-
-* In reality, the toolchain for the default "MSYS" environment is actually defined in a 'chainload' file, just like all the other sub-systems - it is simply loaded (in the same way as a 'chainload' file) when using the 'buildsystem' file for the master file of the toolchain. So, when active, the 'buildsystem' always contains the "MSYS" sub-system's 'chainload' file, as well as any other you might pass into the chainload file slot.
-
-* Just like the other sub-systems, "MSYS" aims to be usable without the 'buildsystem' encapsulating it, if you wish.
-
-* Lastly, it's important to note that the 'buildsystem' file - that is, "MSYS2.cmake", *also* over-writes the standard CMake 'add_library()' and 'add_executable()' functions in order to append important flag variables, copy and move your project dependency binaries to where they are needed (great when packing for distribution), and provide deeper integration into the build process for an Msys64 'chainloaded' sub-system. These extended functions are what gives the file the definition of being a 'buildsystem'. That being said, there is in fact support for loading the sub-system files as the primary toolchains themselves; they *should* still populate your build configuration with their build tools and settings appropriately without any further adjusting. One of the main restrictions of doing this is having potentially some quite useful tools (and those CMake function re-definitions) from the native "MSYS" environment unavailable, but this may not prevent a successful build.
+</br>
+</br>
 
 ## Todo
 
