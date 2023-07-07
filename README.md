@@ -1,8 +1,6 @@
 # MSYS2 toolchain
 
-For CMake integration and vcpkg support.
-
-Full build support for all Msys64 sub-systems!
+Full CMake build support for all <a href="">Msys64</a> sub-systems, with optonal <a href="">vcpkg</a> integration.
 
 # <b>Usage</b>
 
@@ -22,7 +20,7 @@ Choose an "<b>MSYSTEM</b>" from one of the following  options:
 * CLANGARM64
 * MSYS2
 
-<u><i>IMPORTANT!</i></u> Make sure you include this part of the above command, to enable the '<b>MSYSTEM</b>' platform for CMake:
+<u><i>IMPORTANT</i></u> - Make sure you include this part of the above command, to enable the '<b>MSYSTEM</b>' platform for CMake:
 
 -D<b>CMAKE_MODULE_PATH</b>=<i>\<path/to/this/repo\></i>/scripts/cmake/Modules"
 
@@ -32,11 +30,31 @@ Choose an "<b>MSYSTEM</b>" from one of the following  options:
 * MSYS2 installation (please try to use the default install location)
 * CMake
 
-Note that will need to have run the standard ```pacman -Syuu``` init command, *and* ```pacman -S ming-w64-{arch}-{vendor}-toolchain``` corresponding to each MSYSTEM in order to have the toolchain installed and available to for use by this project. See the MSYS2 (and Packages page) docs for more.
+Note that will need to have run the standard init commands for Msys development;
+
+```pacman -Syuu```
+
+```pacman -S --needed base-devel```
+
+```pacman -S cmake```
+
+```pacman -S autotools```
+
+```pacman -S ming-w64-{msystem}-{arch}-toolchain```
+
+```pacman -S ming-w64-{msystem}-{arch}-cmake```
+
+```pacman -S ming-w64-{msystem}-{arch}-toolchain``` 
+
+```pacman -S ming-w64-{msystem}-{arch}-autotools```
+
+Corresponding to the chosen MSYSTEM in order to have the toolchain installed and available to for use by this project. See the MSYS2 (and Packages page) docs for more.
 
 # <b>Description</b>
 
 This independent project is an ongoing investigation into the potential of cross-pollinating <a href="">MSYS2</a>'s multi-verse of build envinronments and toolchains, with the source code package registry access and management of <a href="">Microsoft's vcpkg</a>, thanks to the power and flexibility of <a href="">CMake</a>.
+
+Fortunately, for this project to achieve it's targets, much of the required configurations are already available within a standard CMake, Msys64, and optionally vcpkg, installation; we have simply defined an additional set of standard processes for directing the flow of file-hopping that CMake does under the hood when configuring/building/etc to pick up combinations of native CMake files that otherwise wouldn't be specified together, using the provided configs alone.
 
 Doing this involves porting the contents of several configuration as found in Windows MSYS2 installations:
 
@@ -111,9 +129,7 @@ Here's what building with each of the sub-systems offers, as per the <a href="">
 
 <i><b>**</b> Universal C Runtime (<b>UCRT</b>)</i>
 
-We don't want build-system configs to be baked into our project source code (because they contain variables relevant only to the machine used to build with), so one common working method is to specify a '<b>toolchain file</b>' that configures the end-user/developer's build system appropriately, based on what is available on their specific build system, come build time. A well-designed implementation is a balance of machine-based file lookup and user-specification, coupled with very thoughtful design patterns for fall-through cases, where something important might not have been (possible to have been) specified at a certain point in the build process. Since each MSYS2 sub-system has it's own compiler toolchain, runtime libraries, and architecture, there are many environmental variants among each sub-system that require critical attention in order to be correctly utilized in custom builds and projects.
-
-Fortunately, for this project to achieve it's targets, much of the required configurations are already available within a standard CMake (and optionally vcpkg) installation, and we have simply a process of directing the flow of file-hopping that CMake does under the hood when configuring/building/etc to pick up combinations of native CMake files that otherwise wouldn't be specified together, using the provided configs alone.
+We don't want build-system configs to be baked into our project source code (because they contain variables relevant only to the machine used to build with), so one common working method is to specify a '<b>toolchain file</b>' that configures the end-user/developer's build system appropriately, based on what is available on their specific build system, come build time. A well-designed implementation is a balance of machine-based file lookup and user-specification, coupled with very thoughtful design patterns for fall-through cases, where something important might not have been (possible to have been) specified at a certain point in the build process. Since each MSYS2 sub-system has it's own compiler toolchain, runtime libraries, and architecture, there are many environmental variants among each sub-system that require critical attention in order to be correctly utilized in custom builds and projects - *and* in sync with both latest CMake release and compiler toolchain installed on your system.
 
 (to better understand this last paragraph, please see the files under your CMake installation directory; 'share/cmake/Modules/Platform/', 'share/cmake/Modules/Compiler/', 'share/cmake/Modules/CMakeCLanguageInformation.cmake', and 'share/cmake/Modules/CMakeSystemSpecificInformation.cmake' ...)
 
