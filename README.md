@@ -31,6 +31,8 @@ Choose an "<b>MSYSTEM</b>" from one of the following  options:
 * MSYS2 installation (please try to use the default install location)
 * CMake
 
+Note that will need to have run the standard ```pacman -Syuu``` init command, *and* ```pacman -S ming-w64-{arch}-{vendor}-toolchain``` corresponding to each MSYSTEM in order to have the toolchain installed and available to for use by this project. See the MSYS2 (and Packages page) docs for more.
+
 # <b>Description</b>
 
 This independent project is an ongoing investigation into the potential of cross-pollinating <a href="">MSYS2</a>'s multi-verse of build envinronments and toolchains, with the source code package registry access and management of <a href="">Microsoft's vcpkg</a>, thanks to the power and flexibility of <a href="">CMake</a>.
