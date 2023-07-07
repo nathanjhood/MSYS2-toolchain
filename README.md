@@ -9,7 +9,7 @@ Full build support for all Msys64 sub-systems!
 Simply pass the <a href="">scripts/buildsystems/MSYS2.cmake</a> file as your "<b>CMAKE_TOOLCHAIN_FILE</b>", along with a desired "<b>MSYSTEM</b>".
 
 ```
-$ cmake -S "<path/to/project>" -B "<path/to/project>/build" -DCMAKE_TOOLCHAIN_FILE:FILEPATH=<path/to/this/repo>/scripts/buildsystems/MSYS2.cmake -DMSYSTEM:STRING=MINGW64 -G "Ninja Multi-Config"
+$ cmake -S "<path/to/project>" -B "<path/to/project>/build" "-DMSYSTEM=MINGW64" "-DCMAKE_TOOLCHAIN_FILE=<path/to/this/repo>/scripts/buildsystems/MSYS2.cmake" "-DCMAKE_MODULE_PATH=<path/to/this/repo>/scripts/cmake/Modules" -G "Ninja Multi-Config"
 ```
 
 Choose an "<b>MSYSTEM</b>" from one of the following  options:
@@ -113,16 +113,19 @@ Fortunately, for this project to achieve it's targets, much of the required conf
 
 (to better understand this last paragraph, please see the files under your CMake installation directory; 'share/cmake/Modules/Platform/', 'share/cmake/Modules/Compiler/', 'share/cmake/Modules/CMakeCLanguageInformation.cmake', and 'share/cmake/Modules/CMakeSystemSpecificInformation.cmake' ...)
 
-To use the toolchain and buildsystem, pass these vars to your CMake invocation;
+To use the toolchain and buildsystem, first install your MSYSTEM toolchain using pacman as usual, then pass these vars to your CMake invocation when building;
 
-* <b>-DCMAKE_TOOLCHAIN_FILE</b>:FILEPATH=<i>"\<path/to/this/repo\>/scripts/buildsystem/MSYS2.cmake"</i>
+* "-D<b>CMAKE_TOOLCHAIN_FILE</b>=<i>\<path/to/this/repo\></i>/scripts/buildsystem/MSYS2.cmake"
 
-* <b>-DMSYSTEM</b>:STRING=<i>"\<MINGW64\>"</i>
+* "-D<b>MSYSTEM</b>=<b>MINGW64</b>"
+
+* "-D<b>CMAKE_MODULE_PATH</b>=<i>\<path/to/this/repo\></i>/scripts/cmake/Modules"
 
 or, to use a sub-system without the encasing buildsystem, just pass it in as the toolchain file directly (this omits usage as a package manager, but still provides a full configured toolchain and utilities);
 
-* <b>-DCMAKE_TOOLCHAIN_FILE</b>:FILEPATH=<i>"\<path/to/this/repo\>/scripts/toolchains/MINGW64.cmake"</i>
+* -D<b>CMAKE_TOOLCHAIN_FILE</b>=<i>"\<path/to/this/repo\></i>/scripts/toolchains/MINGW64.cmake"
 
+<i>* you may of course swap 'MINGW64' for any of the other available MSYSTEM's - just don't forget to include files indicated in the module path as above. <b><u>CMake will fail without this</b>!</u></i>
 
 The 'chainload' toolchain files ('scripts/toolchains') are named identically to the chosen "<b>MSYSTEM</b>" and *may* provide more thorough default behaviours for invoked "<b>MSYSTEM</b>" settings. Use in tandem for best results. However, there is *some* experimental support for passing just the 'buildsystem' file without any '\<MSYSTEM\>':
 
