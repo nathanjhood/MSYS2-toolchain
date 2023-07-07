@@ -1,6 +1,13 @@
 #! /bin/sh
 # Wrapper for windres to rc which do not understand '-i -o --output-format'.
 # cvtres is invoked by the linker
+
+##-- For the original source code, please see:
+# vcpkg - C++ Library Manager for Windows, Linux, and MacOS
+# Copyright (c) Microsoft Corporation
+# vcpkg is distributed under the MIT License
+# https://github.com/microsoft/vcpkg.git
+
 scriptversion=2022-08-24.12; # UTC
 
 

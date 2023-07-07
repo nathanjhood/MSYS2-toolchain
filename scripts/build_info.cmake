@@ -1,3 +1,9 @@
+##-- For the original source code, please see:
+# vcpkg - C++ Library Manager for Windows, Linux, and MacOS
+# Copyright (c) Microsoft Corporation
+# vcpkg is distributed under the MIT License
+# https://github.com/microsoft/vcpkg.git
+
 set(BUILD_INFO_FILE_PATH ${CURRENT_PACKAGES_DIR}/BUILD_INFO)
 file(WRITE  ${BUILD_INFO_FILE_PATH} "CRTLinkage: ${CRT_LINKAGE}\n")
 file(APPEND ${BUILD_INFO_FILE_PATH} "LibraryLinkage: ${LIBRARY_LINKAGE}\n")

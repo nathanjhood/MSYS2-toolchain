@@ -2,6 +2,12 @@
 # cl_cpp_wrapper
 # Wrapper around MS's cl.exe to make it act more like Unix cpp
 
+##-- For the original source code, please see:
+# vcpkg - C++ Library Manager for Windows, Linux, and MacOS
+# Copyright (c) Microsoft Corporation
+# vcpkg is distributed under the MIT License
+# https://github.com/microsoft/vcpkg.git
+
 PATH="$PATH:/usr/bin"
 
 case $MACHTYPE in

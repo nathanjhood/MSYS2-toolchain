@@ -1,5 +1,11 @@
 #!/usr/bin/env cmake
 
+##-- For the original source code, please see:
+# vcpkg - C++ Library Manager for Windows, Linux, and MacOS
+# Copyright (c) Microsoft Corporation
+# vcpkg is distributed under the MIT License
+# https://github.com/microsoft/vcpkg.git
+
 # message("Reading MSYS.cmake from the top...")
 
 # Mark variables as used so cmake doesn't complain about them

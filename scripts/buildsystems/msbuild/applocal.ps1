@@ -1,3 +1,9 @@
+##-- For the original source code, please see:
+# vcpkg - C++ Library Manager for Windows, Linux, and MacOS
+# Copyright (c) Microsoft Corporation
+# vcpkg is distributed under the MIT License
+# https://github.com/microsoft/vcpkg.git
+
 [cmdletbinding()]
 param([string]$targetBinary, [string]$installedDir, [string]$tlogFile, [string]$copiedFilesLog)
 
