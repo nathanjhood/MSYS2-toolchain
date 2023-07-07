@@ -1,7 +1,4 @@
-# Copyright (c) 2023
-# Nathan J. Hood (@StoneyDSP) <nathanjhood@googlemail.com>.
-# Licensed under the MIT License.
-# All rights reserved.
+#!/usr/bin/env cmake
 
 # message("Reading MSYS.cmake from the top...")
 
@@ -44,14 +41,22 @@ endfunction()
 
 set(Z_MSYS_CMAKE_REQUIRED_MINIMUM_VERSION "3.7.2")
 if(CMAKE_VERSION VERSION_LESS Z_MSYS_CMAKE_REQUIRED_MINIMUM_VERSION)
-    message(FATAL_ERROR "MSYS2.cmake requires at least CMake ${Z_MSYS_CMAKE_REQUIRED_MINIMUM_VERSION}.")
+    # message(FATAL_ERROR "MSYS2.cmake requires at least CMake ${Z_MSYS_CMAKE_REQUIRED_MINIMUM_VERSION}.")
+    z_msys_add_fatal_error("MSYS2.cmake requires at least CMake ${Z_MSYS_CMAKE_REQUIRED_MINIMUM_VERSION}.")
 endif()
 cmake_policy(PUSH)
 cmake_policy(VERSION 3.7.2)
 
-# set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}")
-# list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/../cmake/Modules")
 # message("Reading MSYS.cmake from ${CMAKE_CURRENT_LIST_LINE}")
+
+# set(TOOLCHAIN_LIST)
+# list(APPEND TOOLCHAIN_LIST "x86_64-pc-windows-msys") # (usr)
+# list(APPEND TOOLCHAIN_LIST "x86_64-w64-windows-gnu") # (clang64)
+# list(APPEND TOOLCHAIN_LIST "i686-w64-mingw32") # (opt)
+# list(APPEND TOOLCHAIN_LIST "x86_64-w64-mingw32") # (opt)
+# list(APPEND TOOLCHAIN_LIST "x86_64-pc-msys") # (usr)
+# list(APPEND TOOLCHAIN_LIST "x86_64-w64-mingw32") # (mingw64)
+# list(APPEND TOOLCHAIN_LIST "x86_64-w64-mingw32") # (ucrt64)
 
 # Prevents multiple inclusions...
 if(MSYS_TOOLCHAIN)
@@ -61,6 +66,10 @@ if(MSYS_TOOLCHAIN)
 endif()
 
 include(CMakeDependentOption)
+
+if(DEFINED MSYSTEM)
+    set(MSYSTEM "${MSYSTEM}" CACHE STRING "<MSYSTEM>" FORCE)
+endif()
 
 # MSYS toolchain options.
 if(DEFINED ENV{VERBOSE})
@@ -94,34 +103,6 @@ option(OPTION_STRIP_SHARED "Appends '--strip-unneeded' to <CMAKE_SHARED_LINKER_F
 option(OPTION_STRIP_STATIC "Appends '--strip-debug' to <CMAKE_STATIC_LINKER_FLAGS>" ON)
 
 # CMake helper utilities
-
-function(z_msys_select_default_msys_chainload_toolchain)
-    # message(STATUS "Calling ${CMAKE_CURRENT_FUNCTION}(${MSYSTEM})")
-
-    # Try avoiding adding more defaults here.
-    # Set MSYS_CHAINLOAD_TOOLCHAIN_FILE explicitly in the triplet.
-    if(DEFINED Z_MSYS_CHAINLOAD_TOOLCHAIN_FILE)
-        set(MSYS_CHAINLOAD_TOOLCHAIN_FILE "${Z_MSYS_CHAINLOAD_TOOLCHAIN_FILE}")
-    elseif(MSYSTEM STREQUAL "MINGW64")
-        set(MSYS_CHAINLOAD_TOOLCHAIN_FILE "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../toolchains/MINGW64.cmake")
-    elseif(MSYSTEM STREQUAL "MINGW32")
-        set(MSYS_CHAINLOAD_TOOLCHAIN_FILE "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../toolchains/MINGW32.cmake")
-    elseif(MSYSTEM STREQUAL "CLANG64")
-        set(MSYS_CHAINLOAD_TOOLCHAIN_FILE "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../toolchains/CLANG64.cmake")
-    elseif(MSYSTEM STREQUAL "CLANG32")
-        set(MSYS_CHAINLOAD_TOOLCHAIN_FILE "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../toolchains/CLANG32.cmake")
-    elseif(MSYSTEM STREQUAL "CLANGARM64")
-        set(MSYS_CHAINLOAD_TOOLCHAIN_FILE "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../toolchains/CLANGARM64.cmake")
-    elseif(MSYSTEM STREQUAL "UCRT64")
-        set(MSYS_CHAINLOAD_TOOLCHAIN_FILE "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../toolchains/UCRT64.cmake")
-    elseif(MSYSTEM STREQUAL "MSYS")
-        set(MSYS_CHAINLOAD_TOOLCHAIN_FILE "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../toolchains/MSYS.cmake")
-    # else()
-    #     set(MSYS_CHAINLOAD_TOOLCHAIN_FILE "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../toolchains/GENERIC.cmake")
-    endif()
-    set(MSYS_CHAINLOAD_TOOLCHAIN_FILE ${MSYS_CHAINLOAD_TOOLCHAIN_FILE} PARENT_SCOPE)
-endfunction()
-
 
 #[===[.md:
 # z_msys_function_arguments
@@ -225,10 +206,89 @@ function(z_msys_set_powershell_path)
     endif() # Z_MSYS_POWERSHELL_PATH
 endfunction()
 
+macro(z_msys_select_default_msys_chainload_toolchain toolchainFile)
+    #message(STATUS "Calling ${CMAKE_CURRENT_FUNCTION}(${MSYSTEM})")
+
+    # Detect MINGW64.cmake to figure MSYS_TOOLCHAINS_ROOT_DIR
+    set(Z_MSYS_TOOLCHAINS_ROOT_DIR_CANDIDATE "${CMAKE_CURRENT_LIST_DIR}")
+
+    while(NOT DEFINED Z_MSYS_TOOLCHAINS_ROOT_DIR)
+
+        if(EXISTS "${Z_MSYS_TOOLCHAINS_ROOT_DIR_CANDIDATE}/MINGW64.cmake")
+
+            set(Z_MSYS_TOOLCHAINS_ROOT_DIR "${Z_MSYS_TOOLCHAINS_ROOT_DIR_CANDIDATE}/toolchains" CACHE INTERNAL "msys root directory")
+
+        elseif(EXISTS "${Z_MSYS_TOOLCHAINS_ROOT_DIR_CANDIDATE}/toolchains/MINGW64.cmake")
+
+            set(Z_MSYS_TOOLCHAINS_ROOT_DIR "${Z_MSYS_TOOLCHAINS_ROOT_DIR_CANDIDATE}/toolchains" CACHE INTERNAL "msys root directory")
+
+        elseif(IS_DIRECTORY "${Z_MSYS_TOOLCHAINS_ROOT_DIR_CANDIDATE}")
+
+            get_filename_component(Z_MSYS_TOOLCHAINS_ROOT_DIR "${Z_MSYS_TOOLCHAINS_ROOT_DIR_CANDIDATE}" DIRECTORY)
+
+            if(Z_MSYS_TOOLCHAINS_ROOT_DIR STREQUAL Z_MSYS_TOOLCHAINS_ROOT_DIR_CANDIDATE)
+
+                z_msys_add_fatal_error("Unable to determine default chainload toolchain files directory!")
+
+                break() # If unchanged, we have reached the root of the drive without finding 'MINGW64.cmake'.
+
+            endif()
+
+            set(Z_MSYS_TOOLCHAINS_ROOT_DIR_CANDIDATE "${Z_MSYS_TOOLCHAINS_ROOT_DIR}")
+
+            unset(Z_MSYS_TOOLCHAINS_ROOT_DIR)
+
+        else()
+
+            break()
+
+        endif()
+
+    endwhile()
+
+    unset(Z_MSYS_TOOLCHAINS_ROOT_DIR_CANDIDATE)
+
+    # Try avoiding adding more defaults here.
+    # Set MSYS_CHAINLOAD_TOOLCHAIN_FILE explicitly in the triplet.
+    if(DEFINED Z_MSYS_CHAINLOAD_TOOLCHAIN_FILE)
+        set(MSYS_CHAINLOAD_TOOLCHAIN_FILE "${Z_MSYS_CHAINLOAD_TOOLCHAIN_FILE}")
+    elseif(MSYSTEM STREQUAL "MINGW64")
+        set(MSYS_CHAINLOAD_TOOLCHAIN_FILE "${Z_MSYS_TOOLCHAINS_ROOT_DIR}/MINGW64.cmake")
+    elseif(MSYSTEM STREQUAL "MINGW32")
+        set(MSYS_CHAINLOAD_TOOLCHAIN_FILE "${Z_MSYS_TOOLCHAINS_ROOT_DIR}/MINGW32.cmake")
+    elseif(MSYSTEM STREQUAL "CLANG64")
+        set(MSYS_CHAINLOAD_TOOLCHAIN_FILE "${Z_MSYS_TOOLCHAINS_ROOT_DIR}/CLANG64.cmake")
+    elseif(MSYSTEM STREQUAL "CLANG32")
+        set(MSYS_CHAINLOAD_TOOLCHAIN_FILE "${Z_MSYS_TOOLCHAINS_ROOT_DIR}/CLANG32.cmake")
+    elseif(MSYSTEM STREQUAL "CLANGARM64")
+        set(MSYS_CHAINLOAD_TOOLCHAIN_FILE "${Z_MSYS_TOOLCHAINS_ROOT_DIR}/CLANGARM64.cmake")
+    elseif(MSYSTEM STREQUAL "UCRT64")
+        set(MSYS_CHAINLOAD_TOOLCHAIN_FILE "${Z_MSYS_TOOLCHAINS_ROOT_DIR}/UCRT64.cmake")
+    elseif(MSYSTEM STREQUAL "MSYS")
+        set(MSYS_CHAINLOAD_TOOLCHAIN_FILE "${Z_MSYS_TOOLCHAINS_ROOT_DIR}/MSYS.cmake")
+    else()
+        # nope, we actually need this var to vacate to avoid multiple inclusion.
+        # When the var clears on a re-run and lands on a fall-through value, we
+        # end up including this file without the intention of doing so.
+        # Honestly, this is probably best handled on the CLI/invocation...
+
+    #    z_msys_add_fatal_error("Unable to determine default chainload toolchain file!")
+    # else()
+    #     set(MSYS_CHAINLOAD_TOOLCHAIN_FILE "${Z_MSYS_TOOLCHAINS_ROOT_DIR}/MINGW64.cmake")
+    # else()
+    #     set(MSYS_CHAINLOAD_TOOLCHAIN_FILE "${Z_MSYS_TOOLCHAINS_ROOT_DIR}/GENERIC.cmake")
+    endif()
+    set(toolchainFile "${MSYS_CHAINLOAD_TOOLCHAIN_FILE}" CACHE FILEPATH "" FORCE)
+    set(MSYS_CHAINLOAD_TOOLCHAIN_FILE "${MSYS_CHAINLOAD_TOOLCHAIN_FILE}" CACHE FILEPATH "" FORCE)
+
+endmacro()
+
 # Determine whether the toolchain is loaded during a try-compile configuration
 get_property(Z_MSYS_CMAKE_IN_TRY_COMPILE GLOBAL PROPERTY IN_TRY_COMPILE)
 
-z_msys_select_default_msys_chainload_toolchain()
+# No, don't do this default selection... see notes in the macro above!
+# z_msys_select_default_msys_chainload_toolchain(_MSYS_CHAINLOAD_TOOLCHAIN_FILE)
+# set(_MSYS_CHAINLOAD_TOOLCHAIN_FILE "${_MSYS_CHAINLOAD_TOOLCHAIN_FILE}")
 
 if(MSYS_CHAINLOAD_TOOLCHAIN_FILE)
     include("${MSYS_CHAINLOAD_TOOLCHAIN_FILE}")
@@ -259,46 +319,6 @@ option(ENABLE_IMPORTED_CONFIGS "If CMake does not have a mapping for MinSizeRel 
     endif()
 endif()
 
-
-set(MSYS_TARGET_TRIPLET "x64-mingw-dynamic" CACHE STRING " " FORCE)
-
-if(MSYS_TARGET_TRIPLET STREQUAL "x86-mingw-static")
-    set(MSYS_TARGET_ARCHITECTURE x86)
-    set(MSYS_CRT_LINKAGE dynamic)
-    set(MSYS_LIBRARY_LINKAGE static)
-    set(MSYS_ENV_PASSTHROUGH PATH)
-
-    set(MSYS_CMAKE_SYSTEM_NAME MinGW)
-
-elseif(MSYS_TARGET_TRIPLET STREQUAL "x86-mingw-dynamic")
-    set(MSYS_TARGET_ARCHITECTURE x86)
-    set(MSYS_CRT_LINKAGE dynamic)
-    set(MSYS_LIBRARY_LINKAGE dynamic)
-    set(MSYS_ENV_PASSTHROUGH PATH)
-
-    set(MSYS_CMAKE_SYSTEM_NAME MinGW)
-    set(MSYS_POLICY_DLLS_WITHOUT_LIBS enabled)
-
-elseif(MSYS_TARGET_TRIPLET STREQUAL "x64-mingw-static")
-    set(MSYS_TARGET_ARCHITECTURE x64)
-    set(MSYS_CRT_LINKAGE dynamic)
-    set(MSYS_LIBRARY_LINKAGE static)
-    set(MSYS_ENV_PASSTHROUGH PATH)
-
-    set(MSYS_CMAKE_SYSTEM_NAME MinGW)
-
-elseif(MSYS_TARGET_TRIPLET STREQUAL "x64-mingw-dynamic")
-    set(MSYS_TARGET_ARCHITECTURE x64)
-    set(MSYS_CRT_LINKAGE dynamic)
-    set(MSYS_LIBRARY_LINKAGE dynamic)
-    set(MSYS_ENV_PASSTHROUGH PATH)
-
-    set(MSYS_CMAKE_SYSTEM_NAME MinGW)
-    set(MSYS_POLICY_DLLS_WITHOUT_LIBS enabled)
-else()
-    message(WARNING "No MSYSTEM triplet detected...")
-endif()
-
 if(MSYS_TARGET_TRIPLET)
 
     # This is required since a user might do: 'set(MSYS_TARGET_TRIPLET somevalue)' [no CACHE] before the first project() call
@@ -309,15 +329,6 @@ if(MSYS_TARGET_TRIPLET)
     # configure call will see the user value as the more recent value. The same logic must be applied to all cache values within this file!
     # The FORCE keyword is required to ALWAYS lift the user provided/previously set value into a CACHE value.
     set(MSYS_TARGET_TRIPLET "${MSYS_TARGET_TRIPLET}" CACHE STRING "msys2 target triplet (ex. x86_64-msys-pc)" FORCE)
-
-# elseif(CMAKE_GENERATOR_PLATFORM MATCHES "^[Ii]386$")
-#     set(Z_MSYS_TARGET_TRIPLET_ARCH x86)
-# elseif(CMAKE_GENERATOR_PLATFORM MATCHES "^[Xx]86_64$")
-#     set(Z_MSYS_TARGET_TRIPLET_ARCH x64)
-# elseif(CMAKE_GENERATOR_PLATFORM MATCHES "^[Aa][Rr][Mm]$")
-#     set(Z_MSYS_TARGET_TRIPLET_ARCH arm)
-# elseif(CMAKE_GENERATOR_PLATFORM MATCHES "^[Aa][Aa][Rr][Cc][Hh]64$")
-#     set(Z_MSYS_TARGET_TRIPLET_ARCH arm64)
 
 elseif(CMAKE_GENERATOR_PLATFORM MATCHES "^[Ww][Ii][Nn]32$")
     set(Z_MSYS_TARGET_TRIPLET_ARCH x86)
@@ -365,9 +376,10 @@ else()
         elseif(CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin" AND DEFINED CMAKE_SYSTEM_NAME AND NOT CMAKE_SYSTEM_NAME STREQUAL "Darwin")
             list(LENGTH CMAKE_OSX_ARCHITECTURES Z_MSYS_OSX_ARCH_COUNT)
             if(Z_MSYS_OSX_ARCH_COUNT EQUAL "0")
-                message(WARNING "Unable to determine target architecture. "
-                                "Consider providing a value for the CMAKE_OSX_ARCHITECTURES cache variable. "
-                                "Continuing without msys.")
+                # message(WARNING "Unable to determine target architecture. "
+                #                 "Consider providing a value for the CMAKE_OSX_ARCHITECTURES cache variable. "
+                #                 "Continuing without msys.")
+                z_msys_add_fatal_error("Unable to determine target architecture")
                 set(MSYS_TOOLCHAIN ON)
                 # message("Leaving MSYS.cmake at ${CMAKE_CURRENT_LIST_LINE}")
                 cmake_policy(POP)
@@ -390,7 +402,8 @@ else()
             elseif(Z_MSYS_OSX_TARGET_ARCH STREQUAL "i386")
                 set(Z_MSYS_TARGET_TRIPLET_ARCH x86)
             else()
-                message(WARNING "Unable to determine target architecture, continuing without msys.")
+                # message(WARNING "Unable to determine target architecture, continuing without msys.")
+                z_msys_add_fatal_error("Unable to determine target architecture")
                 set(MSYS_TOOLCHAIN ON)
                 # message("Leaving MSYS.cmake at ${CMAKE_CURRENT_LIST_LINE}")
                 cmake_policy(POP)
@@ -416,7 +429,8 @@ else()
             if(Z_MSYS_CMAKE_IN_TRY_COMPILE)
                 message(STATUS "Unable to determine target architecture, continuing without msys.")
             else()
-                message(WARNING "Unable to determine target architecture, continuing without msys.")
+                #message(WARNING "Unable to determine target architecture, continuing without msys.")
+                z_msys_add_fatal_error("Unable to determine target architecture")
             endif()
             set(MSYS_TOOLCHAIN ON)
             # message("Leaving MSYS.cmake at ${CMAKE_CURRENT_LIST_LINE}")
@@ -434,7 +448,7 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin" OR (NOT CMAKE_SYSTEM_NAME AND CMAKE_H
     set(Z_MSYS_TARGET_TRIPLET_PLAT osx)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "iOS")
     set(Z_MSYS_TARGET_TRIPLET_PLAT ios)
-elseif(MINGW OR (CMAKE_SYSTEM_NAME STREQUAL "MINGW64"))
+elseif(MINGW)
     set(Z_MSYS_TARGET_TRIPLET_PLAT mingw-dynamic)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows" OR (NOT CMAKE_SYSTEM_NAME AND CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows"))
     if(XBOX_CONSOLE_TARGET STREQUAL "scarlett")
@@ -455,12 +469,6 @@ endif()
 
 set(MSYS_TARGET_TRIPLET "${Z_MSYS_TARGET_TRIPLET_ARCH}-${Z_MSYS_TARGET_TRIPLET_PLAT}" CACHE STRING "Msys target triplet (ex. x86-windows)" FORCE)
 set(Z_MSYS_TOOLCHAIN_DIR "${CMAKE_CURRENT_LIST_DIR}")
-
-#set(MSYS_TARGET_TRIPLET "x64-mingw-dynamic" CACHE STRING "Msys target triplet (ex. x86-windows)" FORCE) ############################## FORCE IT!!!
-# ##--MSYS triplets
-# if(NOT DEFINED MSYS_TARGET_ARCHITECTURE)
-#     # message(STATUS "Using MSYSTEM triplet ${MSYS_TARGET_TRIPLET}")
-# endif()
 
 # Detect msys2.ini to figure MSYS_ROOT_DIR
 set(Z_MSYS_ROOT_DIR_CANDIDATE "${CMAKE_CURRENT_LIST_DIR}")
@@ -538,10 +546,10 @@ set(MSYS_CMAKE_FIND_ROOT_PATH "${CMAKE_FIND_ROOT_PATH}")
 # CMAKE_EXECUTABLE_SUFFIX is not yet defined
 if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
     set(Z_MSYS_EXECUTABLE "${Z_MSYS_ROOT_DIR}/msys2.exe")
-    # set(Z_MSYS_BOOTSTRAP_SCRIPT "${Z_VCPKG_ROOT_DIR}/bootstrap-vcpkg.bat")
+    set(Z_MSYS_BOOTSTRAP_SCRIPT "${Z_VCPKG_ROOT_DIR}/autorebase.bat")
 else()
     set(Z_MSYS_EXECUTABLE "${Z_MSYS_ROOT_DIR}/msys2")
-    # set(Z_MSYS_BOOTSTRAP_SCRIPT "${Z_VCPKG_ROOT_DIR}/bootstrap-vcpkg.sh")
+    set(Z_MSYS_BOOTSTRAP_SCRIPT "${Z_VCPKG_ROOT_DIR}/autorebase")
 endif()
 
 option(MSYS_SETUP_CMAKE_PROGRAM_PATH  "Enable the setup of CMAKE_PROGRAM_PATH to msys paths" OFF)
@@ -632,7 +640,6 @@ function(add_executable)
 endfunction()
 
 function(add_library)
-
     z_msys_function_arguments(ARGS)
     _add_library(${ARGS})
     set(target_name "${ARGV0}")
@@ -669,10 +676,9 @@ endfunction()
 #
 # Note that this function requires CMake 3.14 for policy CMP0087
 function(x_msys_install_local_dependencies)
+
     if(CMAKE_VERSION VERSION_LESS "3.14")
-        message(FATAL_ERROR "x_msys_install_local_dependencies and X_MSYS_APPLOCAL_DEPS_INSTALL require at least CMake 3.14
-(current version: ${CMAKE_VERSION})"
-        )
+        message(FATAL_ERROR "x_msys_install_local_dependencies and X_MSYS_APPLOCAL_DEPS_INSTALL require at least CMake 3.14 (current version: ${CMAKE_VERSION})")
     endif()
 
     cmake_parse_arguments(PARSE_ARGV "0" arg
@@ -1221,81 +1227,6 @@ Could look into some other variations on this...
 # include("${Z_MSYS_ROOT_DIR}/scripts/cmake/msys_compression_defaults.cmake")
 
 
-set(ENV_VARS_FILE_PATH "${CMAKE_CURRENT_BINARY_DIR}/.${MSYS_TARGET_TRIPLET}/.env")
-# file(WRITE ${ENV_VARS_FILE_PATH} "Generator: Toolchain file.\n")
-
-execute_process(COMMAND "${CMAKE_COMMAND}" -E environment
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    OUTPUT_VARIABLE ENV_VARS_FILE
-)
-
-file(APPEND ${ENV_VARS_FILE_PATH} "${ENV_VARS_FILE}")
-
-
-#     # Flag config backup...
-#     set(CFLAGS_DEBUG              "${DEBUG_CFLAGS}")                  #CACHE STRING "Default <CFLAGS_DEBUG> flags." FORCE)
-#     set(CFLAGS_RELEASE            "${RELEASE_CFLAGS}")                #CACHE STRING "Default <CFLAGS_RELEASE> flags." FORCE)
-#     set(CFLAGS_MINSIZEREL         "${MINSIZEREL_CFLAGS}")             #CACHE STRING "Default <CFLAGS_MINSIZEREL> flags." FORCE)
-#     set(CFLAGS_RELWITHDEBINFO     "${RELWITHDEBINFO_CFLAGS}")         #CACHE STRING "Default <CFLAGS_RELWITHDEBINFO> flags." FORCE)
-
-#     set(CXXFLAGS_DEBUG            "${DEBUG_CXXFLAGS}")                #CACHE STRING "Default <CXXFLAGS_DEBUG> flags." FORCE)
-#     set(CXXFLAGS_RELEASE          "${RELEASE_CXXFLAGS}")              #CACHE STRING "Default <CXXFLAGS_RELEASE> flags." FORCE)
-#     set(CXXFLAGS_MINSIZEREL       "${MINSIZEREL_CXXFLAGS}")           #CACHE STRING "Default <CXXFLAGS_MINSIZEREL> flags." FORCE)
-#     set(CXXFLAGS_RELWITHDEBINFO   "${RELWITHDEBINFO_CXXFLAGS}")       #CACHE STRING "Default <CXXFLAGS_RELWITHDEBINFO> flags." FORCE)
-
-#     set(CPPFLAGS_DEBUG            "${DEBUG_CPPFLAGS}")                #CACHE STRING "Default <CPPFLAGS_DEBUG> flags." FORCE)
-#     set(CPPFLAGS_RELEASE          "${RELEASE_CPPFLAGS}")              #CACHE STRING "Default <CPPFLAGS_RELEASE> flags." FORCE)
-#     set(CPPFLAGS_MINSIZEREL       "${MINSIZEREL_CPPFLAGS}")           #CACHE STRING "Default <CPPFLAGS_MINSIZEREL> flags." FORCE)
-#     set(CPPFLAGS_RELWITHDEBINFO   "${RELWITHDEBINFO_CPPFLAGS}")       #CACHE STRING "Default <CPPFLAGS_RELWITHDEBINFO> flags." FORCE)
-
-#     set(RCFLAGS_DEBUG             "${DEBUG_RCFLAGS}")                 #CACHE STRING "Default <CFLAGS_DEBUG> flags." FORCE)
-#     set(RCFLAGS_RELEASE           "${RELEASE_RCFLAGS}")               #CACHE STRING "Default <CFLAGS_RELEASE> flags." FORCE)
-#     set(RCFLAGS_MINSIZEREL        "${MINSIZEREL_RCFLAGS}")            #CACHE STRING "Default <CFLAGS_MINSIZEREL> flags." FORCE)
-#     set(RCFLAGS_RELWITHDEBINFO    "${RELWITHDEBINFO_RCFLAGS}")        #CACHE STRING "Default <CFLAGS_RELWITHDEBINFO> flags." FORCE)
-
-
-# unset(CC)
-# unset(CXX)
-# unset(LD)
-# unset(RC)
-# unset(LDFLAGS)
-# unset(LDFLAGS_DEBUG)
-# unset(LDFLAGS_MINSIZEREL)
-# unset(LDFLAGS_RELEASE)
-# unset(LDFLAGS_RELWITHDEBINFO)
-# unset(RCFLAGS)
-# unset(RCFLAGS_DEBUG)
-# unset(RCFLAGS_MINSIZEREL)
-# unset(RCFLAGS_RELEASE)
-# unset(RCFLAGS_RELWITHDEBINFO)
-# unset(CFLAGS)
-# unset(CFLAGS_DEBUG)
-# unset(CFLAGS_MINSIZEREL)
-# unset(CFLAGS_RELEASE)
-# unset(CFLAGS_RELWITHDEBINFO)
-# unset(CXXFLAGS)
-# unset(CXXFLAGS_DEBUG)
-# unset(CXXFLAGS_MINSIZEREL)
-# unset(CXXFLAGS_RELEASE)
-# unset(CXXFLAGS_RELWITHDEBINFO)
-# unset(CPPFLAGS)
-# unset(CPPFLAGS_DEBUG)
-# unset(CPPFLAGS_MINSIZEREL)
-# unset(CPPFLAGS_RELEASE)
-# unset(CPPFLAGS_RELWITHDEBINFO)
-# unset(DEBUG_CFLAGS)
-# unset(DEBUG_CPPFLAGS)
-# unset(DEBUG_CXXFLAGS)
-# unset(DEBUG_LDFLAGS)
-# unset(DEBUG_RCFLAGS)
-# unset(RELEASE_CFLAGS)
-# unset(RELEASE_CPPFLAGS)
-# unset(RELEASE_CXXFLAGS)
-# unset(RELEASE_LDFLAGS)
-# unset(RELEASE_RCFLAGS)
-# unset(CARCH)
-# unset(CHOST)
-
 #[===[.md
 
 # Todo
@@ -1303,117 +1234,6 @@ file(APPEND ${ENV_VARS_FILE_PATH} "${ENV_VARS_FILE}")
 #########################################################################
 # NOTES
 #########################################################################
-
-# Pick up the relevant root-level files for just-in-case purposes...?
-string(TOLOWER ${MSYSTEM} MSYSTEM_NAME)
-set(MSYSTEM_CONFIG_FILE "${Z_MSYS_ROOT_DIR}/${MSYSTEM_NAME}.ini")
-set(MSYSTEM_LAUNCH_FILE "${Z_MSYS_ROOT_DIR}/${MSYSTEM_NAME}.exe")
-set(MSYSTEM_ICON_FILE "${Z_MSYS_ROOT_DIR}/${MSYSTEM_NAME}.ico")
-
-These vars (examples) can be detected in Windows system environments...
-
-UCRTVersion := 10.0.22621.0
-UniversalCRTSdkDir := C:\Program Files (x86)\Windows Kits\10\
-VCIDEInstallDir := C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\Common7\IDE\VC\
-VCINSTALLDIR := C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\
-VCToolsRedistDir := C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Redist\MSVC\14.36.32532\
-VisualStudioVersion := 17.0
-VSINSTALLDIR := C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\
-WindowsLibPath := C:\Program Files (x86)\Windows Kits\10\UnionMetadata\10.0.22621.0;C:\Program Files (x86)\Windows Kits\10\References\10.0.22621.0
-WindowsSdkBinPath := C:\Program Files (x86)\Windows Kits\10\bin\
-WindowsSdkDir := C:\Program Files (x86)\Windows Kits\10\
-WindowsSDKLibVersion := 10.0.22621.0\
-WindowsSDKVersion := 10.0.22621.0\
-TMP := C:\Users\natha\AppData\Local\Temp
-
-
-# The below is the equivalent to /etc/msystem but for cmake...
-if(MSYSTEM STREQUAL MINGW32)
-    set(MSYSTEM_PREFIX          "/mingw32"                            CACHE PATH      "")
-    set(MSYSTEM_CARCH           "i686"                                CACHE STRING    "")
-    set(MSYSTEM_CHOST           "i686-w64-mingw32"                    CACHE STRING    "")
-    set(MINGW_CHOST             "${MSYSTEM_CHOST}"                    CACHE STRING    "")
-    set(MINGW_PREFIX            "${MSYSTEM_PREFIX}"                   CACHE PATH      "")
-    set(MINGW_PACKAGE_PREFIX    "mingw-w64-${MSYSTEM_CARCH}"          CACHE STRING    "")
-elseif(MSYSTEM STREQUAL MINGW64)
-    set(MSYSTEM_PREFIX          "/mingw64"                            CACHE PATH      "")
-    set(MSYSTEM_CARCH           "x86_64"                              CACHE STRING    "")
-    set(MSYSTEM_CHOST           "x86_64-w64-mingw32"                  CACHE STRING    "")
-    set(MINGW_CHOST             "${MSYSTEM_CHOST}"                    CACHE STRING    "")
-    set(MINGW_PREFIX            "${MSYSTEM_PREFIX}"                   CACHE PATH      "")
-    set(MINGW_PACKAGE_PREFIX    "mingw-w64-${MSYSTEM_CARCH}"          CACHE STRING    "")
-elseif(MSYSTEM STREQUAL CLANG32)
-    set(MSYSTEM_PREFIX          "/clang32"                            CACHE PATH      "")
-    set(MSYSTEM_CARCH           "i686"                                CACHE STRING    "")
-    set(MSYSTEM_CHOST           "i686-w64-mingw32"                    CACHE STRING    "")
-    set(MINGW_CHOST             "${MSYSTEM_CHOST}"                    CACHE STRING    "")
-    set(MINGW_PREFIX            "${MSYSTEM_PREFIX}"                   CACHE PATH      "")
-    set(MINGW_PACKAGE_PREFIX    "mingw-w64-clang-${MSYSTEM_CARCH}"    CACHE STRING    "")
-elseif(MSYSTEM STREQUAL CLANG64)
-
-    set(MSYSTEM_TITLE "MinGW Clang x64")
-    set(MSYSTEM_TOOLCHAIN_VARIANT llvm)
-    set(MSYSTEM_C_LIBRARY ucrt)
-    set(MSYSTEM_CXX_LIBRARY libc++)
-
-    set(MSYSTEM_PREFIX          "/clang64"                            CACHE PATH      "")
-    set(MSYSTEM_CARCH           "x86_64"                              CACHE STRING    "")
-    set(MSYSTEM_CHOST           "x86_64-w64-mingw32"                  CACHE STRING    "")
-
-    set(MINGW_CHOST             "${MSYSTEM_CHOST}"                    CACHE STRING    "")
-    set(MINGW_PREFIX            "${MSYSTEM_PREFIX}"                   CACHE PATH      "")
-    set(MINGW_PACKAGE_PREFIX    "mingw-w64-clang-${MSYSTEM_CARCH}"    CACHE STRING    "")
-
-elseif(MSYSTEM STREQUAL CLANGARM64)
-
-    set(MSYSTEM_TITLE               "MinGW Clang ARM64"                 CACHE STRING    "")
-    set(MSYSTEM_TOOLCHAIN_VARIANT   llvm                                CACHE STRING    "")
-    set(MSYSTEM_C_LIBRARY           ucrt                                CACHE STRING    "")
-    set(MSYSTEM_CXX_LIBRARY         libc++                              CACHE STRING    "")
-
-    set(MSYSTEM_PREFIX              "/clangarm64"                       CACHE PATH      "")
-    set(MSYSTEM_CARCH               "aarch64"                           CACHE STRING    "")
-    set(MSYSTEM_CHOST               "aarch64-w64-mingw32"               CACHE STRING    "")
-
-    set(MINGW_CHOST                 "${MSYSTEM_CHOST}"                  CACHE STRING    "")
-    set(MINGW_PREFIX                "${MSYSTEM_PREFIX}"                 CACHE PATH      "")
-    set(MINGW_PACKAGE_PREFIX        "mingw-w64-clang-${MSYSTEM_CARCH}"  CACHE STRING    "")
-
-elseif(MSYSTEM STREQUAL UCRT64)
-
-    set(MSYSTEM_TITLE               "MinGW UCRT x64"                    CACHE STRING    "")
-    set(MSYSTEM_TOOLCHAIN_VARIANT   gcc                                 CACHE STRING    "")
-    set(MSYSTEM_C_LIBRARY           ucrt                                CACHE STRING    "")
-    set(MSYSTEM_CXX_LIBRARY         libstdc++                           CACHE STRING    "")
-
-    set(MSYSTEM_PREFIX              "/ucrt64"                           CACHE PATH      "")
-    set(MSYSTEM_CARCH               "x86_64"                            CACHE STRING    "")
-    set(MSYSTEM_CHOST               "x86_64-w64-mingw32"                CACHE STRING    "")
-
-    set(MINGW_CHOST                 "${MSYSTEM_CHOST}"                  CACHE STRING    "")
-    set(MINGW_PREFIX                "${MSYSTEM_PREFIX}"                 CACHE PATH      "")
-    set(MINGW_PACKAGE_PREFIX        "mingw-w64-ucrt-${MSYSTEM_CARCH}"   CACHE STRING    "")
-
-else()
-
-    # Fallback to MSYS
-
-    execute_process(
-        COMMAND /usr/bin/uname -m
-        WORKING_DIRECTORY "."
-        OUTPUT_VARIABLE MSYSTEM_CARCH
-    )
-
-    set(MSYSTEM                     MSYS                                CACHE STRING    "")
-    set(MSYSTEM_TOOLCHAIN_VARIANT   gcc                                 CACHE STRING    "")
-    set(MSYSTEM_C_LIBRARY           cygwin                              CACHE STRING    "")
-    set(MSYSTEM_CXX_LIBRARY         libstdc++                           CACHE STRING    "")
-
-    set(MSYSTEM_PREFIX              "/usr"                              CACHE PATH      "")
-    set(MSYSTEM_CARCH               "${MSYSTEM_CARCH}"                  CACHE STRING    "")
-    set(MSYSTEM_CHOST               "${MSYSTEM_CARCH}-pc-msys"          CACHE STRING    "")
-
-endif()
 
 
 elseif(MSYSTEM STREQUAL CLANG64)

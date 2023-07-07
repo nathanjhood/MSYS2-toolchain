@@ -34,11 +34,11 @@ endif()
 
 ## WHOLE_ARCHIVE: Force loading all members of an archive
 if(_CMAKE_LINKER_PUSHPOP_STATE_SUPPORTED)
-set(CMAKE_LINK_LIBRARY_USING_WHOLE_ARCHIVE "LINKER:--push-state,--whole-archive"
+    set(CMAKE_LINK_LIBRARY_USING_WHOLE_ARCHIVE "LINKER:--push-state,--whole-archive"
                                             "<LINK_ITEM>"
                                             "LINKER:--pop-state")
 else()
-set(CMAKE_LINK_LIBRARY_USING_WHOLE_ARCHIVE "LINKER:--whole-archive"
+    set(CMAKE_LINK_LIBRARY_USING_WHOLE_ARCHIVE "LINKER:--whole-archive"
                                             "<LINK_ITEM>"
                                             "LINKER:--no-whole-archive")
 endif()

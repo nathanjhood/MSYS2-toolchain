@@ -14,6 +14,9 @@ set(__MSYSTEM_PATHS_INCLUDED 1)
 # message(WARNING "ping")
 
 # set(MINGW64 1)
+#set(UNIX 1) # Set to ``True`` when the target system is UNIX or UNIX-like (e.g. ``APPLE`` and ``CYGWIN``
+set(MINGW 1) # ``True`` when using MinGW
+set(WIN32 1) # Set to ``True`` when the target system is Windows, including Win64.
 
 # also add the install directory of the running cmake to the search directories
 # CMAKE_ROOT is CMAKE_INSTALL_PREFIX/share/cmake, so we need to go two levels up
@@ -23,45 +26,262 @@ get_filename_component(_CMAKE_INSTALL_DIR "${_CMAKE_INSTALL_DIR}" PATH)
 # List common installation prefixes.  These will be used for all
 # search types.
 set(CMAKE_SYSTEM_PREFIX_PATH)
+list(APPEND CMAKE_SYSTEM_PREFIX_PATH "${_CMAKE_INSTALL_DIR}")
+
+
+#[===[.md:
+# z_msys_set_powershell_path
+
+Gets either the path to powershell or powershell core,
+and places it in the variable Z_MSYS_POWERSHELL_PATH.
+#]===]
+function(z_msys_set_powershell_path)
+    # Attempt to use pwsh if it is present; otherwise use powershell
+    if(NOT DEFINED Z_MSYS_POWERSHELL_PATH)
+        find_program(Z_MSYS_PWSH_PATH pwsh)
+        if(Z_MSYS_PWSH_PATH)
+            set(Z_MSYS_POWERSHELL_PATH "${Z_MSYS_PWSH_PATH}" CACHE INTERNAL "The path to the PowerShell implementation to use.")
+        else()
+            message(DEBUG "msys2: Could not find PowerShell Core; falling back to PowerShell")
+            find_program(Z_MSYS_BUILTIN_POWERSHELL_PATH powershell REQUIRED)
+            if(Z_MSYS_BUILTIN_POWERSHELL_PATH)
+                set(Z_MSYS_POWERSHELL_PATH "${Z_MSYS_BUILTIN_POWERSHELL_PATH}" CACHE INTERNAL "The path to the PowerShell implementation to use.")
+            else()
+                message(WARNING "msys2: Could not find PowerShell; using static string 'powershell.exe'")
+                set(Z_MSYS_POWERSHELL_PATH "powershell.exe" CACHE INTERNAL "The path to the PowerShell implementation to use.")
+            endif()
+        endif()
+    endif() # Z_MSYS_POWERSHELL_PATH
+endfunction()
+
+z_msys_set_powershell_path()
+
 #
+#if MSYS2_PATH_TYPE == "-inherit"
+#
+#    Inherit previous path. Note that this will make all of the
+#    Windows path available in current shell, with possible
+#    interference in project builds.
+#
+#if MSYS2_PATH_TYPE == "-minimal"
+#
+#if MSYS2_PATH_TYPE == "-strict"
+#
+#    Do not inherit any path configuration, and allow for full
+#    customization of external path. This is supposed to be used
+#    in special cases such as debugging without need to change
+#    this file, but not daily usage.
+#
+macro(set_msystem_path_type)
+
+    if(NOT DEFINED MSYS2_PATH_TYPE)
+        set(MSYS2_PATH_TYPE "inherit")
+    endif()
+    set(MSYS2_PATH_TYPE "${MSYS2_PATH_TYPE}" CACHE STRING " " FORCE)
+
+    if(ENV{VERBOSE})
+        message(STATUS "Msys64 path type: '${MSYS2_PATH_TYPE}'")
+    endif()
+
+    if(MSYS2_PATH_TYPE STREQUAL "strict")
+
+        # Do not inherit any path configuration, and allow for full customization
+        # of external path. This is supposed to be used in special cases such as
+        # debugging without need to change this file, but not daily usage.
+        unset(ORIGINAL_PATH)
+
+    elseif(MSYS2_PATH_TYPE STREQUAL "inherit")
+
+        # Inherit previous path. Note that this will make all of the Windows path
+        # available in current shell, with possible interference in project builds.
+        # ORIGINAL_PATH="${ORIGINAL_PATH:-${PATH}}"
+        set(ORIGINAL_PATH "$ENV{Path}")
+
+    elseif(MSYS2_PATH_TYPE STREQUAL "minimal")
+
+        # WIN_ROOT="$(PATH=${MSYS2_PATH} exec cygpath -Wu)"
+        if(DEFINED ENV{WINDIR})
+            set(WIN_ROOT "$ENV{WINDIR}" CACHE FILEPATH "" FORCE)
+        else()
+            if(DEFINED ENV{HOMEDRIVE})
+                set(WIN_ROOT "$ENV{HOMEDRIVE}/Windows" CACHE FILEPATH "" FORCE)
+            else()
+                message(FATAL_ERROR "HELP!")
+            endif()
+        endif()
+        set(ORIGINAL_PATH)
+        list(APPEND ORIGINAL_PATH "${WIN_ROOT}/System32")
+        list(APPEND ORIGINAL_PATH "${WIN_ROOT}")
+        list(APPEND ORIGINAL_PATH "${WIN_ROOT}/System32/Wbem")
+        if(DEFINED Z_MSYS_POWERSHELL_PATH)
+            list(APPEND ORIGINAL_PATH "${Z_MSYS_POWERSHELL_PATH}")
+        else()
+            list(APPEND ORIGINAL_PATH "${WIN_ROOT}/System32/WindowsPowerShell/v1.0/")
+        endif()
+        set(ORIGINAL_PATH "${ORIGINAL_PATH}")
+
+    endif()
+
+    set(ORIGINAL_PATH "${ORIGINAL_PATH}" CACHE STRING "<PATH> environment variable." FORCE)
+
+endmacro()
+
+set_msystem_path_type()
+
+macro(set_msys_system_paths)
+    find_program(BASH "${Z_MSYS_ROOT_DIR}/usr/bin/bash.exe")
+    find_program(ECHO "${Z_MSYS_ROOT_DIR}/usr/bin/echo.exe")
+
+    execute_process(
+        COMMAND ${ECHO} {{,usr/}{,local/}{,share/},opt/*/}{man} mingw{32,64}{{,/local}{,/share},/opt/*}/{man}
+        WORKING_DIRECTORY ${Z_MSYS_ROOT_DIR}
+        OUTPUT_VARIABLE MAN_DIRS
+    )
+    string(REPLACE " " ";\n" MAN_DIRS "${MAN_DIRS}")
+    message(STATUS "MAN_DIRS = \n${MAN_DIRS}")
+
+    execute_process(
+        COMMAND ${ECHO} {{,usr/}{,local/}{,share/},opt/*/}{info} mingw{32,64}{{,/local}{,/share},/opt/*}/{info}
+        WORKING_DIRECTORY ${Z_MINGW64_ROOT_DIR}
+        OUTPUT_VARIABLE INFO_DIRS
+    )
+    string(REPLACE " " "\n" INFO_DIRS "${INFO_DIRS}")
+    message(STATUS "INFO_DIRS = \n${INFO_DIRS}")
+endmacro()
+
+# set_msys_system_paths()
+
+set(MSYS2_PATH)
+list(APPEND MSYS2_PATH "${Z_MSYS_ROOT_DIR}/usr/local/bin")
+list(APPEND MSYS2_PATH "${Z_MSYS_ROOT_DIR}/usr/bin")
+list(APPEND MSYS2_PATH "${Z_MSYS_ROOT_DIR}/bin")
+
+
+set(MSYS2_MANPATH)
+list(APPEND MANPATH "${Z_MSYS_ROOT_DIR}/usr/local/man")
+list(APPEND MANPATH "${Z_MSYS_ROOT_DIR}/usr/share/man")
+list(APPEND MANPATH "${Z_MSYS_ROOT_DIR}/usr/man")
+list(APPEND MANPATH "${Z_MSYS_ROOT_DIR}/share/man")
+
+
+set(MSYS2_INFOPATH)
+list(APPEND INFOPATH "${Z_MSYS_ROOT_DIR}/usr/local/info")
+list(APPEND INFOPATH "${Z_MSYS_ROOT_DIR}/usr/share/info")
+list(APPEND INFOPATH "${Z_MSYS_ROOT_DIR}/usr/info")
+list(APPEND INFOPATH "${Z_MSYS_ROOT_DIR}/share/info")
+
+
+if(MSYSTEM STREQUAL "MSYS2")
+else()
+    # set(PATH "${MINGW_MOUNT_POINT}/bin:${MSYS2_PATH}${ORIGINAL_PATH:+:${ORIGINAL_PATH}}")
+    set(MSYS2_PATH "${MINGW_MOUNT_POINT}/bin" "${MSYS2_PATH}" "${ORIGINAL_PATH}")
+    set(PKG_CONFIG_PATH "${MINGW_MOUNT_POINT}/lib/pkgconfig" "${MINGW_MOUNT_POINT}/share/pkgconfig")
+    set(PKG_CONFIG_SYSTEM_INCLUDE_PATH "${MINGW_MOUNT_POINT}/include")
+    set(PKG_CONFIG_SYSTEM_LIBRARY_PATH "${MINGW_MOUNT_POINT}/lib")
+    set(ACLOCAL_PATH "${MINGW_MOUNT_POINT}/share/aclocal" "/usr/share/aclocal")
+    set(MSYS2_MANPATH "${MINGW_MOUNT_POINT}/local/man" "${MINGW_MOUNT_POINT}/share/man" "${MANPATH}")
+    set(MSYS2_INFOPATH "${MINGW_MOUNT_POINT}/local/info" "${MINGW_MOUNT_POINT}/share/info" "${INFOPATH}")
+    set(MSYS2_DXSDK_DIR "${MINGW_MOUNT_POINT}/${MINGW_CHOST}")
+endif()
+
+set(MSYS2_PATH "${MSYS2_PATH}" CACHE PATH "<MSYS2_PATH>" FORCE)
+set(MSYS2_MANPATH "${MSYS2_MANPATH}" CACHE PATH "<MSYS2_MANPATH>" FORCE)
+set(MSYS2_INFOPATH "${MSYS2_INFOPATH}" CACHE PATH "<MSYS2_INFOPATH>" FORCE)
+
 # Reminder when adding new locations computed from environment variables
 # please make sure to keep Help/variable/CMAKE_SYSTEM_PREFIX_PATH.rst
 # synchronized
 list(APPEND CMAKE_SYSTEM_PREFIX_PATH
+
     # Standard
-    "${Z_${MSYSTEM}_ROOT_DIR}/usr/local"
-    "${Z_${MSYSTEM}_ROOT_DIR}/usr"
-    "${Z_${MSYSTEM}_ROOT_DIR}/"
+    "${MSYS2_PATH}"
 
     # CMake install location
     "${_CMAKE_INSTALL_DIR}"
 )
-if (NOT CMAKE_FIND_NO_INSTALL_PREFIX)
 
-    list(APPEND CMAKE_SYSTEM_PREFIX_PATH
-        # Project install destination.
-        "${CMAKE_INSTALL_PREFIX}"
-    )
-
-    if(CMAKE_STAGING_PREFIX)
-
-        list(APPEND CMAKE_SYSTEM_PREFIX_PATH
-            # User-supplied staging prefix.
-            "${CMAKE_STAGING_PREFIX}"
-        )
-
+#
+#Add the program-files folder(s) to the list of installation
+#prefixes.
+#
+#Windows 64-bit Binary:
+#
+#    ENV{ProgramFiles(x86)} = [C:\Program Files (x86)]
+#    ENV{ProgramFiles}      = [C:\Program Files]
+#    ENV{ProgramW6432}      = [C:\Program Files] or <not set>
+#
+#Windows 32-bit Binary on 64-bit Windows:
+#
+#    ENV{ProgramFiles(x86)} = [C:\Program Files (x86)]
+#    ENV{ProgramFiles}      = [C:\Program Files (x86)]
+#    ENV{ProgramW6432}      = [C:\Program Files]
+#
+#Reminder when adding new locations computed from environment variables
+#please make sure to keep Help/variable/CMAKE_SYSTEM_PREFIX_PATH.rst
+#synchronized
+macro(add_win32_program_files_to_cmake_system_prefix_path)
+    set(_programfiles "")
+    foreach(v "ProgramW6432" "ProgramFiles" "ProgramFiles(x86)")
+        if(DEFINED "ENV{${v}}")
+            file(TO_CMAKE_PATH "$ENV{${v}}" _env_programfiles)
+            list(APPEND _programfiles "${_env_programfiles}")
+            unset(_env_programfiles)
+        endif()
+    endforeach()
+    if(DEFINED "ENV{SystemDrive}")
+        foreach(d "Program Files" "Program Files (x86)")
+            if(EXISTS "$ENV{SystemDrive}/${d}")
+                list(APPEND _programfiles "$ENV{SystemDrive}/${d}")
+            endif()
+        endforeach()
     endif()
+    if(_programfiles)
+        list(REMOVE_DUPLICATES _programfiles)
+        list(APPEND CMAKE_SYSTEM_PREFIX_PATH ${_programfiles})
+    endif()
+    unset(_programfiles)
+endmacro()
 
+add_win32_program_files_to_cmake_system_prefix_path()
+
+if (NOT CMAKE_FIND_NO_INSTALL_PREFIX) # Add other locations.
+    list(APPEND CMAKE_SYSTEM_PREFIX_PATH "${CMAKE_INSTALL_PREFIX}") # Project install destination.
+    if(CMAKE_STAGING_PREFIX)
+        list(APPEND CMAKE_SYSTEM_PREFIX_PATH "${CMAKE_STAGING_PREFIX}") # User-supplied staging prefix.
+    endif()
 endif()
 _cmake_record_install_prefix()
+
+if(CMAKE_CROSSCOMPILING AND NOT CMAKE_HOST_SYSTEM_NAME MATCHES "Windows")
+    # MinGW (useful when cross compiling from linux with CMAKE_FIND_ROOT_PATH set)
+    list(APPEND CMAKE_SYSTEM_PREFIX_PATH /)
+endif()
+
+list(APPEND CMAKE_SYSTEM_INCLUDE_PATH)
+
+# mingw can also link against dlls which can also be in '/bin', so list this too
+if (NOT CMAKE_FIND_NO_INSTALL_PREFIX)
+    list(APPEND CMAKE_SYSTEM_LIBRARY_PATH "${CMAKE_INSTALL_PREFIX}/bin")
+    if (CMAKE_STAGING_PREFIX)
+        list(APPEND CMAKE_SYSTEM_LIBRARY_PATH "${CMAKE_STAGING_PREFIX}/bin")
+    endif()
+endif()
+list(APPEND CMAKE_SYSTEM_LIBRARY_PATH "${_CMAKE_INSTALL_DIR}/bin")
+list(APPEND CMAKE_SYSTEM_LIBRARY_PATH /bin)
+
+list(APPEND CMAKE_SYSTEM_PROGRAM_PATH)
+
 
 # Non "standard" but common install prefixes
 list(APPEND CMAKE_SYSTEM_PREFIX_PATH
     # "${Z_${MSYSTEM}_ROOT_DIR}/usr/X11R6"
     # "${Z_${MSYSTEM}_ROOT_DIR}/usr/pkg"
     # "${Z_${MSYSTEM}_ROOT_DIR}/opt"
-    "${Z_${MSYSTEM}_ROOT_DIR}/x86_64-w64-mingw32"
+    # "${Z_${MSYSTEM}_ROOT_DIR}/x86_64-w64-mingw32"
 )
+if(DEFINED MSYS2_DXSDK_DIR) # This should probably be some sort of 'COMPATIBILITY' switcheroo...
+    list(APPEND CMAKE_SYSTEM_PREFIX_PATH "${MSYS2_DXSDK_DIR}")
+endif()
 
 # List common include file locations not under the common prefixes.
 list(APPEND CMAKE_SYSTEM_INCLUDE_PATH
@@ -123,6 +343,13 @@ endif()
 set_property(GLOBAL PROPERTY FIND_LIBRARY_USE_LIB32_PATHS TRUE)
 set_property(GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS TRUE)
 set_property(GLOBAL PROPERTY FIND_LIBRARY_USE_LIBX32_PATHS TRUE)
+
+
+###############################################################################
+
+
+
+
 
 # if(ENABLE_${MSYSTEM})
 #     set(${MSYSTEM}_ROOT                    "${Z_${MSYSTEM}_ROOT_DIR}")            # CACHE PATH      "<MINGW64>: Root of the build system." FORCE)

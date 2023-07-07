@@ -1,5 +1,8 @@
+#!/usr/bin/env cmake
 cmake_minimum_required(VERSION 3.14...3.27 FATAL_ERROR)
 message("Loading ${CMAKE_CURRENT_LIST_FILE}")
+
+# set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/scripts/cmake/Modules")
 
 # include("./scripts/ports.cmake")
 
@@ -9,14 +12,159 @@ message("Loading ${CMAKE_CURRENT_LIST_FILE}")
 # include("${CMAKE_CURRENT_LIST_DIR}/scripts/detect_compiler/CMakeLists.txt")
 # include("${CMAKE_CURRENT_LIST_DIR}/scripts/get_cmake_vars/CMakeLists.txt")
 
+
+# Returns the host triple.
+# Invokes config.guess
+
+function(get_host_triplet var)
+    if(MSVC)
+        if(CMAKE_C_COMPILER_ARCHITECTURE_ID MATCHES "ARM64.*")
+            set(value "aarch64-pc-windows-msvc")
+        elseif(CMAKE_C_COMPILER_ARCHITECTURE_ID MATCHES "ARM.*")
+            set(value "armv7-pc-windows-msvc")
+        elseif(CMAKE_C_COMPILER_ARCHITECTURE_ID STREQUAL "x64")
+            set(value "x86_64-pc-windows-msvc")
+        elseif(CMAKE_C_COMPILER_ARCHITECTURE_ID STREQUAL "X86")
+            set(value "i686-pc-windows-msvc")
+        elseif(CMAKE_SIZEOF_VOID_P EQUAL 8)
+            set(value "x86_64-pc-windows-msvc")
+        else()
+            set(value "i686-pc-windows-msvc")
+        endif()
+    elseif(MINGW)
+        # CMake doesn't provide COMPILER_ARCHITECTURE_ID for Clang/GCC,
+        # but it does for MSVC.
+        if(CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "ARM.*")
+            if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+                set(value "aarch64-w64-windows-gnu")
+            else()
+                set(value "armv7-w64-windows-gnu")
+            endif()
+        else()
+            if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+                set(value "x86_64-w64-windows-gnu")
+            else()
+                set(value "i686-w64-windows-gnu")
+            endif()
+        endif()
+    elseif(CMAKE_SYSTEM_NAME MATCHES "OS390")
+        set(value "s390x-ibm-zos")
+    elseif(CMAKE_SYSTEM_NAME STREQUAL AIX)
+        # We defer to dynamic detection of the host AIX version.
+        if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+            set(value "powerpc64-ibm-aix")
+        else()
+            set(value "powerpc-ibm-aix")
+        endif()
+    else(MSVC)
+        if(CMAKE_HOST_SYSTEM_NAME STREQUAL Windows AND NOT MSYS)
+            message(WARNING "unable to determine host target triple")
+        else()
+            set(config_guess ${CMAKE_CURRENT_LIST_DIR}/config.guess)
+            execute_process(
+                COMMAND sh ${config_guess}
+                RESULT_VARIABLE TT_RV
+                OUTPUT_VARIABLE TT_OUT
+                OUTPUT_STRIP_TRAILING_WHITESPACE
+            )
+            if(NOT TT_RV EQUAL 0)
+                message(FATAL_ERROR "Failed to execute ${config_guess}")
+            endif(NOT TT_RV EQUAL 0)
+            set(value ${TT_OUT})
+        endif()
+    endif(MSVC)
+    set(${var} ${value} PARENT_SCOPE)
+endfunction(get_host_triplet var)
+
+macro(set_msys_target_triplet)
+    set(MSYS_DEFAULT_TARGET_TRIPLET "${MSYS_DEFAULT_TARGET_TRIPLET_default}" CACHE STRING "Default target for which Msys64 will generate code." )
+    if(TARGET_TRIPLET)
+        message(WARNING "TARGET_TRIPLET is deprecated and will be removed in a future release. "
+        "Please use MSYS_DEFAULT_TARGET_TRIPLET instead.")
+        set(MSYS_TARGET_TRIPLET "${TARGET_TRIPLET}")
+    else()
+        set(MSYS_TARGET_TRIPLET "${MSYS_DEFAULT_TARGET_TRIPLET}")
+    endif()
+    message(STATUS "Msys64 host triplet: ${MSYS_HOST_TRIPLET}")
+    message(STATUS "Msys64 default target triplet: ${MSYS_DEFAULT_TARGET_TRIPLET}")
+endmacro()
+
 project(application)
 
 enable_language(C)
 enable_language(CXX)
-enable_language(Fortran)
-enable_language(OBJC)
-enable_language(OBJCXX)
-enable_language(ASM)
+# enable_language(Fortran)
+# enable_language(OBJC)
+# enable_language(OBJCXX)
+# enable_language(ASM)
+
+set(MSYSTEM "MINGW64" CACHE STRING "" FORCE)
+
+# get_host_triplet(MSYS_HOST_TRIPLET)
+# set(MSYS_HOST_TRIPLET "${MSYS_HOST_TRIPLET}" CACHE STRING "" FORCE)
+
+# if(NOT DEFINED MSYS_DEFAULT_TARGET_TRIPLET)
+#     set(MSYS_DEFAULT_TARGET_TRIPLET "${MSYS_HOST_TRIPLET}")
+# endif()
+
+# if(NOT DEFINED MSYS_TARGET_TRIPLET)
+#     set(MSYS_TARGET_TRIPLET "${MSYS_DEFAULT_TARGET_TRIPLET}" CACHE STRING "" FORCE)
+# endif()
+
+# if(${MSYS_TARGET_TRIPLET} STREQUAL "i686-w64-windows-gnu")
+#     set(MSYS_TARGET_ARCHITECTURE x86)
+#     set(MSYS_CRT_LINKAGE dynamic)
+#     set(MSYS_LIBRARY_LINKAGE static)
+#     set(MSYS_ENV_PASSTHROUGH PATH)
+
+#     set(MSYS_CMAKE_SYSTEM_NAME MinGW)
+
+# elseif(${MSYS_TARGET_TRIPLET} STREQUAL "i686-w64-windows-gnu-static")
+#     set(MSYS_TARGET_ARCHITECTURE x86)
+#     set(MSYS_CRT_LINKAGE static)
+#     set(MSYS_LIBRARY_LINKAGE static)
+#     set(MSYS_ENV_PASSTHROUGH PATH)
+
+#     set(MSYS_CMAKE_SYSTEM_NAME MinGW)
+
+# elseif(${MSYS_TARGET_TRIPLET} STREQUAL "i686-w64-windows-gnu-dynamic")
+#     set(MSYS_TARGET_ARCHITECTURE x86)
+#     set(MSYS_CRT_LINKAGE dynamic)
+#     set(MSYS_LIBRARY_LINKAGE dynamic)
+#     set(MSYS_ENV_PASSTHROUGH PATH)
+
+#     set(MSYS_CMAKE_SYSTEM_NAME MinGW)
+#     set(MSYS_POLICY_DLLS_WITHOUT_LIBS enabled)
+
+# elseif(${MSYS_TARGET_TRIPLET} STREQUAL "x86_64-w64-windows-gnu")
+#     set(MSYS_TARGET_ARCHITECTURE x64)
+#     set(MSYS_CRT_LINKAGE dynamic)
+#     set(MSYS_LIBRARY_LINKAGE static)
+#     set(MSYS_ENV_PASSTHROUGH PATH)
+
+#     set(MSYS_CMAKE_SYSTEM_NAME MinGW)
+
+# elseif(${MSYS_TARGET_TRIPLET} STREQUAL "x86_64-w64-windows-gnu-static")
+#     set(MSYS_TARGET_ARCHITECTURE x64)
+#     set(MSYS_CRT_LINKAGE static)
+#     set(MSYS_LIBRARY_LINKAGE static)
+#     set(MSYS_ENV_PASSTHROUGH PATH)
+
+#     set(MSYS_CMAKE_SYSTEM_NAME MinGW)
+
+# elseif(${MSYS_TARGET_TRIPLET} STREQUAL "x86_64-w64-windows-gnu-dynamic")
+#     set(MSYS_TARGET_ARCHITECTURE x64)
+#     set(MSYS_CRT_LINKAGE dynamic)
+#     set(MSYS_LIBRARY_LINKAGE dynamic)
+#     set(MSYS_ENV_PASSTHROUGH PATH)
+
+#     set(MSYS_CMAKE_SYSTEM_NAME MinGW)
+#     set(MSYS_POLICY_DLLS_WITHOUT_LIBS enabled)
+
+# else()
+#     message(WARNING "No MSYSTEM triplet detected...")
+# endif()
+
 
 # include(GNUInstallDirs)
 
@@ -482,14 +630,26 @@ endif() # BUILD_TESTS
 #include(CMakePrintSystemInformation)
 
 
-set(OUT_FILE_PATH "${CMAKE_BINARY_DIR}/OUT_INFO.sh")
-set(CLONE_FILE_PATH "${CMAKE_BINARY_DIR}/CLONE_INFO.cmake")
-file(WRITE ${OUT_FILE_PATH} "# Generated by: ${CMAKE_PROJECT_NAME}\n")
-file(WRITE ${CLONE_FILE_PATH} "# Generated by: ${CMAKE_PROJECT_NAME}\n")
-get_cmake_property(all_variables VARIABLES)
-foreach(variable ${all_variables})
-    if (DEFINED variable)
-        file(APPEND ${OUT_FILE_PATH} "${variable}=\"${${variable}}\"\n")
-        file(APPEND ${CLONE_FILE_PATH} "set(${variable} \"${${variable}}\")\n")
-    endif()
-endforeach()
+# include(vcpkg-tool.cmake)
+
+# set(ENV_VARS_FILE_PATH "${CMAKE_CURRENT_BINARY_DIR}/.${MSYS_TARGET_TRIPLET}/.env")
+# # file(WRITE ${ENV_VARS_FILE_PATH} "Generator: Toolchain file.\n")
+
+# execute_process(COMMAND "${CMAKE_COMMAND}" -E environment
+#     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+#     OUTPUT_VARIABLE ENV_VARS_FILE
+# )
+
+# file(APPEND ${ENV_VARS_FILE_PATH} "${ENV_VARS_FILE}")
+
+# set(OUT_FILE_PATH "${CMAKE_BINARY_DIR}/OUT_INFO.sh")
+# set(CLONE_FILE_PATH "${CMAKE_BINARY_DIR}/CLONE_INFO.cmake")
+# file(WRITE ${OUT_FILE_PATH} "# Generated by: ${CMAKE_PROJECT_NAME}\n")
+# file(WRITE ${CLONE_FILE_PATH} "# Generated by: ${CMAKE_PROJECT_NAME}\n")
+# get_cmake_property(all_variables VARIABLES)
+# foreach(variable ${all_variables})
+#     if (DEFINED variable)
+#         file(APPEND ${OUT_FILE_PATH} "${variable}=\"${${variable}}\"\n")
+#         file(APPEND ${CLONE_FILE_PATH} "set(${variable} \"${${variable}}\")\n")
+#     endif()
+# endforeach()
