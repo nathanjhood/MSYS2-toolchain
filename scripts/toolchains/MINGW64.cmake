@@ -1,7 +1,7 @@
 if(NOT _MSYS_MINGW64_TOOLCHAIN)
 set(_MSYS_MINGW64_TOOLCHAIN 1)
 
-message(STATUS "MinGW x64 toolchain loading...")
+message(STATUS "MinGW GNU x64 toolchain loading...")
 
 if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
     set(CMAKE_CROSSCOMPILING OFF CACHE BOOL "")
@@ -68,17 +68,17 @@ mark_as_advanced(CMAKE_OBJCXX_COMPILER)
 
 if(NOT DEFINED CMAKE_ASM_COMPILER)
     find_program(CMAKE_ASM_COMPILER "${Z_MINGW64_ROOT_DIR}/bin/as.exe")
-    mark_as_advanced(CMAKE_ASM_COMPILER)
 endif()
+mark_as_advanced(CMAKE_ASM_COMPILER)
 
 find_program(CMAKE_RC_COMPILER "${Z_MINGW64_ROOT_DIR}/bin/windres.exe")
-mark_as_advanced(CMAKE_RC_COMPILER)
 if(NOT CMAKE_RC_COMPILER)
     find_program (CMAKE_RC_COMPILER "${Z_MINGW64_ROOT_DIR}/bin/windres" NO_CACHE)
     if(NOT CMAKE_RC_COMPILER)
         find_program(CMAKE_RC_COMPILER "windres" NO_CACHE)
     endif()
 endif()
+mark_as_advanced(CMAKE_RC_COMPILER)
 
 get_property(_CMAKE_IN_TRY_COMPILE GLOBAL PROPERTY IN_TRY_COMPILE )
 
@@ -167,17 +167,17 @@ if(NOT _CMAKE_IN_TRY_COMPILE)
     string(APPEND CMAKE_MODULE_LINKER_FLAGS_INIT            " ${MSYS_LINKER_FLAGS} ")
     string(APPEND CMAKE_EXE_LINKER_FLAGS_INIT               " ${MSYS_LINKER_FLAGS} ")
 
-    # if(OPTION_STRIP_BINARIES)
-    #     string(APPEND CMAKE_EXE_LINKER_FLAGS_INIT               " --strip-all")
-    # endif()
+    if(OPTION_STRIP_BINARIES)
+        string(APPEND CMAKE_EXE_LINKER_FLAGS_INIT               " --strip-all")
+    endif()
 
-    # if(OPTION_STRIP_SHARED)
-    #     string(APPEND CMAKE_SHARED_LINKER_FLAGS_INIT            " --strip-unneeded")
-    # endif()
+    if(OPTION_STRIP_SHARED)
+        string(APPEND CMAKE_SHARED_LINKER_FLAGS_INIT            " --strip-unneeded")
+    endif()
 
-    # if(OPTION_STRIP_STATIC)
-    #     string(APPEND CMAKE_STATIC_LINKER_FLAGS_INIT            " --strip-debug")
-    # endif()
+    if(OPTION_STRIP_STATIC)
+        string(APPEND CMAKE_STATIC_LINKER_FLAGS_INIT            " --strip-debug")
+    endif()
 
     if(MSYS_CRT_LINKAGE STREQUAL "static")
         string(APPEND CMAKE_SHARED_LINKER_FLAGS_INIT        " -static")
