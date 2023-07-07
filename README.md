@@ -22,9 +22,9 @@ Choose an "<b>MSYSTEM</b>" from one of the following  options:
 * CLANGARM64
 * MSYS2
 
-<u><i><b>IMPORTANT</b></i>:</u> Make sure you include this part of the above command, to enable the '<b>MSYSTEM</b>' platform for CMake:
+<u><i>IMPORTANT!</i></u> Make sure you include this part of the above command, to enable the '<b>MSYSTEM</b>' platform for CMake:
 
-```"-D<b>CMAKE_MODULE_PATH</b>=<i>\<path/to/this/repo\></i>/scripts/cmake/Modules"```
+-D<b>CMAKE_MODULE_PATH</b>=<i>\<path/to/this/repo\></i>/scripts/cmake/Modules"
 
 # <b>Requirements</b>
 
