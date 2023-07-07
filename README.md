@@ -44,7 +44,7 @@ Note that will need to have run the standard init commands for Msys development;
 
 ```pacman -S ming-w64-{msystem}-{arch}-cmake```
 
-```pacman -S ming-w64-{msystem}-{arch}-toolchain``` 
+```pacman -S ming-w64-{msystem}-{arch}-toolchain```
 
 ```pacman -S ming-w64-{msystem}-{arch}-autotools```
 
@@ -305,3 +305,30 @@ The key turnaround was realizing that the standard CMake installation files 'CMa
 I won't set up a dev branch, proper doc files, git flows, PR/issue templates or anything else until I mark the actual source code to be out of development, but please consider this repo very much public and the author more than happy to investigate any further findings, take questions, etc.
 
 # Thanks for reading!
+
+# Legal
+
+This Git repo, named "MSYS2-toolchain", is an independant project, created and maintained by @StoneyDSP as a project of interest. By "independant", the author specifies that they have no relation to any of the parties further outlined below in this section of the page.
+
+## MSYS2
+
+MSYS2 is a software distribution consisting of several independent parts, each with their own licenses, comparable to a Linux distribution.
+
+The installer, for example, is based on the qt-installer-framework and pre-packs the direct and indirect dependencies of the base meta package. Each package has its own licenses.
+
+The "pacman" package manager in MSYS2 allows users to install other packages available in our repository, each with their own licenses.
+
+The license information for each package as visible on https://packages.msys2.org is maintained on a best effort basis and we make no guarantee that it is accurate or complete.
+
+## vcpkg
+
+vcpkg - C++ Library Manager for Windows, Linux, and MacOS
+Copyright (c) Microsoft Corporation
+vcpkg is distributed under the MIT License
+
+## CMake
+
+CMake - Cross Platform Makefile Generator
+Copyright 2000-2023 Kitware, Inc. and Contributors
+CMake is distributed under the OSI-approved BSD 3-clause License
+All rights reserved.
