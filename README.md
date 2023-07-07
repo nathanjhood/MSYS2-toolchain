@@ -4,9 +4,6 @@ For CMake integration and vcpkg support.
 
 Full build support for all Msys64 sub-systems!
 
-Eventual intended usage would be to supercede Msys's native Arch-Linux style "Pacman" package manager, for Microsoft's "vcpkg-tool" - or a customization of it - to enable much greater interoperability between Msys's MinGW-based sub-systems (including the Clang toolchain variants and their tools), and the native development environment (IDE integration, etc); as well as integrating a much larger package registry for third-party libraries (vcpkg's "ports"), cross-compiling support, and driven by a finely-tuned CMake configuration, tailored to tap into each subsystem's entire toolchain with ease.
-
-
 # <b>Usage</b>
 
 Simply pass the <a href="">scripts/buildsystems/MSYS2.cmake</a> file as your "<b>CMAKE_TOOLCHAIN_FILE</b>", along with a desired "<b>MSYSTEM</b>".
@@ -37,8 +34,7 @@ Note that will need to have run the standard ```pacman -Syuu``` init command, *a
 
 This independent project is an ongoing investigation into the potential of cross-pollinating <a href="">MSYS2</a>'s multi-verse of build envinronments and toolchains, with the source code package registry access and management of <a href="">Microsoft's vcpkg</a>, thanks to the power and flexibility of <a href="">CMake</a>.
 
-
-This involves is porting the contents of several configuration as found in Windows MSYS2 installations:
+Doing this involves porting the contents of several configuration as found in Windows MSYS2 installations:
 
 * <a href="">etc/makepkg.conf</a>*
 * <a href="">etc/makepkg_mingw.conf</a>**
@@ -51,16 +47,16 @@ These files are typically used to drive configurations for "<b>PKGBUILD</b>", wh
 
 This project aims to port as much of the above as possible to a natively-CMake-driven process, including the integration of a port Microsoft's 'vcpkg' package manager and its' useful "triplet/toolchain/buildsystem" paradigm:
 
-* Known configuration of '<b>host</b>'<b>*</b> system to build on.
-* Desired configuration of '<b>target</b>'<b>*</b> system to run on.
+* Known configuration of system to build software on, i.e., the '<b>host</b>'<b>*</b>.
+* Desired configuration of system to run software on, i.e., the '<b>target</b>'<b>*</b>.
 * Chain of tools to build with, i.e., a '<b>toolchain</b>'.
-* A building process to invoking all of the above, i.e., a '<b>build system</b>'.
+* A building process invoking all of the above, i.e., a '<b>build system</b>'.
 
-<i><b>*</b> these configurations are referred to as '<b>triplets</b>'</i>
+<i><b>*</b>each of these configurations are referred to as '<b>triplets</b>'</i>
 
 In a CMake-driven build environment, these settings can all be pre-defined with configuration scripts ('<b>toolchain files</b>') which configure CMake with a full set of environment variables, binary/library paths, and compiler flags for each of the available invoking MSYS sub-systems (often known as "MSYSTEM"'s), appropriately setting each of the underlying build tool behaviours for each sub-system, enabling CMake to correctly find and use them.
 
-This project aims to do precisely the above with as minimal user requirements as possible. With the desired toolchain(s) on your pacman-driven Msys installation in place, it should be as simple as passing the 'MSYS2.cmake' buildsystem file (as the CMake toolchain) and an 'MSYSTEM' to your CMake invocation, making the entire sub-system readily available to your CMake/Msys64 projects.
+This project does precisely the above with as minimal user requirements as possible. With the desired toolchain(s) on your pacman-driven Msys installation in place, it should be as simple as passing the 'MSYS2.cmake' buildsystem file (as the CMake toolchain) and an 'MSYSTEM' to your CMake invocation, making the entire sub-system readily available to your CMake/Msys64 projects.
 
 Here's what building with each of the sub-systems offers, as per the <a href="">MSYS2 documentation</a>:
 
@@ -115,7 +111,7 @@ We don't want build-system configs to be baked into our project source code (bec
 
 Fortunately, for this project to achieve it's targets, much of the required configurations are already available within CMake (and vcpkg), and we have simply a process of directing the flow of file-hopping that CMake does under the hood when configuring/building/etc to pick up combinations of native CMake files that otherwise aren't currently available at the time of this project's creation.
 
-(to better understand this last paragraph, please see the files under 'scripts/cmake/Modules/Platform'...)
+(to better understand this last paragraph, please see the files under your CMake installation directory; 'share/cmake/Modules/Platform/', ...)
 
 To use the toolchain and buildsystem, pass these vars to your CMake invocation;
 
@@ -248,9 +244,11 @@ Add in the new line below (the one with 'clang-cl' in it);
 
 And save the file. Done.
 
-Many vars will be translated (back!) over to their <b>'\<VCPKG_*\>'</b> origins in order to work as a drop-in toolchain for vcpkg. However, this is of particular interest as it opens up a lot more interoperability, which appeals to the core nature of the project itself.
+## Package management
 
-Cross compiling...? We need solid native configs first, in any case.
+Eventual intended usage would be to supercede Msys's native Arch-Linux style "Pacman" package manager, for Microsoft's "vcpkg-tool" - or a customization of it - to enable much greater interoperability between Msys's MinGW-based sub-systems (including the Clang toolchain variants and their tools), and the native development environment (IDE integration, etc); as well as integrating a much larger package registry for third-party libraries (vcpkg's "ports"), cross-compiling support, and driven by a finely-tuned CMake configuration, tailored to tap into each subsystem's entire toolchain with ease.
+
+Many vars will be translated (back!) over to their <b>'\<VCPKG_*\>'</b> origins in order to work as a drop-in toolchain for vcpkg. However, this is of particular interest as it opens up a lot more interoperability, which appeals to the core nature of the project itself.
 
 Note that vcpkg also has the foundations of an MSYS installation in it's package registries, which it often uses to pull and patch <i>'*.pc'</i> files for build system variables. There are definitions of functions to pull varieties of MSYS packages (directly from Git/mirrors instead of via pacman) - there seems to be enough foundation there almost to spin vcpkg into some super-package-manager for a custom MSYS-based system, if wanted. Perhaps some of this can be leveraged later on...
 
@@ -266,7 +264,9 @@ Available <b>'\<MSYSTEM\>'</b> options...
 * <b>'\<UCRT64\>'</b>
 * <b>'\<MSYS\>'</b>
 
-Main development is happening on the MinGW x64 variant, closely followed by the Clang x64 and then MinGW x86 varieties. The '\<MSYS2\>' subsystem mostly falls back on CMake's platform defaults for Cygwin, whereas the others require more tailoring to take full advantage of the buildsystem and create rigidly-defined behaviour. If something doesn't appear to be working, please keep in mind the priority order above. The ucrt64 case I believe will require a bit further effort, then even more so for Clang arm64 cases. The MinGW-based GNU/Clang subsystems are where most of the working proof can be seen.
+## Cross compiling...?
+
+We need solid native configs first, in any case.
 
 # Dev latest
 
@@ -282,4 +282,4 @@ The key turnaround was realizing that the standard CMake installation files 'CMa
 
 I won't set up a dev branch, proper doc files, git flows, PR/issue templates or anything else until I mark the actual source code to be out of development, but please consider this repo very much public and the author more than happy to investigate any further findings, take questions, etc.
 
-Thanks for reading!
+# Thanks for reading!

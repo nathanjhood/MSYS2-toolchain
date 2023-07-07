@@ -58,7 +58,7 @@ function(get_host_triplet var)
         endif()
     else(MSVC)
         if(CMAKE_HOST_SYSTEM_NAME STREQUAL Windows AND NOT MSYS)
-            message(WARNING "unable to determine host target triple")
+            message(WARNING "unable to determine host target triplet")
         else()
             set(config_guess ${CMAKE_CURRENT_LIST_DIR}/config.guess)
             execute_process(
@@ -89,27 +89,21 @@ macro(set_msys_target_triplet)
     message(STATUS "Msys64 default target triplet: ${MSYS_DEFAULT_TARGET_TRIPLET}")
 endmacro()
 
+
+
 project(application)
 
-enable_language(C)
-enable_language(CXX)
-# enable_language(Fortran)
-# enable_language(OBJC)
-# enable_language(OBJCXX)
-# enable_language(ASM)
 
-set(MSYSTEM "MINGW64" CACHE STRING "" FORCE)
+get_host_triplet(MSYS_HOST_TRIPLET)
+set(MSYS_HOST_TRIPLET "${MSYS_HOST_TRIPLET}" CACHE STRING "<MSYS_HOST_TRIPLET>" FORCE)
 
-# get_host_triplet(MSYS_HOST_TRIPLET)
-# set(MSYS_HOST_TRIPLET "${MSYS_HOST_TRIPLET}" CACHE STRING "" FORCE)
+if(NOT DEFINED MSYS_DEFAULT_TARGET_TRIPLET)
+    set(MSYS_DEFAULT_TARGET_TRIPLET "${MSYS_HOST_TRIPLET}" CACHE STRING "MSYS_DEFAULT_TARGET_TRIPLET" FORCE)
+endif()
 
-# if(NOT DEFINED MSYS_DEFAULT_TARGET_TRIPLET)
-#     set(MSYS_DEFAULT_TARGET_TRIPLET "${MSYS_HOST_TRIPLET}")
-# endif()
-
-# if(NOT DEFINED MSYS_TARGET_TRIPLET)
-#     set(MSYS_TARGET_TRIPLET "${MSYS_DEFAULT_TARGET_TRIPLET}" CACHE STRING "" FORCE)
-# endif()
+if(NOT DEFINED MSYS_TARGET_TRIPLET)
+    set(MSYS_TARGET_TRIPLET "${MSYS_DEFAULT_TARGET_TRIPLET}" CACHE STRING "MSYS_TARGET_TRIPLET" FORCE)
+endif()
 
 # if(${MSYS_TARGET_TRIPLET} STREQUAL "i686-w64-windows-gnu")
 #     set(MSYS_TARGET_ARCHITECTURE x86)
@@ -165,6 +159,13 @@ set(MSYSTEM "MINGW64" CACHE STRING "" FORCE)
 #     message(WARNING "No MSYSTEM triplet detected...")
 # endif()
 
+
+enable_language(C)
+enable_language(CXX)
+# enable_language(Fortran)
+# enable_language(OBJC)
+# enable_language(OBJCXX)
+# enable_language(ASM)
 
 # include(GNUInstallDirs)
 
@@ -653,3 +654,7 @@ endif() # BUILD_TESTS
 #         file(APPEND ${CLONE_FILE_PATH} "set(${variable} \"${${variable}}\")\n")
 #     endif()
 # endforeach()
+
+get_property(_project_enabled_languages GLOBAL PROPERTY ENABLED_LANGUAGES)
+message(STATUS "${PROJECT_NAME} languages used: ${_project_enabled_languages}")
+unset(_project_enabled_languages)
