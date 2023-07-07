@@ -206,92 +206,51 @@ function(z_msys_set_powershell_path)
     endif() # Z_MSYS_POWERSHELL_PATH
 endfunction()
 
-macro(z_msys_select_default_msys_chainload_toolchain toolchainFile)
-    #message(STATUS "Calling ${CMAKE_CURRENT_FUNCTION}(${MSYSTEM})")
-
+macro(z_msys_find_toolchains_dir)
     # Detect MINGW64.cmake to figure MSYS_TOOLCHAINS_ROOT_DIR
     set(Z_MSYS_TOOLCHAINS_ROOT_DIR_CANDIDATE "${CMAKE_CURRENT_LIST_DIR}")
-
     while(NOT DEFINED Z_MSYS_TOOLCHAINS_ROOT_DIR)
-
         if(EXISTS "${Z_MSYS_TOOLCHAINS_ROOT_DIR_CANDIDATE}/MINGW64.cmake")
-
             set(Z_MSYS_TOOLCHAINS_ROOT_DIR "${Z_MSYS_TOOLCHAINS_ROOT_DIR_CANDIDATE}/toolchains" CACHE INTERNAL "msys root directory")
-
         elseif(EXISTS "${Z_MSYS_TOOLCHAINS_ROOT_DIR_CANDIDATE}/toolchains/MINGW64.cmake")
-
             set(Z_MSYS_TOOLCHAINS_ROOT_DIR "${Z_MSYS_TOOLCHAINS_ROOT_DIR_CANDIDATE}/toolchains" CACHE INTERNAL "msys root directory")
-
         elseif(IS_DIRECTORY "${Z_MSYS_TOOLCHAINS_ROOT_DIR_CANDIDATE}")
-
             get_filename_component(Z_MSYS_TOOLCHAINS_ROOT_DIR "${Z_MSYS_TOOLCHAINS_ROOT_DIR_CANDIDATE}" DIRECTORY)
-
             if(Z_MSYS_TOOLCHAINS_ROOT_DIR STREQUAL Z_MSYS_TOOLCHAINS_ROOT_DIR_CANDIDATE)
-
                 z_msys_add_fatal_error("Unable to determine default chainload toolchain files directory!")
-
                 break() # If unchanged, we have reached the root of the drive without finding 'MINGW64.cmake'.
-
             endif()
-
             set(Z_MSYS_TOOLCHAINS_ROOT_DIR_CANDIDATE "${Z_MSYS_TOOLCHAINS_ROOT_DIR}")
-
             unset(Z_MSYS_TOOLCHAINS_ROOT_DIR)
-
         else()
-
             break()
-
         endif()
-
     endwhile()
-
     unset(Z_MSYS_TOOLCHAINS_ROOT_DIR_CANDIDATE)
-
-    # Try avoiding adding more defaults here.
-    # Set MSYS_CHAINLOAD_TOOLCHAIN_FILE explicitly in the triplet.
-    if(DEFINED Z_MSYS_CHAINLOAD_TOOLCHAIN_FILE)
-        set(MSYS_CHAINLOAD_TOOLCHAIN_FILE "${Z_MSYS_CHAINLOAD_TOOLCHAIN_FILE}")
-    elseif(MSYSTEM STREQUAL "MINGW64")
-        set(MSYS_CHAINLOAD_TOOLCHAIN_FILE "${Z_MSYS_TOOLCHAINS_ROOT_DIR}/MINGW64.cmake")
-    elseif(MSYSTEM STREQUAL "MINGW32")
-        set(MSYS_CHAINLOAD_TOOLCHAIN_FILE "${Z_MSYS_TOOLCHAINS_ROOT_DIR}/MINGW32.cmake")
-    elseif(MSYSTEM STREQUAL "CLANG64")
-        set(MSYS_CHAINLOAD_TOOLCHAIN_FILE "${Z_MSYS_TOOLCHAINS_ROOT_DIR}/CLANG64.cmake")
-    elseif(MSYSTEM STREQUAL "CLANG32")
-        set(MSYS_CHAINLOAD_TOOLCHAIN_FILE "${Z_MSYS_TOOLCHAINS_ROOT_DIR}/CLANG32.cmake")
-    elseif(MSYSTEM STREQUAL "CLANGARM64")
-        set(MSYS_CHAINLOAD_TOOLCHAIN_FILE "${Z_MSYS_TOOLCHAINS_ROOT_DIR}/CLANGARM64.cmake")
-    elseif(MSYSTEM STREQUAL "UCRT64")
-        set(MSYS_CHAINLOAD_TOOLCHAIN_FILE "${Z_MSYS_TOOLCHAINS_ROOT_DIR}/UCRT64.cmake")
-    elseif(MSYSTEM STREQUAL "MSYS")
-        set(MSYS_CHAINLOAD_TOOLCHAIN_FILE "${Z_MSYS_TOOLCHAINS_ROOT_DIR}/MSYS.cmake")
-    else()
-        # nope, we actually need this var to vacate to avoid multiple inclusion.
-        # When the var clears on a re-run and lands on a fall-through value, we
-        # end up including this file without the intention of doing so.
-        # Honestly, this is probably best handled on the CLI/invocation...
-
-    #    z_msys_add_fatal_error("Unable to determine default chainload toolchain file!")
-    # else()
-    #     set(MSYS_CHAINLOAD_TOOLCHAIN_FILE "${Z_MSYS_TOOLCHAINS_ROOT_DIR}/MINGW64.cmake")
-    # else()
-    #     set(MSYS_CHAINLOAD_TOOLCHAIN_FILE "${Z_MSYS_TOOLCHAINS_ROOT_DIR}/GENERIC.cmake")
-    endif()
-    set(toolchainFile "${MSYS_CHAINLOAD_TOOLCHAIN_FILE}" CACHE FILEPATH "" FORCE)
-    set(MSYS_CHAINLOAD_TOOLCHAIN_FILE "${MSYS_CHAINLOAD_TOOLCHAIN_FILE}" CACHE FILEPATH "" FORCE)
-
 endmacro()
 
 # Determine whether the toolchain is loaded during a try-compile configuration
 get_property(Z_MSYS_CMAKE_IN_TRY_COMPILE GLOBAL PROPERTY IN_TRY_COMPILE)
 
-# No, don't do this default selection... see notes in the macro above!
-# z_msys_select_default_msys_chainload_toolchain(_MSYS_CHAINLOAD_TOOLCHAIN_FILE)
-# set(_MSYS_CHAINLOAD_TOOLCHAIN_FILE "${_MSYS_CHAINLOAD_TOOLCHAIN_FILE}")
-
+# Tricky default selection business!
+# we actually need this var to vacate to avoid multiple inclusion.
+# When the var clears on a re-run and lands on a fall-through value, we
+# end up including this file without the intention of doing so.
+# Honestly, this is probably best handled on the CLI/invocation...
 if(MSYS_CHAINLOAD_TOOLCHAIN_FILE)
     include("${MSYS_CHAINLOAD_TOOLCHAIN_FILE}")
+    unset(MSYS_CHAINLOAD_TOOLCHAIN_FILE)
+elseif(DEFINED Z_MSYS_CHAINLOAD_TOOLCHAIN_FILE)
+    set(MSYS_CHAINLOAD_TOOLCHAIN_FILE "${Z_MSYS_CHAINLOAD_TOOLCHAIN_FILE}")
+    include("${MSYS_CHAINLOAD_TOOLCHAIN_FILE}")
+    unset(MSYS_CHAINLOAD_TOOLCHAIN_FILE)
+elseif(DEFINED MSYSTEM)
+    z_msys_find_toolchains_dir()
+    set(MSYS_CHAINLOAD_TOOLCHAIN_FILE "${Z_MSYS_TOOLCHAINS_ROOT_DIR}/${MSYSTEM}.cmake")
+    include("${MSYS_CHAINLOAD_TOOLCHAIN_FILE}")
+    unset(MSYS_CHAINLOAD_TOOLCHAIN_FILE)
+else()
+    unset(MSYS_CHAINLOAD_TOOLCHAIN_FILE)
 endif()
 
 if(MSYS_TOOLCHAIN)
