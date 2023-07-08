@@ -13,8 +13,7 @@ set(__MSYSTEM_PATHS_INCLUDED 1)
 
 # message(WARNING "ping")
 
-# set(MINGW64 1)
-#set(UNIX 1) # Set to ``True`` when the target system is UNIX or UNIX-like (e.g. ``APPLE`` and ``CYGWIN``
+#set(UNIX 1) # Don't set 'UNIX' for MinGW!!! ;)
 set(MINGW 1) # ``True`` when using MinGW
 set(WIN32 1) # Set to ``True`` when the target system is Windows, including Win64.
 
@@ -29,164 +28,67 @@ set(CMAKE_SYSTEM_PREFIX_PATH)
 list(APPEND CMAKE_SYSTEM_PREFIX_PATH "${_CMAKE_INSTALL_DIR}")
 
 
-#[===[.md:
-# z_msys_set_powershell_path
+set(MSYS_PATH)
+if(EXISTS "${Z_MSYS_ROOT_DIR}/usr/local/bin")
+    list(APPEND MSYS_PATH "${Z_MSYS_ROOT_DIR}/usr/local/bin")
+endif()
+if(EXISTS "${Z_MSYS_ROOT_DIR}/usr/bin")
+    list(APPEND MSYS_PATH "${Z_MSYS_ROOT_DIR}/usr/bin")
+endif()
+if(EXISTS "${Z_MSYS_ROOT_DIR}/bin")
+    list(APPEND MSYS_PATH "${Z_MSYS_ROOT_DIR}/bin")
+endif()
 
-Gets either the path to powershell or powershell core,
-and places it in the variable Z_MSYS_POWERSHELL_PATH.
-#]===]
-function(z_msys_set_powershell_path)
-    # Attempt to use pwsh if it is present; otherwise use powershell
-    if(NOT DEFINED Z_MSYS_POWERSHELL_PATH)
-        find_program(Z_MSYS_PWSH_PATH pwsh)
-        if(Z_MSYS_PWSH_PATH)
-            set(Z_MSYS_POWERSHELL_PATH "${Z_MSYS_PWSH_PATH}" CACHE INTERNAL "The path to the PowerShell implementation to use.")
-        else()
-            message(DEBUG "msys2: Could not find PowerShell Core; falling back to PowerShell")
-            find_program(Z_MSYS_BUILTIN_POWERSHELL_PATH powershell REQUIRED)
-            if(Z_MSYS_BUILTIN_POWERSHELL_PATH)
-                set(Z_MSYS_POWERSHELL_PATH "${Z_MSYS_BUILTIN_POWERSHELL_PATH}" CACHE INTERNAL "The path to the PowerShell implementation to use.")
-            else()
-                message(WARNING "msys2: Could not find PowerShell; using static string 'powershell.exe'")
-                set(Z_MSYS_POWERSHELL_PATH "powershell.exe" CACHE INTERNAL "The path to the PowerShell implementation to use.")
-            endif()
-        endif()
-    endif() # Z_MSYS_POWERSHELL_PATH
-endfunction()
+set(MSYS_MANPATH)
+if(EXISTS "${Z_MSYS_ROOT_DIR}/usr/local/man")
+    list(APPEND MANPATH "${Z_MSYS_ROOT_DIR}/usr/local/man")
+endif()
+if(EXISTS "${Z_MSYS_ROOT_DIR}/usr/share/man")
+    list(APPEND MANPATH "${Z_MSYS_ROOT_DIR}/usr/share/man")
+endif()
+if(EXISTS "${Z_MSYS_ROOT_DIR}/usr/man")
+    list(APPEND MANPATH "${Z_MSYS_ROOT_DIR}/usr/man")
+endif()
+if(EXISTS "${Z_MSYS_ROOT_DIR}/share/man")
+    list(APPEND MANPATH "${Z_MSYS_ROOT_DIR}/share/man")
+endif()
 
-z_msys_set_powershell_path()
-
-#
-#if MSYS2_PATH_TYPE == "-inherit"
-#
-#    Inherit previous path. Note that this will make all of the
-#    Windows path available in current shell, with possible
-#    interference in project builds.
-#
-#if MSYS2_PATH_TYPE == "-minimal"
-#
-#if MSYS2_PATH_TYPE == "-strict"
-#
-#    Do not inherit any path configuration, and allow for full
-#    customization of external path. This is supposed to be used
-#    in special cases such as debugging without need to change
-#    this file, but not daily usage.
-#
-macro(set_msystem_path_type)
-
-    if(NOT DEFINED MSYS2_PATH_TYPE)
-        set(MSYS2_PATH_TYPE "inherit")
-    endif()
-    set(MSYS2_PATH_TYPE "${MSYS2_PATH_TYPE}" CACHE STRING " " FORCE)
-
-    if(ENV{VERBOSE})
-        message(STATUS "Msys64 path type: '${MSYS2_PATH_TYPE}'")
-    endif()
-
-    if(MSYS2_PATH_TYPE STREQUAL "strict")
-
-        # Do not inherit any path configuration, and allow for full customization
-        # of external path. This is supposed to be used in special cases such as
-        # debugging without need to change this file, but not daily usage.
-        unset(ORIGINAL_PATH)
-
-    elseif(MSYS2_PATH_TYPE STREQUAL "inherit")
-
-        # Inherit previous path. Note that this will make all of the Windows path
-        # available in current shell, with possible interference in project builds.
-        # ORIGINAL_PATH="${ORIGINAL_PATH:-${PATH}}"
-        set(ORIGINAL_PATH "$ENV{Path}")
-
-    elseif(MSYS2_PATH_TYPE STREQUAL "minimal")
-
-        # WIN_ROOT="$(PATH=${MSYS2_PATH} exec cygpath -Wu)"
-        if(DEFINED ENV{WINDIR})
-            set(WIN_ROOT "$ENV{WINDIR}" CACHE FILEPATH "" FORCE)
-        else()
-            if(DEFINED ENV{HOMEDRIVE})
-                set(WIN_ROOT "$ENV{HOMEDRIVE}/Windows" CACHE FILEPATH "" FORCE)
-            else()
-                message(FATAL_ERROR "HELP!")
-            endif()
-        endif()
-        set(ORIGINAL_PATH)
-        list(APPEND ORIGINAL_PATH "${WIN_ROOT}/System32")
-        list(APPEND ORIGINAL_PATH "${WIN_ROOT}")
-        list(APPEND ORIGINAL_PATH "${WIN_ROOT}/System32/Wbem")
-        if(DEFINED Z_MSYS_POWERSHELL_PATH)
-            list(APPEND ORIGINAL_PATH "${Z_MSYS_POWERSHELL_PATH}")
-        else()
-            list(APPEND ORIGINAL_PATH "${WIN_ROOT}/System32/WindowsPowerShell/v1.0/")
-        endif()
-        set(ORIGINAL_PATH "${ORIGINAL_PATH}")
-
-    endif()
-
-    set(ORIGINAL_PATH "${ORIGINAL_PATH}" CACHE STRING "<PATH> environment variable." FORCE)
-
-endmacro()
-
-set_msystem_path_type()
-
-macro(set_msys_system_paths)
-    find_program(BASH "${Z_MSYS_ROOT_DIR}/usr/bin/bash.exe")
-    find_program(ECHO "${Z_MSYS_ROOT_DIR}/usr/bin/echo.exe")
-
-    execute_process(
-        COMMAND ${ECHO} {{,usr/}{,local/}{,share/},opt/*/}{man} mingw{32,64}{{,/local}{,/share},/opt/*}/{man}
-        WORKING_DIRECTORY ${Z_MSYS_ROOT_DIR}
-        OUTPUT_VARIABLE MAN_DIRS
-    )
-    string(REPLACE " " ";\n" MAN_DIRS "${MAN_DIRS}")
-    message(STATUS "MAN_DIRS = \n${MAN_DIRS}")
-
-    execute_process(
-        COMMAND ${ECHO} {{,usr/}{,local/}{,share/},opt/*/}{info} mingw{32,64}{{,/local}{,/share},/opt/*}/{info}
-        WORKING_DIRECTORY ${Z_MINGW64_ROOT_DIR}
-        OUTPUT_VARIABLE INFO_DIRS
-    )
-    string(REPLACE " " "\n" INFO_DIRS "${INFO_DIRS}")
-    message(STATUS "INFO_DIRS = \n${INFO_DIRS}")
-endmacro()
-
-# set_msys_system_paths()
-
-set(MSYS2_PATH)
-list(APPEND MSYS2_PATH "${Z_MSYS_ROOT_DIR}/usr/local/bin")
-list(APPEND MSYS2_PATH "${Z_MSYS_ROOT_DIR}/usr/bin")
-list(APPEND MSYS2_PATH "${Z_MSYS_ROOT_DIR}/bin")
-
-
-set(MSYS2_MANPATH)
-list(APPEND MANPATH "${Z_MSYS_ROOT_DIR}/usr/local/man")
-list(APPEND MANPATH "${Z_MSYS_ROOT_DIR}/usr/share/man")
-list(APPEND MANPATH "${Z_MSYS_ROOT_DIR}/usr/man")
-list(APPEND MANPATH "${Z_MSYS_ROOT_DIR}/share/man")
-
-
-set(MSYS2_INFOPATH)
-list(APPEND INFOPATH "${Z_MSYS_ROOT_DIR}/usr/local/info")
-list(APPEND INFOPATH "${Z_MSYS_ROOT_DIR}/usr/share/info")
-list(APPEND INFOPATH "${Z_MSYS_ROOT_DIR}/usr/info")
-list(APPEND INFOPATH "${Z_MSYS_ROOT_DIR}/share/info")
-
+set(MSYS_INFOPATH)
+if(EXISTS "${Z_MSYS_ROOT_DIR}/usr/local/info")
+    list(APPEND INFOPATH "${Z_MSYS_ROOT_DIR}/usr/local/info")
+endif()
+if(EXISTS "${Z_MSYS_ROOT_DIR}/usr/share/info")
+    list(APPEND INFOPATH "${Z_MSYS_ROOT_DIR}/usr/share/info")
+endif()
+if(EXISTS "${Z_MSYS_ROOT_DIR}/usr/info")
+    list(APPEND INFOPATH "${Z_MSYS_ROOT_DIR}/usr/info")
+endif()
+if(EXISTS "${Z_MSYS_ROOT_DIR}/share/info")
+    list(APPEND INFOPATH "${Z_MSYS_ROOT_DIR}/share/info")
+endif()
 
 if(MSYSTEM STREQUAL "MSYS2")
-else()
+elseif(DEFINED MSYSTEM)
     # set(PATH "${MINGW_MOUNT_POINT}/bin:${MSYS2_PATH}${ORIGINAL_PATH:+:${ORIGINAL_PATH}}")
-    set(MSYS2_PATH "${MINGW_MOUNT_POINT}/bin" "${MSYS2_PATH}" "${ORIGINAL_PATH}")
+    # set(MSYS2_PATH "${MINGW_MOUNT_POINT}/bin" "${MSYS2_PATH}" "${ORIGINAL_PATH}")
+    list(APPEND MSYS_PATH "${MINGW_MOUNT_POINT}/bin")
+    list(APPEND MSYS_PATH "${MSYS_PATH}")
+    if(ORIGINAL_PATH)
+        list(APPEND MSYS_PATH "${ORIGINAL_PATH}")
+    endif()
+
     set(PKG_CONFIG_PATH "${MINGW_MOUNT_POINT}/lib/pkgconfig" "${MINGW_MOUNT_POINT}/share/pkgconfig")
     set(PKG_CONFIG_SYSTEM_INCLUDE_PATH "${MINGW_MOUNT_POINT}/include")
     set(PKG_CONFIG_SYSTEM_LIBRARY_PATH "${MINGW_MOUNT_POINT}/lib")
     set(ACLOCAL_PATH "${MINGW_MOUNT_POINT}/share/aclocal" "/usr/share/aclocal")
-    set(MSYS2_MANPATH "${MINGW_MOUNT_POINT}/local/man" "${MINGW_MOUNT_POINT}/share/man" "${MANPATH}")
-    set(MSYS2_INFOPATH "${MINGW_MOUNT_POINT}/local/info" "${MINGW_MOUNT_POINT}/share/info" "${INFOPATH}")
-    set(MSYS2_DXSDK_DIR "${MINGW_MOUNT_POINT}/${MINGW_CHOST}")
+    set(MSYS_MANPATH "${MINGW_MOUNT_POINT}/local/man" "${MINGW_MOUNT_POINT}/share/man" "${MANPATH}")
+    set(MSYS_INFOPATH "${MINGW_MOUNT_POINT}/local/info" "${MINGW_MOUNT_POINT}/share/info" "${INFOPATH}")
+    set(MSYS_DXSDK_DIR "${MINGW_MOUNT_POINT}/${MINGW_CHOST}")
 endif()
 
-set(MSYS2_PATH "${MSYS2_PATH}" CACHE PATH "<MSYS2_PATH>" FORCE)
-set(MSYS2_MANPATH "${MSYS2_MANPATH}" CACHE PATH "<MSYS2_MANPATH>" FORCE)
-set(MSYS2_INFOPATH "${MSYS2_INFOPATH}" CACHE PATH "<MSYS2_INFOPATH>" FORCE)
+set(MSYS_PATH "${MSYS_PATH}" CACHE PATH "<MSYS_PATH>" FORCE)
+set(MSYS_MANPATH "${MSYS_MANPATH}" CACHE PATH "<MSYS_MANPATH>" FORCE)
+set(MSYS_INFOPATH "${MSYS_INFOPATH}" CACHE PATH "<MSYS_INFOPATH>" FORCE)
 
 # Reminder when adding new locations computed from environment variables
 # please make sure to keep Help/variable/CMAKE_SYSTEM_PREFIX_PATH.rst
@@ -194,7 +96,7 @@ set(MSYS2_INFOPATH "${MSYS2_INFOPATH}" CACHE PATH "<MSYS2_INFOPATH>" FORCE)
 list(APPEND CMAKE_SYSTEM_PREFIX_PATH
 
     # Standard
-    "${MSYS2_PATH}"
+    "${MSYS_PATH}"
 
     # CMake install location
     "${_CMAKE_INSTALL_DIR}"
@@ -303,6 +205,158 @@ list(APPEND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES
     "${Z_${MSYSTEM}_ROOT_DIR}/usr/lib64"
 )
 
+##-- This one is for 'FindMSYS'
+set(MSYS_INSTALL_PATH "${Z_MSYS_ROOT_DIR}" CACHE PATH " This one is for 'FindMSYS'." FORCE)
+
+# Later, this triggers 'include("CMakeFind${CMAKE_EXTRA_GENERATOR}" OPTIONAL)'
+# Which picks up several useful include dirs...
+set(CMAKE_EXTRA_GENERATOR "MSYS Makefiles" CACHE STRING "" FORCE)
+
+# include(FindMSYSTEMCommands)
+
+# find_program(BASH
+#   bash
+#   ${MSYS_INSTALL_PATH}/usr/bin
+#   NO_DEFAULT_PATH
+#   DOC "GNU Bash."
+# )
+# mark_as_advanced(BASH)
+
+# find_program(CP
+#   cp
+#   ${MSYS_INSTALL_PATH}/usr/bin
+#   NO_DEFAULT_PATH
+#   DOC "Copy SOURCE to DEST, or multiple SOURCE(s) to DIRECTORY."
+# )
+# mark_as_advanced(CP)
+
+# find_program(CYGPATH
+#   cygpath
+#   ${MSYS_INSTALL_PATH}/usr/bin
+#   NO_DEFAULT_PATH
+# )
+# mark_as_advanced(CYGPATH)
+
+# find_program(GZIP
+#   gzip
+#   ${MSYS_INSTALL_PATH}/usr/bin
+#   NO_DEFAULT_PATH
+# )
+# mark_as_advanced(GZIP)
+
+# find_program(MV
+#   mv
+#   ${MSYS_INSTALL_PATH}/usr/bin
+#   NO_DEFAULT_PATH
+# )
+# mark_as_advanced(MV)
+
+# find_program(RM
+#   rm
+#   ${MSYS_INSTALL_PATH}/usr/bin
+#   NO_DEFAULT_PATH
+#   DOC "Remove (unlink) the FILE(s)."
+# )
+# mark_as_advanced(RM)
+
+# find_program(TAR
+#   NAMES
+#   tar
+#   gtar
+#   PATHS
+#   ${MSYS_INSTALL_PATH}/usr/bin
+#   NO_DEFAULT_PATH
+# )
+# mark_as_advanced(TAR)
+
+# include(FindPackageHandleStandardArgs)
+# find_package_handle_standard_args(UnixCommands
+#   REQUIRED_VARS BASH
+# )
+# find_package_handle_standard_args(UnixCommands
+#   REQUIRED_VARS CP
+# )
+# find_package_handle_standard_args(UnixCommands
+#   REQUIRED_VARS CYGPATH
+# )
+# find_package_handle_standard_args(UnixCommands
+#   REQUIRED_VARS GZIP
+# )
+# find_package_handle_standard_args(UnixCommands
+#   REQUIRED_VARS MV
+# )
+# find_package_handle_standard_args(UnixCommands
+#   REQUIRED_VARS RM
+# )
+# find_package_handle_standard_args(UnixCommands
+#   REQUIRED_VARS TAR
+# )
+
+# find_program(AS
+#   NAMES
+#   as
+#   PATHS
+#   ${Z_${MSYSTEM}_ROOT_DIR}/bin
+#   NO_DEFAULT_PATH
+# )
+# mark_as_advanced(AS)
+
+# find_program(CC
+#   NAMES
+#   cc
+#   PATHS
+#   ${Z_${MSYSTEM}_ROOT_DIR}/bin
+#   NO_DEFAULT_PATH
+# )
+# mark_as_advanced(CC)
+
+# find_program(CXX
+#   NAMES
+#   c++
+#   PATHS
+#   ${Z_${MSYSTEM}_ROOT_DIR}/bin
+#   NO_DEFAULT_PATH
+# )
+# mark_as_advanced(CC)
+
+# find_program(OBJC
+#   NAMES
+#   cc
+#   PATHS
+#   ${Z_${MSYSTEM}_ROOT_DIR}/bin
+#   NO_DEFAULT_PATH
+# )
+# mark_as_advanced(OBJC)
+
+# find_program(OBJCXX
+#   NAMES
+#   c++
+#   PATHS
+#   ${Z_${MSYSTEM}_ROOT_DIR}/bin
+#   NO_DEFAULT_PATH
+# )
+# mark_as_advanced(OBJCXX)
+
+# find_package_handle_standard_args(UnixCommands
+#   REQUIRED_VARS CC
+# )
+
+# find_package_handle_standard_args(UnixCommands
+#   REQUIRED_VARS CXX
+# )
+
+# find_package_handle_standard_args(UnixCommands
+#   REQUIRED_VARS OBJC
+# )
+
+# find_package_handle_standard_args(UnixCommands
+#   REQUIRED_VARS OBJCXX
+# )
+
+# set(CMAKE_USER_MAKE_RULES_OVERRIDE "CMakeMSYSTEMFindMake" CACHE FILEPATH "" FORCE)
+
+
+
 if(CMAKE_SYSROOT_COMPILE)
     set(_cmake_sysroot_compile "${CMAKE_SYSROOT_COMPILE}")
 else()
@@ -348,8 +402,9 @@ set_property(GLOBAL PROPERTY FIND_LIBRARY_USE_LIBX32_PATHS TRUE)
 ###############################################################################
 
 
-
-
+# set(CMAKE_SYSTEM_NAME "MINGW64_NT" CACHE STRING "The name of the operating system for which CMake is to build." FORCE)
+# set(CMAKE_SYSTEM_VERSION "${CMAKE_HOST_SYSTEM_VERSION}" CACHE STRING "The version of the operating system for which CMake is to build." FORCE)
+# #set(CMAKE_SYSTEM "${CMAKE_SYSTEM_PROCESSOR}-${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_VERSION}" CACHE STRING "Composite name of operating system CMake is compiling for.." FORCE)
 
 # if(ENABLE_${MSYSTEM})
 #     set(${MSYSTEM}_ROOT                    "${Z_${MSYSTEM}_ROOT_DIR}")            # CACHE PATH      "<MINGW64>: Root of the build system." FORCE)
