@@ -100,8 +100,8 @@ if(ENABLE_DLAGENT_FILE)
         # string(APPEND DLAGENT_FILE_FLAGS "${_output_file} ") # %o
         # string(APPEND DLAGENT_FILE_FLAGS "${_user} ") # %u
     endif()
-    set(DLAGENT_FILE_FLAGS "${DLAGENT_FILE_FLAGS}" CACHE STRING "The arguments passed to the standard download agent utility command <FILE>." FORCE)
-    set(DLAGENT_FILE_COMMAND "${DLAGENT_FILE} ${DLAGENT_FILE_FLAGS}" CACHE STRING "The file download agent utility command <FILE>." FORCE)
+    set(DLAGENT_FILE_FLAGS "${DLAGENT_FILE_FLAGS}") # CACHE STRING "The arguments passed to the standard download agent utility command <FILE>." FORCE)
+    set(DLAGENT_FILE_COMMAND "${DLAGENT_FILE} ${DLAGENT_FILE_FLAGS}") # CACHE STRING "The file download agent utility command <FILE>." FORCE)
     set(DLAGENT_FILE "file::${DLAGENT_FILE_COMMAND}" CACHE STRING "The standard command for downloads <FILE>." FORCE)
 endif()
 
@@ -124,8 +124,8 @@ if(ENABLE_DLAGENT_FTP)
         # string(APPEND DLAGENT_FTP_FLAGS "${_output_file} ") # %o
         # string(APPEND DLAGENT_FTP_FLAGS "${_user} ") # %u
     endif()
-    set(DLAGENT_FTP_FLAGS "${DLAGENT_FTP_FLAGS}" CACHE STRING "The arguments passed to the standard download agent utility command <FTP>." FORCE)
-    set(DLAGENT_FTP_COMMAND "${DLAGENT_FTP} ${DLAGENT_FTP_FLAGS}" CACHE STRING "The file download agent utility command <FTP>." FORCE)
+    set(DLAGENT_FTP_FLAGS "${DLAGENT_FTP_FLAGS}") # CACHE STRING "The arguments passed to the standard download agent utility command <FTP>." FORCE)
+    set(DLAGENT_FTP_COMMAND "${DLAGENT_FTP} ${DLAGENT_FTP_FLAGS}") # CACHE STRING "The file download agent utility command <FTP>." FORCE)
     set(DLAGENT_FTP "ftp::${DLAGENT_FTP_COMMAND}" CACHE STRING "The standard command for downloads <FTP>." FORCE)
 endif()
 
@@ -146,8 +146,8 @@ if(ENABLE_DLAGENT_HTTP)
         # string(APPEND DLAGENT_HTTP_FLAGS "${_output_file} ") # %o
         # string(APPEND DLAGENT_HTTP_FLAGS "${_user} ") # %u
     endif()
-    set(DLAGENT_HTTP_FLAGS "${DLAGENT_HTTP_FLAGS}" CACHE STRING "The arguments passed to the standard download agent utility command <HTTP>." FORCE)
-    set(DLAGENT_HTTP_COMMAND "${DLAGENT_HTTP} ${DLAGENT_HTTP_FLAGS}" CACHE STRING "The file download agent utility command <HTTP>." FORCE)
+    set(DLAGENT_HTTP_FLAGS "${DLAGENT_HTTP_FLAGS}") # CACHE STRING "The arguments passed to the standard download agent utility command <HTTP>." FORCE)
+    set(DLAGENT_HTTP_COMMAND "${DLAGENT_HTTP} ${DLAGENT_HTTP_FLAGS}") # CACHE STRING "The file download agent utility command <HTTP>." FORCE)
     set(DLAGENT_HTTP "http::${DLAGENT_HTTP_COMMAND}" CACHE STRING "The standard command for downloads <HTTP>." FORCE)
 endif()
 
@@ -168,8 +168,8 @@ if(ENABLE_DLAGENT_HTTPS)
         # string(APPEND DLAGENT_HTTPS_FLAGS "${_output_file} ") # %o
         # string(APPEND DLAGENT_HTTPS_FLAGS "${_user} ") # %u
     endif()
-    set(DLAGENT_HTTPS_FLAGS "${DLAGENT_HTTPS_FLAGS}" CACHE STRING "The arguments passed to the standard download agent utility command <HTTPS>." FORCE)
-    set(DLAGENT_HTTPS_COMMAND "${DLAGENT_HTTPS} ${DLAGENT_HTTPS_FLAGS}" CACHE STRING "The file download agent utility command <HTTPS>." FORCE)
+    set(DLAGENT_HTTPS_FLAGS "${DLAGENT_HTTPS_FLAGS}") # CACHE STRING "The arguments passed to the standard download agent utility command <HTTPS>." FORCE)
+    set(DLAGENT_HTTPS_COMMAND "${DLAGENT_HTTPS} ${DLAGENT_HTTPS_FLAGS}") # CACHE STRING "The file download agent utility command <HTTPS>." FORCE)
     set(DLAGENT_HTTPS "https::${DLAGENT_HTTPS_COMMAND}" CACHE STRING "The standard command for downloads <HTTPS>." FORCE)
 endif()
 
@@ -189,8 +189,8 @@ if(ENABLE_DLAGENT_RSYNC)
         # string(APPEND DLAGENT_RSYNC_FLAGS "${_user} ") # %u
         # string(APPEND DLAGENT_RSYNC_FLAGS "${_output_file} ") # %o
     endif()
-    set(DLAGENT_RSYNC_FLAGS "${DLAGENT_RSYNC_FLAGS}" CACHE STRING "The arguments passed to the standard download agent utility command <RSYNC>." FORCE)
-    set(DLAGENT_RSYNC_COMMAND "${DLAGENT_RSYNC} ${DLAGENT_RSYNC_FLAGS}" CACHE STRING "The file download agent utility command <RSYNC>." FORCE)
+    set(DLAGENT_RSYNC_FLAGS "${DLAGENT_RSYNC_FLAGS}") # CACHE STRING "The arguments passed to the standard download agent utility command <RSYNC>." FORCE)
+    set(DLAGENT_RSYNC_COMMAND "${DLAGENT_RSYNC} ${DLAGENT_RSYNC_FLAGS}") # CACHE STRING "The file download agent utility command <RSYNC>." FORCE)
     set(DLAGENT_RSYNC "rsync::${DLAGENT_RSYNC_COMMAND}" CACHE STRING "The standard command for downloads <RSYNC>." FORCE)
 endif()
 
@@ -208,8 +208,8 @@ if(ENABLE_DLAGENT_SCP)
         # string(APPEND DLAGENT_SCP_FLAGS "${_user} ") # %u
         # string(APPEND DLAGENT_SCP_FLAGS "${_output_file} ") # %o
     endif()
-    set(DLAGENT_SCP_FLAGS "${DLAGENT_SCP_FLAGS}" CACHE STRING "The arguments passed to the standard download agent utility command <SCP>." FORCE)
-    set(DLAGENT_SCP_COMMAND "${DLAGENT_SCP} ${DLAGENT_SCP_FLAGS}" CACHE STRING "The file download agent utility command <SCP>." FORCE)
+    set(DLAGENT_SCP_FLAGS "${DLAGENT_SCP_FLAGS}") # CACHE STRING "The arguments passed to the standard download agent utility command <SCP>." FORCE)
+    set(DLAGENT_SCP_COMMAND "${DLAGENT_SCP} ${DLAGENT_SCP_FLAGS}") # CACHE STRING "The file download agent utility command <SCP>." FORCE)
     set(DLAGENT_SCP "scp::${DLAGENT_SCP_COMMAND}" CACHE STRING "The standard command for downloads <SCP>." FORCE)
 endif()
 
@@ -223,7 +223,7 @@ list(APPEND DLAGENTS
     "${DLAGENT_RSYNC}"
     "${DLAGENT_SCP}"
 )
-set(DLAGENTS "${DLAGENTS}" CACHE STRING "The standard agents for downloads. Format: 'protocol::agent [flags]'." FORCE)
+set(DLAGENTS "${DLAGENTS}") # CACHE STRING "The standard agents for downloads. Format: 'protocol::agent [flags]'." FORCE)
 
 #-- The package required by makepkg to download VCS sources.
 # We can use vcpkg to fetch these for linking our packages with.
