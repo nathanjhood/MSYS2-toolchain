@@ -232,6 +232,108 @@ endif()
 
 option(OPTION_USE_DSX_BINUTILS "(Inactive) Use the BinUtils programs found under '<rootDir>/<packagePrefix>' for DirectX compatibility instead of standard BinUtils." OFF)
 mark_as_advanced(OPTION_USE_DSX_BINUTILS)
+
+
+#########################################################################
+# GLOBAL PACKAGE OPTIONS
+#   These are default values for the options=() settings
+#########################################################################
+#
+# Makepkg defaults: OPTIONS=(!strip docs libtool staticlibs emptydirs !zipman !purge !debug !lto)
+#  A negated option will do the opposite of the comments below.
+#
+#-- strip:      Strip symbols from binaries/libraries
+#-- docs:       Save doc directories specified by DOC_DIRS
+#-- libtool:    Leave libtool (.la) files in packages
+#-- staticlibs: Leave static library (.a) files in packages
+#-- emptydirs:  Leave empty directories in packages
+#-- zipman:     Compress manual (man and info) pages in MAN_DIRS with gzip
+#-- purge:      Remove files specified by PURGE_TARGETS
+#-- debug:      Add debugging flags as specified in DEBUG_* variables
+#-- lto:        Add compile flags for building with link time optimization
+
+
+# Options handler...
+
+option(OPTION_DOCS "Save doc directories specified by <DOC_DIRS>." ON)
+option(OPTION_LIBTOOL "Leave libtool (.la) files in packages." OFF)
+option(OPTION_STATIC_LIBS "Leave static library (.a) files in packages." ON)
+option(OPTION_EMPTY_DIRS "Leave empty directories in packages." ON)
+option(OPTION_ZIPMAN "Compress manual (man and info) pages in <MAN_DIRS> with gzip." ON)
+option(OPTION_PURGE "Remove files specified by <PURGE_TARGETS>." ON)
+option(OPTION_DEBUG "Add debugging flags as specified in <DEBUG_*> variables." OFF)
+option(OPTION_LTO "Add compile flags for building with link time optimization." OFF)
+
+mark_as_advanced(OPTION_DOCS)
+mark_as_advanced(OPTION_LIBTOOL)
+mark_as_advanced(OPTION_STATIC_LIBS)
+mark_as_advanced(OPTION_EMPTY_DIRS)
+mark_as_advanced(OPTION_ZIPMAN)
+mark_as_advanced(OPTION_PURGE)
+mark_as_advanced(OPTION_DEBUG)
+mark_as_advanced(OPTION_LTO)
+# option(OPTION_STRIP "Strip symbols from binaries/libraries." ON)
+# if(OPTION_STRIP)
+#     set(OPTION_STRIP_FLAG strip CACHE STRING "A negated option will do the opposite of the comments below." FORCE)
+#     #-- Options to be used when stripping binaries. See `man strip' for details.
+#     if(NOT DEFINED STRIP_BINARIES)
+#         set(STRIP_BINARIES --strip-all CACHE STRING "Options to be used when stripping binaries. See `man strip' for details." FORCE)
+#     endif()
+# else()
+#     set(OPTION_STRIP_FLAG !strip CACHE STRING "A negated option will do the opposite of the comments below." FORCE)
+# endif()
+
+# # And so forth, or nah...?
+
+if(OPTION_DOCS)
+    set(OPTION_DOCS_FLAG docs) # CACHE STRING "A negated option will do the opposite of the comments below." FORCE)
+else()
+    set(OPTION_DOCS_FLAG !docs) # CACHE STRING "A negated option will do the opposite of the comments below." FORCE)
+endif()
+
+if(OPTION_LIBTOOL)
+    set(OPTION_LIBTOOL_FLAG libtool) # CACHE STRING "A negated option will do the opposite of the comments below." FORCE)
+else()
+    set(OPTION_LIBTOOL_FLAG !libtool) # CACHE STRING "A negated option will do the opposite of the comments below." FORCE)
+endif()
+
+if(OPTION_STATIC_LIBS)
+    set(OPTION_STATIC_LIBS_FLAG staticlibs) # CACHE STRING "A negated option will do the opposite of the comments below." FORCE)
+else()
+    set(OPTION_STATIC_LIBS_FLAG !staticlibs) # CACHE STRING "A negated option will do the opposite of the comments below." FORCE)
+endif()
+
+if(OPTION_EMPTY_DIRS)
+    set(OPTION_EMPTY_DIRS_FLAG emptydirs) # CACHE STRING "A negated option will do the opposite of the comments below." FORCE)
+else()
+    set(OPTION_EMPTY_DIRS_FLAG !emptydirs) # CACHE STRING "A negated option will do the opposite of the comments below." FORCE)
+endif()
+
+if(OPTION_ZIPMAN)
+    set(OPTION_ZIPMAN_FLAG zipman) # CACHE STRING "A negated option will do the opposite of the comments below." FORCE)
+else()
+    set(OPTION_ZIPMAN_FLAG !zipman) # CACHE STRING "A negated option will do the opposite of the comments below." FORCE)
+endif()
+
+if(OPTION_PURGE)
+    set(OPTION_PURGE_FLAG purge) # CACHE STRING "A negated option will do the opposite of the comments below." FORCE)
+else()
+    set(OPTION_PURGE_FLAG !purge) # CACHE STRING "A negated option will do the opposite of the comments below." FORCE)
+endif()
+
+if(OPTION_DEBUG)
+    set(OPTION_DEBUG_FLAG debug) # CACHE STRING "A negated option will do the opposite of the comments below." FORCE)
+else()
+    set(OPTION_DEBUG_FLAG !debug) # CACHE STRING "A negated option will do the opposite of the comments below." FORCE)
+endif()
+
+if(OPTION_LTO)
+    set(OPTION_LTO_FLAG lto) # CACHE STRING "A negated option will do the opposite of the comments below." FORCE)
+else()
+    set(OPTION_LTO_FLAG !lto) # CACHE STRING "A negated option will do the opposite of the comments below." FORCE)
+endif()
+
+
 #########################################################################
 # BUILD ENVIRONMENT
 #########################################################################
