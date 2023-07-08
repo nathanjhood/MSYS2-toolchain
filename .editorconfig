@@ -17,6 +17,10 @@ insert_final_newline = true
 # License header
 file_header_template = Copyright (c) StoneyDSP.\nLicensed under the MIT License.
 
+[{CMakeLists.txt,*.cmake}]
+indent_size = 4
+indent_style = space
+
 # Xml project files
 [*.{csproj,vbproj,vcxproj,vcxproj.filters,vcxitems,vcxitems.filters,proj,nativeproj,locproj,njsproj}]
 indent_size = 2
