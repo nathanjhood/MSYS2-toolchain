@@ -86,12 +86,6 @@ mark_as_advanced(MSYS_VERBOSE)
 
 message(STATUS "Msys2 Build system loading...")
 
-# if(NOT DEFINED PORTS)
-#     message(WARNING "Why is this happening...")
-#     set(PORTS "${CMAKE_CURRENT_LIST_DIR}/../ports.cmake" CACHE FILEPATH "" FORCE)
-#     include("${PORTS}")
-# endif()
-
 if(MSYS_VERBOSE)
     set(CMAKE_VERBOSE_MAKEFILE ON CACHE BOOL "Enable verbose output from Makefile builds." FORCE)
 endif()
@@ -103,10 +97,6 @@ option(MSYS_PREFER_SYSTEM_LIBS "Appends the msys paths to CMAKE_PREFIX_PATH, CMA
 # if(MSYS_PREFER_SYSTEM_LIBS)
 #     message(WARNING "MSYS_PREFER_SYSTEM_LIBS has been deprecated. Use empty overlay ports instead.")
 # endif()
-
-option(OPTION_STRIP_BINARIES "Appends '--strip-all' to <CMAKE_EXE_LINKER_FLAGS>" ON)
-option(OPTION_STRIP_SHARED "Appends '--strip-unneeded' to <CMAKE_SHARED_LINKER_FLAGS>" ON)
-option(OPTION_STRIP_STATIC "Appends '--strip-debug' to <CMAKE_STATIC_LINKER_FLAGS>" ON)
 
 # CMake helper utilities
 
@@ -164,27 +154,6 @@ macro(z_msys_function_arguments OUT_VAR)
         # remove leading `;`
         string(SUBSTRING "${${OUT_VAR}}" "1" "-1" "${OUT_VAR}")
     endif()
-endmacro()
-
-macro(set_paths)
-    find_program(BASH "${Z_MSYS_ROOT_DIR}/usr/bin/bash.exe")
-    find_program(ECHO "${Z_MSYS_ROOT_DIR}/usr/bin/echo.exe")
-
-    execute_process(
-        COMMAND ${ECHO} {{,usr/}{,local/}{,share/},opt/*/}{man} mingw{32,64}{{,/local}{,/share},/opt/*}/{man}
-        WORKING_DIRECTORY ${Z_MSYS_ROOT_DIR}
-        OUTPUT_VARIABLE MAN_DIRS
-    )
-    string(REPLACE " " ";\n" MAN_DIRS "${MAN_DIRS}")
-    message(STATUS "MAN_DIRS = \n${MAN_DIRS}")
-
-    execute_process(
-        COMMAND ${ECHO} {{,usr/}{,local/}{,share/},opt/*/}{info} mingw{32,64}{{,/local}{,/share},/opt/*}/{info}
-        WORKING_DIRECTORY ${Z_MINGW64_ROOT_DIR}
-        OUTPUT_VARIABLE INFO_DIRS
-    )
-    string(REPLACE " " "\n" INFO_DIRS "${INFO_DIRS}")
-    message(STATUS "INFO_DIRS = \n${INFO_DIRS}")
 endmacro()
 
 #[===[.md:
@@ -463,8 +432,8 @@ if(DEFINED MSYS_INSTALLED_DIR)
     set(Z_MSYS_INSTALLED_DIR_INITIAL_VALUE "${MSYS_INSTALLED_DIR}")
 elseif(DEFINED _MSYS_INSTALLED_DIR)
     set(Z_MSYS_INSTALLED_DIR_INITIAL_VALUE "${_MSYS_INSTALLED_DIR}")
-elseif(MSYS_MANIFEST_MODE)
-    set(Z_MSYS_INSTALLED_DIR_INITIAL_VALUE "${CMAKE_BINARY_DIR}/msys_installed")
+# elseif(MSYS_MANIFEST_MODE)
+#     set(Z_MSYS_INSTALLED_DIR_INITIAL_VALUE "${CMAKE_BINARY_DIR}/msys_installed")
 else()
     set(Z_MSYS_INSTALLED_DIR_INITIAL_VALUE "${Z_MSYS_ROOT_DIR}/usr/local")
 endif()
@@ -503,10 +472,10 @@ endif()
 if(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE STREQUAL "ONLY" OR
     CMAKE_FIND_ROOT_PATH_MODE_LIBRARY STREQUAL "ONLY" OR
     CMAKE_FIND_ROOT_PATH_MODE_PACKAGE STREQUAL "ONLY")
-    list(APPEND CMAKE_PREFIX_PATH "/")
+    list(APPEND CMAKE_PREFIX_PATH "${Z_MSYS_ROOT_DIR}/")
 endif()
 
-set(MSYS_CMAKE_FIND_ROOT_PATH "${CMAKE_FIND_ROOT_PATH}")
+set(MSYS_CMAKE_FIND_ROOT_PATH "${CMAKE_FIND_ROOT_PATH}" CACHE PATH "" STRING)
 
 # CMAKE_EXECUTABLE_SUFFIX is not yet defined
 if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
@@ -741,215 +710,6 @@ if(X_MSYS_APPLOCAL_DEPS_INSTALL)
         endif()
     endfunction()
 endif()
-
-
-#########################################################################
-# ARCHITECTURE, COMPILE FLAGS
-#########################################################################
-
-#[===[.md
-
-# compiler_and_linker_flags
-
--march (or -mcpu) builds exclusively for an architecture
--mtune optimizes for an architecture, but builds for whole processor family
-
-Could look into some other variations on this...
-
-    # add_compile_definitions("__USE_MINGW_ANSI_STDIO=1")
-    # add_compile_definitions("$<$<COMPILE_LANGUAGE:C>:_FORTIFY_SOURCE=2>")
-    # add_compile_options(-march=nocona -msahf -mtune=generic -pipe "$<$<COMPILE_LANGUAGE:C>:-Wp,-D_FORTIFY_SOURCE=2>" "$<$<COMPILE_LANGUAGE:C>:-fstack-protector-strong>")
-
-    #-- Release build flags
-    # set(RELEASE_CFLAGS          "-O2")                                 #CACHE STRING    "Default <CFLAGS_RELEASE> flags." FORCE)
-    # set(RELEASE_CXXFLAGS        "-O2")                                 #CACHE STRING    "Default <CXXFLAGS_RELEASE> flags." FORCE)
-
-    # #-- Debug build flags
-    # set(DEBUG_CFLAGS            "-ggdb -Og")                           #CACHE STRING    "Default <CFLAGS_DEBUG> flags." FORCE)
-    # set(DEBUG_CXXFLAGS          "-ggdb -Og")                           #CACHE STRING    "Default <CXXFLAGS_DEBUG> flags." FORCE)
-
-
-#]===]
-
-# if(MSYSTEM STREQUAL MINGW64)
-
-# elseif(MSYSTEM STREQUAL MINGW32)
-
-# elseif(MSYSTEM STREQUAL CLANG64)
-
-# elseif(MSYSTEM STREQUAL CLANG32)
-
-# elseif(MSYSTEM STREQUAL CLANGARM64)
-
-# elseif(MSYSTEM STREQUAL UCRT64)
-
-# elseif(MSYSTEM STREQUAL "MSYS")
-
-#     set(BUILDSYSTEM             "MSYS2 MSYS"                          CACHE STRING    "Name of the build system." FORCE)
-#     set(BUILDSYSTEM_ROOT        "${MSYS_ROOT}"                        CACHE PATH      "Root of the build system." FORCE)
-
-#     set(TOOLCHAIN_VARIANT       gcc                                   CACHE STRING    "Identification string of the compiler toolchain variant." FORCE)
-#     set(CRT_LIBRARY             cygwin                                CACHE STRING    "Identification string of the C Runtime variant. Can be 'ucrt' (modern, 64-bit only) or 'msvcrt' (compatibilty for legacy builds)." FORCE)
-#     set(CXX_STD_LIBRARY         libstdc++                             CACHE STRING    "Identification string of the C++ Standard Library variant. Can be 'libstdc++' (GNU implementation) or 'libc++' (LLVM implementation)." FORCE)
-
-#     set(CARCH                   "x86_64"                              CACHE STRING    "" FORCE)
-#     set(CHOST                   "x86_64-pc-msys"                      CACHE STRING    "" FORCE)
-
-#     set(CC                      "gcc"                                 CACHE FILEPATH  "The full path to the compiler for <CC>." FORCE)
-#     set(CXX                     "g++"                                 CACHE FILEPATH  "The full path to the compiler for <CXX>." FORCE)
-#     set(LD                      "ld"                                  CACHE FILEPATH "The full path to the linker <LD>." FORCE)
-
-#     set(CFLAGS                  "-march=nocona -msahf -mtune=generic -O2 -pipe" CACHE STRING "Default <CFLAGS> flags for all build types." FORCE)
-#     set(CXXFLAGS                "-march=nocona -msahf -mtune=generic -O2 -pipe" CACHE STRING "" CACHE STRING "Default <CXXFLAGS> flags for all build types." FORCE)
-#     set(CPPFLAGS                ""                                    CACHE STRING    "Default <CPPFLAGS> flags for all build types." FORCE)
-#     set(LDFLAGS                 "-pipe"                               CACHE STRING    "Default <LD> flags for linker for all build types." FORCE)
-
-#     #-- Debugging flags
-#     set(DEBUG_CFLAGS "-ggdb -Og" CACHE STRING "" FORCE)
-#     set(DEBUG_CXXFLAGS "-ggdb -Og" CACHE STRING "" FORCE)
-
-#     execute_process(
-#         COMMAND "${MSYS_ROOT}/usr/bin/uname -m"
-#         WORKING_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}"
-#         OUTPUT_VARIABLE DETECTED_CARCH
-#         # COMMAND_ERROR_IS_FATAL ANY
-#     )
-
-#     set(PREFIX                  "/msys64"                     CACHE PATH      "")
-#     set(CARCH                   "${DETECTED_CARCH}"           CACHE STRING    "")
-#     set(CHOST                   "${DETECTED_CARCH}-pc-msys"   CACHE STRING    "")
-
-#     set(MSYSTEM_PREFIX          "/usr"                        CACHE PATH      "")
-#     set(MSYSTEM_CARCH           "${DETECTED_CARCH}"           CACHE STRING    "")
-#     set(MSYSTEM_CHOST           "${DETECTED_CARCH}-pc-msys"   CACHE STRING    "")
-
-# else()
-#     message(FATAL_ERROR "Unsupported MSYSTEM: ${MSYSTEM}")
-#     # cmake_policy(POP)
-#     return()
-# endif()
-
-# # set(ENABLE_MSYS2 ON)
-# option(ENABLE_MSYS2 "Enable the msys2 MinGW x64 environment." ON)
-# if(ENABLE_MSYS2)
-#     set(MSYS2_TITLE               "MinGW x64"                         CACHE STRING    "MinGW x64: Name of the build system." FORCE)
-#     set(MSYS2_TOOLCHAIN_VARIANT   gcc                                 CACHE STRING    "MinGW x64: Identification string of the compiler toolchain variant." FORCE)
-#     set(MSYS2_CRT_LIBRARY         cygwin                              CACHE STRING    "MinGW x64: Identification string of the C Runtime variant. Can be 'ucrt' (modern, 64-bit only) or 'msvcrt' (compatibilty for legacy builds)." FORCE)
-#     set(MSYS2_CXX_STD_LIBRARY     libstdc++                           CACHE STRING    "MinGW x64: Identification string of the C++ Standard Library variant. Can be 'libstdc++' (GNU implementation) or 'libc++' (LLVM implementation)." FORCE)
-#     set(MSYS2_PREFIX              "/mingw64"                          CACHE STRING    "MinGW x64: Sub-system prefix." FORCE)
-#     set(MSYS2_ARCH                "x86_64"                            CACHE STRING    "MinGW x64: Sub-system architecture." FORCE)
-#     set(MSYS2_PLAT                "x86_64-pc-msys"                    CACHE STRING    "MinGW x64: Sub-system name string." FORCE)
-#     set(MSYS2_PACKAGE_PREFIX      "mingw-w64-x86_64"                  CACHE STRING    "MinGW x64: Sub-system package prefix." FORCE)
-#     #set(MSYS2_ROOT                "${MSYS_ROOT}${MINGW64_PREFIX}"     CACHE PATH      "MinGW x64: Root of the build system." FORCE)
-# endif()
-# option(ENABLE_MINGW64 "Enable the msys2 MinGW x64 environment." OFF)
-# if(ENABLE_MINGW64)
-#     set(MINGW64_TITLE               "MinGW x64"                         CACHE STRING    "MinGW x64: Name of the build system." FORCE)
-#     set(MINGW64_TOOLCHAIN_VARIANT   gcc                                 CACHE STRING    "MinGW x64: Identification string of the compiler toolchain variant." FORCE)
-#     set(MINGW64_CRT_LIBRARY         msvcrt                              CACHE STRING    "MinGW x64: Identification string of the C Runtime variant. Can be 'ucrt' (modern, 64-bit only) or 'msvcrt' (compatibilty for legacy builds)." FORCE)
-#     set(MINGW64_CXX_STD_LIBRARY     libstdc++                           CACHE STRING    "MinGW x64: Identification string of the C++ Standard Library variant. Can be 'libstdc++' (GNU implementation) or 'libc++' (LLVM implementation)." FORCE)
-#     set(MINGW64_PREFIX              "/mingw64"                          CACHE STRING    "MinGW x64: Sub-system prefix." FORCE)
-#     set(MINGW64_ARCH                "x86_64"                            CACHE STRING    "MinGW x64: Sub-system architecture." FORCE)
-#     set(MINGW64_PLAT                "x86_64-w64-mingw32"                CACHE STRING    "MinGW x64: Sub-system name string." FORCE)
-#     set(MINGW64_PACKAGE_PREFIX      "mingw-w64-x86_64"                  CACHE STRING    "MinGW x64: Sub-system package prefix." FORCE)
-#     set(MINGW64_ROOT                "${Z_MSYS_ROOT_DIR}${MINGW64_PREFIX}"     CACHE PATH      "MinGW x64: Root of the build system." FORCE)
-# endif()
-# # set(ENABLE_MINGW32 ON)
-# option(ENABLE_MINGW32 "Enable the msys2 MinGW x64 environment." OFF)
-# if(ENABLE_MINGW32)
-#     set(MINGW32_TITLE               "MinGW x32"                         CACHE STRING    "MinGW x32: Name of the build system." FORCE)
-#     set(MINGW32_TOOLCHAIN_VARIANT   gcc                                 CACHE STRING    "MinGW x32: Identification string of the compiler toolchain variant." FORCE)
-#     set(MINGW32_CRT_LIBRARY         msvcrt                              CACHE STRING    "MinGW x32: Identification string of the C Runtime variant. Can be 'ucrt' (modern, 64-bit only) or 'msvcrt' (compatibilty for legacy builds)." FORCE)
-#     set(MINGW32_CXX_STD_LIBRARY     libstdc++                           CACHE STRING    "MinGW x32: Identification string of the C++ Standard Library variant. Can be 'libstdc++' (GNU implementation) or 'libc++' (LLVM implementation)." FORCE)
-#     set(MINGW32_PREFIX              "/mingw32"                          CACHE STRING    "MinGW x32: Sub-system prefix." FORCE)
-#     set(MINGW32_ARCH                "i686"                              CACHE STRING    "MinGW x32: Sub-system architecture." FORCE)
-#     set(MINGW32_PLAT                "i686-w64-mingw32"                  CACHE STRING    "MinGW x32: Sub-system name string." FORCE)
-#     set(MINGW32_PACKAGE_PREFIX      "mingw-w64-i686"                    CACHE STRING    "MinGW x32: Sub-system package prefix." FORCE)
-#     set(MINGW32_ROOT                "${Z_MSYS_ROOT_DIR}${MINGW32_PREFIX}"     CACHE PATH      "MinGW x32: Root of the build system." FORCE)
-# endif()
-# # set(ENABLE_CLANG64 ON)
-# option(ENABLE_CLANG64 "Enable the msys2 Clang x64 environment." OFF)
-# if(ENABLE_CLANG64)
-#     set(CLANG64_TITLE               "MinGW Clang x64"                   CACHE STRING    "Clang x64: Name of the build system." FORCE)
-#     set(CLANG64_TOOLCHAIN_VARIANT   llvm                                CACHE STRING    "Clang x64: Identification string of the compiler toolchain variant." FORCE)
-#     set(CLANG64_CRT_LIBRARY         ucrt                                CACHE STRING    "Clang x64: Identification string of the C Runtime variant. Can be 'ucrt' (modern, 64-bit only) or 'msvcrt' (compatibilty for legacy builds)." FORCE)
-#     set(CLANG64_CXX_STD_LIBRARY     libc++                              CACHE STRING    "Clang x64: Identification string of the C++ Standard Library variant. Can be 'libstdc++' (GNU implementation) or 'libc++' (LLVM implementation)." FORCE)
-#     set(CLANG64_PREFIX              "/clang64"                          CACHE STRING    "Clang x64: Sub-system prefix." FORCE)
-#     set(CLANG64_ARCH                "x86_64"                            CACHE STRING    "Clang x64: Sub-system architecture." FORCE)
-#     set(CLANG64_PLAT                "x86_64-w64-mingw32"                CACHE STRING    "Clang x64: Sub-system name string." FORCE)
-#     set(CLANG64_PACKAGE_PREFIX      "mingw-w64-clang-x86_64"            CACHE STRING    "Clang x64: Sub-system package prefix." FORCE)
-#     set(CLANG64_ROOT                "${Z_MSYS_ROOT_DIR}${CLANG64_PREFIX}"     CACHE PATH      "Clang x64: Root of the build system." FORCE)
-# endif()
-# # set(ENABLE_CLANG32 ON)
-# option(ENABLE_CLANG32 "Enable the msys2 Clang x32 environment." OFF)
-# if(ENABLE_CLANG32)
-#     set(CLANG32_TITLE               "MinGW Clang x32"                   CACHE STRING    "Clang x32: Name of the build system." FORCE)
-#     set(CLANG32_TOOLCHAIN_VARIANT   llvm                                CACHE STRING    "Clang x32: Identification string of the compiler toolchain variant." FORCE)
-#     set(CLANG32_CRT_LIBRARY         ucrt                                CACHE STRING    "Clang x32: Identification string of the C Runtime variant. Can be 'ucrt' (modern, 64-bit only) or 'msvcrt' (compatibilty for legacy builds)." FORCE)
-#     set(CLANG32_CXX_STD_LIBRARY     libc++                              CACHE STRING    "Clang x32: Identification string of the C++ Standard Library variant. Can be 'libstdc++' (GNU implementation) or 'libc++' (LLVM implementation)." FORCE)
-#     set(CLANG32_PREFIX              "/clang32"                          CACHE STRING    "Clang x32: Sub-system prefix." FORCE)
-#     set(CLANG32_ARCH                "i686"                              CACHE STRING    "Clang x32: Sub-system architecture." FORCE)
-#     set(CLANG32_PLAT                "i686-w64-mingw32"                  CACHE STRING    "Clang x32: Sub-system name string." FORCE)
-#     set(CLANG32_PACKAGE_PREFIX      "mingw-w64-clang-i686"              CACHE STRING    "Clang x32: Sub-system package prefix." FORCE)
-#     set(CLANG32_ROOT                "${Z_MSYS_ROOT_DIR}${CLANG32_PREFIX}"     CACHE PATH      "Clang x32: Root of the build system." FORCE)
-# endif()
-# # set(ENABLE_CLANGARM64 ON)
-# option(ENABLE_CLANGARM64 "Enable the MinGW Clang ARM64 environment." OFF)
-# if(ENABLE_CLANGARM64)
-#     set(CLANGARM64_TITLE             "MinGW Clang ARM64"                 CACHE STRING    "Clang arm64: Name of the build system." FORCE)
-#     set(CLANGARM64_TOOLCHAIN_VARIANT llvm                                CACHE STRING    "Clang arm64: Identification string of the compiler toolchain variant." FORCE)
-#     set(CLANGARM64_CRT_LIBRARY       ucrt                                CACHE STRING    "Clang arm64: Identification string of the C Runtime variant. Can be 'ucrt' (modern, 64-bit only) or 'msvcrt' (compatibilty for legacy builds)." FORCE)
-#     set(CLANGARM64_CXX_STD_LIBRARY   libc++                              CACHE STRING    "Clang arm64: Identification string of the C++ Standard Library variant. Can be 'libstdc++' (GNU implementation) or 'libc++' (LLVM implementation)." FORCE)
-#     set(CLANGARM64_PREFIX            "/clangarm64"                       CACHE STRING    "Clang arm64: Sub-system prefix." FORCE)
-#     set(CLANGARM64_ARCH              "aarch64"                           CACHE STRING    "Clang arm64: Sub-system architecture." FORCE)
-#     set(CLANGARM64_PLAT              "aarch64-w64-mingw32"               CACHE STRING    "Clang arm64: Sub-system name string." FORCE)
-#     set(CLANGARM64_PACKAGE_PREFIX    "mingw-w64-clang-aarch64"           CACHE STRING    "Clang arm64: Sub-system package prefix." FORCE)
-#     set(CLANGARM64_ROOT              "${Z_MSYS_ROOT_DIR}${CLANGARM64_PREFIX}"  CACHE PATH      "Clang arm64: Root of the build system." FORCE)
-# endif()
-# # set(ENABLE_UCRT64 ON)
-# option(ENABLE_UCRT64 "Enable the MinGW UCRT x64 environment." OFF)
-# if(ENABLE_UCRT64)
-#     set(UCRT64_TITLE             "MinGW UCRT x64"                       CACHE STRING    "ucrt x64: Name of the build system." FORCE)
-#     set(UCRT64_TOOLCHAIN_VARIANT gcc                                   CACHE STRING    "ucrt x64: Identification string of the compiler toolchain variant." FORCE)
-#     set(UCRT64_CRT_LIBRARY       ucrt                                   CACHE STRING    "ucrt x64: Identification string of the C Runtime variant. Can be 'ucrt' (modern, 64-bit only) or 'msvcrt' (compatibilty for legacy builds)." FORCE)
-#     set(UCRT64_CXX_STD_LIBRARY   libstdc++                                 CACHE STRING    "ucrt x64: Identification string of the C++ Standard Library variant. Can be 'libstdc++' (GNU implementation) or 'libc++' (LLVM implementation)." FORCE)
-#     set(UCRT64_PREFIX            "/ucrt64"                          CACHE STRING    "ucrt x64: Sub-system prefix." FORCE)
-#     set(UCRT64_ARCH              "x86_64"                              CACHE STRING    "ucrt x64: Sub-system architecture." FORCE)
-#     set(UCRT64_PLAT              "x86_64-w64-mingw32"                  CACHE STRING    "ucrt x64: Sub-system name string." FORCE)
-#     set(UCRT64_PACKAGE_PREFIX    "mingw-w64-ucrt-x86_64"              CACHE STRING    "ucrt x64: Sub-system package prefix." FORCE)
-#     set(UCRT64_ROOT              "${Z_MSYS_ROOT_DIR}${UCRT64_PREFIX}"         CACHE PATH      "ucrt x64: Root of the build system." FORCE)
-# endif()
-
-
-# if ((MSYSTEM STREQUAL MINGW64) OR
-#     (MSYSTEM STREQUAL MINGW32) OR
-#     (MSYSTEM STREQUAL CLANG64) OR
-#     (MSYSTEM STREQUAL CLANG32) OR
-#     (MSYSTEM STREQUAL CLANGARM64) OR
-#     (MSYSTEM STREQUAL UCRT64)
-#     )
-
-#     # # Set toolchain package suffixes (i.e., '{mingw-w64-clang-x86_64}-avr-toolchain')...
-#     # set(TOOLCHAIN_NATIVE_ARM_NONE_EABI          "${MINGW_PACKAGE_PREFIX}-arm-none-eabi-toolchain" CACHE STRING "" FORCE)
-#     # set(TOOLCHAIN_NATIVE_AVR                    "${MINGW_PACKAGE_PREFIX}-avr-toolchain" CACHE STRING "" FORCE)
-#     # set(TOOLCHAIN_NATIVE_RISCV64_UNKOWN_ELF     "${MINGW_PACKAGE_PREFIX}-riscv64-unknown-elf-toolchain" CACHE STRING "The 'unknown elf' toolchain! Careful with this elf, it is not known." FORCE)
-#     # set(TOOLCHAIN_NATIVE                        "${MINGW_PACKAGE_PREFIX}-toolchain" CACHE STRING "" FORCE)
-
-#     # # DirectX compatibility environment variable
-#     # set(DXSDK_DIR "${Z_MSYS_ROOT_DIR}/${MINGW_PREFIX}/${MINGW_CHOST}" CACHE PATH "DirectX compatibility environment variable." FORCE)
-
-#     #-- Make Flags: change this for DistCC/SMP systems
-#     # This var is attempting to pass '-j' to the underlying buildtool - this flag controls the number of processors to build with.
-#     # A trypical logical default (as expressed here) is 'number of logical cores' + 1.
-#     # The var is currently attempting to call 'nproc' from the PATH - CMake has its own vars that are probably better suited for this...
-#     if(NOT DEFINED MAKEFLAGS)
-#         set(MAKEFLAGS "-j$(($(nproc)+1))" CACHE STRING "Make Flags: change this for DistCC/SMP systems")
-#     endif()
-
-#     # set(ACLOCAL_PATH          "${Z_MSYS_ROOT_DIR}/${MINGW_PREFIX}/share/aclocal" "${Z_MSYS_ROOT_DIR}/usr/share" CACHE PATH "By default, aclocal searches for .m4 files in the following directories." FORCE)
-#     # set(PKG_CONFIG_PATH       "${Z_MSYS_ROOT_DIR}/${MINGW_PREFIX}/lib/pkgconfig" "${Z_MSYS_ROOT_DIR}/${MINGW_PREFIX}/share/pkgconfig" CACHE PATH "A colon-separated (on Windows, semicolon-separated) list of directories to search for .pc files. The default directory will always be searched after searching the path." FORCE)
-
-# endif()
 
 #########################################################################
 # BUILD ENVIRONMENT
