@@ -50,6 +50,7 @@ Note that will need to have run the standard init commands for Msys development;
 
 Corresponding to the chosen MSYSTEM in order to have the toolchain installed and available to for use by this project. See the MSYS2 (and Packages page) docs for more.
 
+
 # <b>Description</b>
 
 This independent project is an ongoing investigation into the potential of cross-pollinating <a href="">MSYS2</a>'s multi-verse of build envinronments and toolchains, with the source code package registry access and management of <a href="">Microsoft's vcpkg</a>, thanks to the power and flexibility of <a href="">CMake</a>.
@@ -243,6 +244,8 @@ To better understand this last paragraph, please see the files under your CMake 
 </br>
 
 # <b>Todo</b>
+
+Currently migrating all useful/meaningful utilities inheritable from vcpkg's buildsystem implementation over to a CMake Platform named 'MSYSTEM'. This file gets looked up when the chosen toolchain (or chainload) file sets 'CMAKE_SYSTEM_NAME' to 'MSYSTEM', and itself sets the majority of the Msys64-like environment, including the DLAgents, VSClients, Build/LTO flag options, path options, and the lookup preferences between native Windows, installed Msys64, and selected MSYSTEM binaries. Currently all toolchains are working for full build support, but some of the more advanced features like swapping BinUtils binaries for their DX-compatible counterparts, awareness of Pacman mirror lists and commands, and such forth, are still in progress.
 
 Potential for another refactor to boil the entire set of toolchain file source code into one file (with the "MSYSTEM" switch internally swapping out less and less changes), however I don't personally prefer this approach because it requires a CMake run in order to fetch these compiled variables, compared to just having them defined at-a-glance in the toolchain file, and tells us (less than) nothing about the variables that we *haven't* selected for that run.
 
