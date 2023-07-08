@@ -41,10 +41,8 @@ while(NOT DEFINED Z_UCRT64_ROOT_DIR)
 endwhile()
 unset(Z_UCRT64_ROOT_DIR_CANDIDATE)
 
-foreach(lang C CXX ASM Fortran OBJC OBJCXX)
-    ##-- CMakeCXXInformation: include(Compiler/<CMAKE_CXX_COMPILER_ID>-<LANG>)
-    #set(CMAKE_${lang}_COMPILER_ID "UCRT64 13.1.0" CACHE STRING "" FORCE) # - actually, let's fallback to Kitware's GNU
-    ##-- 'TARGET' tells the compiler in question what it's '--target:' is.
+foreach(lang C CXX) # ASM Fortran OBJC OBJCXX
+
     set(CMAKE_${lang}_COMPILER_TARGET "x86_64-w64-mingw32" CACHE STRING "The target for cross-compiling, if supported. '--target=x86_64-w64-mingw32'")
 
 endforeach()
@@ -57,23 +55,23 @@ mark_as_advanced(CMAKE_C_COMPILER)
 find_program(CMAKE_CXX_COMPILER "${Z_UCRT64_ROOT_DIR}/bin/x86_64-w64-mingw32-g++.exe")
 mark_as_advanced(CMAKE_CXX_COMPILER)
 
-#"C:\msys64\ucrt64\bin\x86_64-w64-mingw32-gfortran.exe"
-find_program(CMAKE_Fortran_COMPILER "${Z_UCRT64_ROOT_DIR}/bin/x86_64-w64-mingw32-gfortran.exe")
-mark_as_advanced(CMAKE_Fortran_COMPILER)
+# #"C:\msys64\ucrt64\bin\x86_64-w64-mingw32-gfortran.exe"
+# find_program(CMAKE_Fortran_COMPILER "${Z_UCRT64_ROOT_DIR}/bin/x86_64-w64-mingw32-gfortran.exe")
+# mark_as_advanced(CMAKE_Fortran_COMPILER)
 
-#"C:\msys64\ucrt64\bin\x86_64-w64-mingw32-gfortran.exe"
-find_program(CMAKE_OBJCXX_COMPILER "${Z_UCRT64_ROOT_DIR}/bin/x86_64-w64-mingw32-gcc.exe")
-mark_as_advanced(CMAKE_OBJC_COMPILER)
+# #"C:\msys64\ucrt64\bin\x86_64-w64-mingw32-gfortran.exe"
+# find_program(CMAKE_OBJCXX_COMPILER "${Z_UCRT64_ROOT_DIR}/bin/x86_64-w64-mingw32-gcc.exe")
+# mark_as_advanced(CMAKE_OBJC_COMPILER)
 
-#"C:\msys64\ucrt64\bin\x86_64-w64-mingw32-gfortran.exe"
-find_program(CMAKE_OBJCXX_COMPILER "${Z_UCRT64_ROOT_DIR}/bin/x86_64-w64-mingw32-g++.exe")
-mark_as_advanced(CMAKE_OBJCXX_COMPILER)
+# #"C:\msys64\ucrt64\bin\x86_64-w64-mingw32-gfortran.exe"
+# find_program(CMAKE_OBJCXX_COMPILER "${Z_UCRT64_ROOT_DIR}/bin/x86_64-w64-mingw32-g++.exe")
+# mark_as_advanced(CMAKE_OBJCXX_COMPILER)
 
-#"C:\msys64\ucrt64\bin\x86_64-w64-mingw32-gfortran.exe"
-if(NOT DEFINED CMAKE_ASM_COMPILER)
-    find_program(CMAKE_ASM_COMPILER "${Z_UCRT64_ROOT_DIR}/bin/as.exe")
-    mark_as_advanced(CMAKE_ASM_COMPILER)
-endif()
+# #"C:\msys64\ucrt64\bin\x86_64-w64-mingw32-gfortran.exe"
+# if(NOT DEFINED CMAKE_ASM_COMPILER)
+#     find_program(CMAKE_ASM_COMPILER "${Z_UCRT64_ROOT_DIR}/bin/as.exe")
+#     mark_as_advanced(CMAKE_ASM_COMPILER)
+# endif()
 
 #"C:\msys64\ucrt64\bin\x86_64-w64-mingw32-gfortran.exe"
 find_program(CMAKE_RC_COMPILER "${Z_UCRT64_ROOT_DIR}/bin/windres.exe")
@@ -85,46 +83,10 @@ if(NOT CMAKE_RC_COMPILER)
     endif()
 endif()
 
-
-get_property(_CMAKE_IN_TRY_COMPILE GLOBAL PROPERTY IN_TRY_COMPILE )
+get_property(_CMAKE_IN_TRY_COMPILE GLOBAL PROPERTY IN_TRY_COMPILE)
 
 # The following flags come from 'PORT' files (i.e., build config files for packages)
 if(NOT _CMAKE_IN_TRY_COMPILE)
-
-    set(LDFLAGS)
-    string(APPEND LDFLAGS " -pipe")
-    set(LDFLAGS "${LDFLAGS}")
-    set(ENV{LDFLAGS} "${LDFLAGS}")
-
-    # set(CFLAGS)
-    # string(APPEND CFLAGS " -march=nocona")
-    # string(APPEND CFLAGS " -msahf")
-    # string(APPEND CFLAGS " -mtune=generic")
-    # string(APPEND CFLAGS " -pipe")
-    # string(APPEND CFLAGS " -Wp,-D_FORTIFY_SOURCE=2")
-    # string(APPEND CFLAGS " -fstack-protector-strong")
-    # set(CFLAGS "${CFLAGS}")
-    # set(ENV{CFLAGS} "${CFLAGS}")
-
-    # set(CXXFLAGS)
-    # string(APPEND CXXFLAGS " -march=nocona")
-    # string(APPEND CXXFLAGS " -msahf")
-    # string(APPEND CXXFLAGS " -mtune=generic")
-    # string(APPEND CXXFLAGS " -pipe")
-    # set(CXXFLAGS "${CXXFLAGS}")
-    # set(ENV{CXXFLAGS} "${CXXFLAGS}")
-
-    # Initial configuration flags.
-    foreach(lang C CXX ASM Fortran OBJC OBJCXX)
-        string(APPEND CMAKE_${lang}_FLAGS_INIT " -march=nocona")
-        string(APPEND CMAKE_${lang}_FLAGS_INIT " -msahf")
-        string(APPEND CMAKE_${lang}_FLAGS_INIT " -mtune=generic")
-        string(APPEND CMAKE_${lang}_FLAGS_INIT " -pipe")
-        if(${lang} STREQUAL C)
-            string(APPEND CMAKE_${lang}_FLAGS_INIT " -Wp,-D_FORTIFY_SOURCE=2")
-            string(APPEND CMAKE_${lang}_FLAGS_INIT " -fstack-protector-strong")
-        endif()
-    endforeach()
 
     string(APPEND CMAKE_C_FLAGS_INIT                        " ${MSYS_C_FLAGS} ")
     string(APPEND CMAKE_C_FLAGS_DEBUG_INIT                  " ${MSYS_C_FLAGS_DEBUG} ")
@@ -138,29 +100,29 @@ if(NOT _CMAKE_IN_TRY_COMPILE)
     string(APPEND CMAKE_CXX_FLAGS_MINSIZEREL_INIT           " ${MSYS_CXX_FLAGS_MINSIZEREL} ")
     string(APPEND CMAKE_CXX_FLAGS_RELWITHDEBINFO_INIT       " ${MSYS_CXX_FLAGS_RELWITHDEBINFO} ")
 
-    string(APPEND CMAKE_ASM_FLAGS_INIT                      " ${MSYS_ASM_FLAGS} ")
-    string(APPEND CMAKE_ASM_FLAGS_DEBUG_INIT                " ${MSYS_ASM_FLAGS_DEBUG} ")
-    string(APPEND CMAKE_ASM_FLAGS_RELEASE_INIT              " ${MSYS_ASM_FLAGS_RELEASE} ")
-    string(APPEND CMAKE_ASM_FLAGS_MINSIZEREL_INIT           " ${MSYS_ASM_FLAGS_MINSIZEREL} ")
-    string(APPEND CMAKE_ASM_FLAGS_RELWITHDEBINFO_INIT       " ${MSYS_ASM_FLAGS_RELWITHDEBINFO} ")
+    # string(APPEND CMAKE_ASM_FLAGS_INIT                      " ${MSYS_ASM_FLAGS} ")
+    # string(APPEND CMAKE_ASM_FLAGS_DEBUG_INIT                " ${MSYS_ASM_FLAGS_DEBUG} ")
+    # string(APPEND CMAKE_ASM_FLAGS_RELEASE_INIT              " ${MSYS_ASM_FLAGS_RELEASE} ")
+    # string(APPEND CMAKE_ASM_FLAGS_MINSIZEREL_INIT           " ${MSYS_ASM_FLAGS_MINSIZEREL} ")
+    # string(APPEND CMAKE_ASM_FLAGS_RELWITHDEBINFO_INIT       " ${MSYS_ASM_FLAGS_RELWITHDEBINFO} ")
 
-    string(APPEND CMAKE_Fortran_FLAGS_INIT                  " ${MSYS_Fortran_FLAGS} ")
-    string(APPEND CMAKE_Fortran_FLAGS_DEBUG_INIT            " ${MSYS_Fortran_FLAGS_DEBUG} ")
-    string(APPEND CMAKE_Fortran_FLAGS_RELEASE_INIT          " ${MSYS_Fortran_FLAGS_RELEASE} ")
-    string(APPEND CMAKE_Fortran_FLAGS_MINSIZEREL_INIT       " ${MSYS_Fortran_FLAGS_MINSIZEREL} ")
-    string(APPEND CMAKE_Fortran_FLAGS_RELWITHDEBINFO_INIT   " ${MSYS_Fortran_FLAGS_RELWITHDEBINFO} ")
+    # string(APPEND CMAKE_Fortran_FLAGS_INIT                  " ${MSYS_Fortran_FLAGS} ")
+    # string(APPEND CMAKE_Fortran_FLAGS_DEBUG_INIT            " ${MSYS_Fortran_FLAGS_DEBUG} ")
+    # string(APPEND CMAKE_Fortran_FLAGS_RELEASE_INIT          " ${MSYS_Fortran_FLAGS_RELEASE} ")
+    # string(APPEND CMAKE_Fortran_FLAGS_MINSIZEREL_INIT       " ${MSYS_Fortran_FLAGS_MINSIZEREL} ")
+    # string(APPEND CMAKE_Fortran_FLAGS_RELWITHDEBINFO_INIT   " ${MSYS_Fortran_FLAGS_RELWITHDEBINFO} ")
 
-    string(APPEND CMAKE_OBJC_FLAGS_INIT                     " ${MSYS_OBJC_FLAGS} ")
-    string(APPEND CMAKE_OBJC_FLAGS_DEBUG_INIT               " ${MSYS_OBJC_FLAGS_DEBUG} ")
-    string(APPEND CMAKE_OBJC_FLAGS_RELEASE_INIT             " ${MSYS_OBJC_FLAGS_RELEASE} ")
-    string(APPEND CMAKE_OBJC_FLAGS_MINSIZEREL_INIT          " ${MSYS_OBJC_FLAGS_MINSIZEREL} ")
-    string(APPEND CMAKE_OBJC_FLAGS_RELWITHDEBINFO_INIT      " ${MSYS_OBJC_FLAGS_RELWITHDEBINFO} ")
+    # string(APPEND CMAKE_OBJC_FLAGS_INIT                     " ${MSYS_OBJC_FLAGS} ")
+    # string(APPEND CMAKE_OBJC_FLAGS_DEBUG_INIT               " ${MSYS_OBJC_FLAGS_DEBUG} ")
+    # string(APPEND CMAKE_OBJC_FLAGS_RELEASE_INIT             " ${MSYS_OBJC_FLAGS_RELEASE} ")
+    # string(APPEND CMAKE_OBJC_FLAGS_MINSIZEREL_INIT          " ${MSYS_OBJC_FLAGS_MINSIZEREL} ")
+    # string(APPEND CMAKE_OBJC_FLAGS_RELWITHDEBINFO_INIT      " ${MSYS_OBJC_FLAGS_RELWITHDEBINFO} ")
 
-    string(APPEND CMAKE_OBJCXX_FLAGS_INIT                   " ${MSYS_OBJCXX_FLAGS} ")
-    string(APPEND CMAKE_OBJCXX_FLAGS_DEBUG_INIT             " ${MSYS_OBJCXX_FLAGS_DEBUG} ")
-    string(APPEND CMAKE_OBJCXX_FLAGS_RELEASE_INIT           " ${MSYS_OBJCXX_FLAGS_RELEASE} ")
-    string(APPEND CMAKE_OBJCXX_FLAGS_MINSIZEREL_INIT        " ${MSYS_OBJCXX_FLAGS_MINSIZEREL} ")
-    string(APPEND CMAKE_OBJCXX_FLAGS_RELWITHDEBINFO_INIT    " ${MSYS_OBJCXX_FLAGS_RELWITHDEBINFO} ")
+    # string(APPEND CMAKE_OBJCXX_FLAGS_INIT                   " ${MSYS_OBJCXX_FLAGS} ")
+    # string(APPEND CMAKE_OBJCXX_FLAGS_DEBUG_INIT             " ${MSYS_OBJCXX_FLAGS_DEBUG} ")
+    # string(APPEND CMAKE_OBJCXX_FLAGS_RELEASE_INIT           " ${MSYS_OBJCXX_FLAGS_RELEASE} ")
+    # string(APPEND CMAKE_OBJCXX_FLAGS_MINSIZEREL_INIT        " ${MSYS_OBJCXX_FLAGS_MINSIZEREL} ")
+    # string(APPEND CMAKE_OBJCXX_FLAGS_RELWITHDEBINFO_INIT    " ${MSYS_OBJCXX_FLAGS_RELWITHDEBINFO} ")
 
     string(APPEND CMAKE_RC_FLAGS_INIT                       " ${MSYS_RC_FLAGS} ")
     string(APPEND CMAKE_RC_FLAGS_DEBUG_INIT                 " ${MSYS_RC_FLAGS_DEBUG} ")
@@ -215,3 +177,63 @@ endif()
 message(STATUS "MinGW UCRT x64 toolchain loaded")
 
 endif()
+
+    # set(LDFLAGS)
+    # string(APPEND LDFLAGS " -pipe")
+    # set(LDFLAGS "${LDFLAGS}")
+    # set(ENV{LDFLAGS} "${LDFLAGS}")
+
+    # set(CFLAGS)
+    # string(APPEND CFLAGS " -march=nocona")
+    # string(APPEND CFLAGS " -msahf")
+    # string(APPEND CFLAGS " -mtune=generic")
+    # string(APPEND CFLAGS " -pipe")
+    # string(APPEND CFLAGS " -Wp,-D_FORTIFY_SOURCE=2")
+    # string(APPEND CFLAGS " -fstack-protector-strong")
+    # set(CFLAGS "${CFLAGS}")
+    # set(ENV{CFLAGS} "${CFLAGS}")
+
+    # set(CXXFLAGS)
+    # string(APPEND CXXFLAGS " -march=nocona")
+    # string(APPEND CXXFLAGS " -msahf")
+    # string(APPEND CXXFLAGS " -mtune=generic")
+    # string(APPEND CXXFLAGS " -pipe")
+    # set(CXXFLAGS "${CXXFLAGS}")
+    # set(ENV{CXXFLAGS} "${CXXFLAGS}")
+
+    # Initial configuration flags.
+    # foreach(lang C) # ASM Fortran OBJC OBJCXX
+    #     string(APPEND CMAKE_${lang}_FLAGS_INIT " -march=nocona")
+    #     string(APPEND CMAKE_${lang}_FLAGS_INIT " -msahf")
+    #     string(APPEND CMAKE_${lang}_FLAGS_INIT " -mtune=generic")
+    #     string(APPEND CMAKE_${lang}_FLAGS_INIT " -pipe")
+    #     if(${lang} STREQUAL C)
+    #         string(APPEND CMAKE_${lang}_FLAGS_INIT " -Wp,-D_FORTIFY_SOURCE=2")
+    #         string(APPEND CMAKE_${lang}_FLAGS_INIT " -fstack-protector-strong")
+    #     endif()
+    # endforeach()
+
+# set(CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES "C:/msys64/ucrt64/lib/gcc/x86_64-w64-mingw32/13.1.0/include;C:/msys64/ucrt64/include;C:/msys64/ucrt64/lib/gcc/x86_64-w64-mingw32/13.1.0/include-fixed")
+# set(CMAKE_C_IMPLICIT_LINK_LIBRARIES "mingw32;gcc;moldname;mingwex;kernel32;pthread;advapi32;shell32;user32;kernel32;mingw32;gcc;moldname;mingwex;kernel32")
+# set(CMAKE_C_IMPLICIT_LINK_DIRECTORIES "C:/msys64/ucrt64/lib/gcc/x86_64-w64-mingw32/13.1.0;C:/msys64/ucrt64/lib/gcc;C:/msys64/ucrt64/x86_64-w64-mingw32/lib;C:/msys64/ucrt64/lib")
+# set(CMAKE_C_IMPLICIT_LINK_FRAMEWORK_DIRECTORIES "")
+
+# set(CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES "C:/msys64/ucrt64/include/c++/13.1.0;C:/msys64/ucrt64/include/c++/13.1.0/x86_64-w64-mingw32;C:/msys64/ucrt64/include/c++/13.1.0/backward;C:/msys64/ucrt64/lib/gcc/x86_64-w64-mingw32/13.1.0/include;C:/msys64/ucrt64/include;C:/msys64/ucrt64/lib/gcc/x86_64-w64-mingw32/13.1.0/include-fixed")
+# set(CMAKE_CXX_IMPLICIT_LINK_LIBRARIES "stdc++;mingw32;gcc_s;gcc;moldname;mingwex;kernel32;pthread;advapi32;shell32;user32;kernel32;mingw32;gcc_s;gcc;moldname;mingwex;kernel32")
+# set(CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES "C:/msys64/ucrt64/lib/gcc/x86_64-w64-mingw32/13.1.0;C:/msys64/ucrt64/lib/gcc;C:/msys64/ucrt64/x86_64-w64-mingw32/lib;C:/msys64/ucrt64/lib")
+# set(CMAKE_CXX_IMPLICIT_LINK_FRAMEWORK_DIRECTORIES "")
+
+# set(CMAKE_Fortran_IMPLICIT_INCLUDE_DIRECTORIES "C:/msys64/ucrt64/lib/gcc/x86_64-w64-mingw32/13.1.0/include;C:/msys64/ucrt64/include;C:/msys64/ucrt64/lib/gcc/x86_64-w64-mingw32/13.1.0/include-fixed")
+# set(CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES "gfortran;mingw32;gcc_s;gcc;moldname;mingwex;kernel32;quadmath;m;mingw32;gcc_s;gcc;moldname;mingwex;kernel32;pthread;advapi32;shell32;user32;kernel32;mingw32;gcc_s;gcc;moldname;mingwex;kernel32")
+# set(CMAKE_Fortran_IMPLICIT_LINK_DIRECTORIES "C:/msys64/ucrt64/lib/gcc/x86_64-w64-mingw32/13.1.0;C:/msys64/ucrt64/lib/gcc;C:/msys64/ucrt64/x86_64-w64-mingw32/lib;C:/msys64/ucrt64/lib")
+# set(CMAKE_Fortran_IMPLICIT_LINK_FRAMEWORK_DIRECTORIES "")
+
+# set(CMAKE_OBJC_IMPLICIT_INCLUDE_DIRECTORIES "C:/msys64/ucrt64/lib/gcc/x86_64-w64-mingw32/13.1.0/include;C:/msys64/ucrt64/include;C:/msys64/ucrt64/lib/gcc/x86_64-w64-mingw32/13.1.0/include-fixed")
+# set(CMAKE_OBJC_IMPLICIT_LINK_LIBRARIES "mingw32;gcc;moldname;mingwex;kernel32;pthread;advapi32;shell32;user32;kernel32;mingw32;gcc;moldname;mingwex;kernel32")
+# set(CMAKE_OBJC_IMPLICIT_LINK_DIRECTORIES "C:/msys64/ucrt64/lib/gcc/x86_64-w64-mingw32/13.1.0;C:/msys64/ucrt64/lib/gcc;C:/msys64/ucrt64/x86_64-w64-mingw32/lib;C:/msys64/ucrt64/lib")
+# set(CMAKE_OBJC_IMPLICIT_LINK_FRAMEWORK_DIRECTORIES "")
+
+# set(CMAKE_OBJCXX_IMPLICIT_INCLUDE_DIRECTORIES "C:/msys64/ucrt64/include/c++/13.1.0;C:/msys64/ucrt64/include/c++/13.1.0/x86_64-w64-mingw32;C:/msys64/ucrt64/include/c++/13.1.0/backward;C:/msys64/ucrt64/lib/gcc/x86_64-w64-mingw32/13.1.0/include;C:/msys64/ucrt64/include;C:/msys64/ucrt64/lib/gcc/x86_64-w64-mingw32/13.1.0/include-fixed")
+# set(CMAKE_OBJCXX_IMPLICIT_LINK_LIBRARIES "mingw32;gcc;moldname;mingwex;kernel32;pthread;advapi32;shell32;user32;kernel32;mingw32;gcc;moldname;mingwex;kernel32")
+# set(CMAKE_OBJCXX_IMPLICIT_LINK_DIRECTORIES "C:/msys64/ucrt64/lib/gcc/x86_64-w64-mingw32/13.1.0;C:/msys64/ucrt64/lib/gcc;C:/msys64/ucrt64/x86_64-w64-mingw32/lib;C:/msys64/ucrt64/lib")
+# set(CMAKE_OBJCXX_IMPLICIT_LINK_FRAMEWORK_DIRECTORIES "")
