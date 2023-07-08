@@ -174,9 +174,9 @@ Do not inherit any paths from the Windows environment, and allow for full custom
 </br>
 Note that in all cases above, the paths in question are *appended* to the list of paths for the selected MSYSTEM. There exists some experimental behaviour for *prepending* any inherited Windows paths, which means that they would be scanned first when CMake is searching for tools during its' run (in cases where the tool(s) in question haven't (yet) been specified in the current process).
 
-## <b>USE_DSX_COMPATIBLE_BINUTILS</b> (coming soon!)
+## <b>OPTION_USE_DSX_BINUTILS</b> (coming soon!)
 
-Also very much worth noting is that several sub-systems offer "DSX-compatibility" GNU Bin Utils, located various differently-named directories here and there. It seems at least a fun idea to leverage a ```cmake_option(USE_DSX_COMPATIBLE_BINUTILS)``` or similar, which likewise would favour these directories during file lookups for the tools in question. Again, this is actually all *pretty much* made possible, in fact quite easy, in CMake's design. Currently there are so very many features, permutations, varieties across the entire project that this concept hasn't yet been explored further, but stay tuned.
+Also very much worth noting is that several sub-systems offer "DSX-compatibility" GNU Bin Utils, located various differently-named directories here and there. It seems at least a fun idea to leverage a ```cmake_option(OPTION_USE_DSX_BINUTILS)``` or similar, which likewise would favour these directories during file lookups for the tools in question. Again, this is actually all *pretty much* made possible, in fact quite easy, in CMake's design. Currently there are so very many features, permutations, varieties across the entire project that this concept hasn't yet been explored further, but stay tuned.
 
 ## <b>OPTION_STRIP_BINARIES</b>
 
