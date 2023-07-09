@@ -456,9 +456,9 @@ function(z_msys_add_msys_to_cmake_path list suffix)
     endif()
     set("${list}" "${${list}}" PARENT_SCOPE)
 endfunction()
-z_msys_add_msys_to_cmake_path(CMAKE_PREFIX_PATH "")
-z_msys_add_msys_to_cmake_path(CMAKE_LIBRARY_PATH "/lib/manual-link")
-z_msys_add_msys_to_cmake_path(CMAKE_FIND_ROOT_PATH "")
+# z_msys_add_msys_to_cmake_path(CMAKE_PREFIX_PATH "")
+# z_msys_add_msys_to_cmake_path(CMAKE_LIBRARY_PATH "/lib/manual-link")
+# z_msys_add_msys_to_cmake_path(CMAKE_FIND_ROOT_PATH "")
 
 if(NOT MSYS_PREFER_SYSTEM_LIBS)
     set(CMAKE_FIND_FRAMEWORK "LAST") # we assume that frameworks are usually system-wide libs, not msys-built
