@@ -17,78 +17,6 @@ set(__MSYSTEM_PATHS_INCLUDED 1)
 set(MINGW 1) # ``True`` when using MinGW
 set(WIN32 1) # Set to ``True`` when the target system is Windows, including Win64.
 
-# also add the install directory of the running cmake to the search directories
-# CMAKE_ROOT is CMAKE_INSTALL_PREFIX/share/cmake, so we need to go two levels up
-get_filename_component(_CMAKE_INSTALL_DIR "${CMAKE_ROOT}" PATH)
-get_filename_component(_CMAKE_INSTALL_DIR "${_CMAKE_INSTALL_DIR}" PATH)
-
-# List common installation prefixes.  These will be used for all
-# search types.
-set(CMAKE_SYSTEM_PREFIX_PATH)
-list(APPEND CMAKE_SYSTEM_PREFIX_PATH "${_CMAKE_INSTALL_DIR}")
-
-
-set(MSYS_PATH)
-if(EXISTS "${Z_MSYS_ROOT_DIR}/usr/local/bin")
-    list(APPEND MSYS_PATH "${Z_MSYS_ROOT_DIR}/usr/local/bin")
-endif()
-if(EXISTS "${Z_MSYS_ROOT_DIR}/usr/bin")
-    list(APPEND MSYS_PATH "${Z_MSYS_ROOT_DIR}/usr/bin")
-endif()
-if(EXISTS "${Z_MSYS_ROOT_DIR}/bin")
-    list(APPEND MSYS_PATH "${Z_MSYS_ROOT_DIR}/bin")
-endif()
-
-set(MSYS_MANPATH)
-if(EXISTS "${Z_MSYS_ROOT_DIR}/usr/local/man")
-    list(APPEND MANPATH "${Z_MSYS_ROOT_DIR}/usr/local/man")
-endif()
-if(EXISTS "${Z_MSYS_ROOT_DIR}/usr/share/man")
-    list(APPEND MANPATH "${Z_MSYS_ROOT_DIR}/usr/share/man")
-endif()
-if(EXISTS "${Z_MSYS_ROOT_DIR}/usr/man")
-    list(APPEND MANPATH "${Z_MSYS_ROOT_DIR}/usr/man")
-endif()
-if(EXISTS "${Z_MSYS_ROOT_DIR}/share/man")
-    list(APPEND MANPATH "${Z_MSYS_ROOT_DIR}/share/man")
-endif()
-
-set(MSYS_INFOPATH)
-if(EXISTS "${Z_MSYS_ROOT_DIR}/usr/local/info")
-    list(APPEND INFOPATH "${Z_MSYS_ROOT_DIR}/usr/local/info")
-endif()
-if(EXISTS "${Z_MSYS_ROOT_DIR}/usr/share/info")
-    list(APPEND INFOPATH "${Z_MSYS_ROOT_DIR}/usr/share/info")
-endif()
-if(EXISTS "${Z_MSYS_ROOT_DIR}/usr/info")
-    list(APPEND INFOPATH "${Z_MSYS_ROOT_DIR}/usr/info")
-endif()
-if(EXISTS "${Z_MSYS_ROOT_DIR}/share/info")
-    list(APPEND INFOPATH "${Z_MSYS_ROOT_DIR}/share/info")
-endif()
-
-if(MSYSTEM STREQUAL "MSYS2")
-elseif(DEFINED MSYSTEM)
-    # set(PATH "${MINGW_MOUNT_POINT}/bin:${MSYS2_PATH}${ORIGINAL_PATH:+:${ORIGINAL_PATH}}")
-    # set(MSYS2_PATH "${MINGW_MOUNT_POINT}/bin" "${MSYS2_PATH}" "${ORIGINAL_PATH}")
-    list(APPEND MSYS_PATH "${MINGW_MOUNT_POINT}/bin")
-    list(APPEND MSYS_PATH "${MSYS_PATH}")
-    if(ORIGINAL_PATH)
-        list(APPEND MSYS_PATH "${ORIGINAL_PATH}")
-    endif()
-
-    set(PKG_CONFIG_PATH "${MINGW_MOUNT_POINT}/lib/pkgconfig" "${MINGW_MOUNT_POINT}/share/pkgconfig")
-    set(PKG_CONFIG_SYSTEM_INCLUDE_PATH "${MINGW_MOUNT_POINT}/include")
-    set(PKG_CONFIG_SYSTEM_LIBRARY_PATH "${MINGW_MOUNT_POINT}/lib")
-    set(ACLOCAL_PATH "${MINGW_MOUNT_POINT}/share/aclocal" "/usr/share/aclocal")
-    set(MSYS_MANPATH "${MINGW_MOUNT_POINT}/local/man" "${MINGW_MOUNT_POINT}/share/man" "${MANPATH}")
-    set(MSYS_INFOPATH "${MINGW_MOUNT_POINT}/local/info" "${MINGW_MOUNT_POINT}/share/info" "${INFOPATH}")
-    set(MSYS_DXSDK_DIR "${MINGW_MOUNT_POINT}/${MINGW_CHOST}")
-endif()
-
-set(MSYS_PATH "${MSYS_PATH}" CACHE PATH "<MSYS_PATH>" FORCE)
-set(MSYS_MANPATH "${MSYS_MANPATH}" CACHE PATH "<MSYS_MANPATH>" FORCE)
-set(MSYS_INFOPATH "${MSYS_INFOPATH}" CACHE PATH "<MSYS_INFOPATH>" FORCE)
 
 # Reminder when adding new locations computed from environment variables
 # please make sure to keep Help/variable/CMAKE_SYSTEM_PREFIX_PATH.rst
@@ -101,50 +29,6 @@ list(APPEND CMAKE_SYSTEM_PREFIX_PATH
     # CMake install location
     "${_CMAKE_INSTALL_DIR}"
 )
-
-#
-#Add the program-files folder(s) to the list of installation
-#prefixes.
-#
-#Windows 64-bit Binary:
-#
-#    ENV{ProgramFiles(x86)} = [C:\Program Files (x86)]
-#    ENV{ProgramFiles}      = [C:\Program Files]
-#    ENV{ProgramW6432}      = [C:\Program Files] or <not set>
-#
-#Windows 32-bit Binary on 64-bit Windows:
-#
-#    ENV{ProgramFiles(x86)} = [C:\Program Files (x86)]
-#    ENV{ProgramFiles}      = [C:\Program Files (x86)]
-#    ENV{ProgramW6432}      = [C:\Program Files]
-#
-#Reminder when adding new locations computed from environment variables
-#please make sure to keep Help/variable/CMAKE_SYSTEM_PREFIX_PATH.rst
-#synchronized
-macro(add_win32_program_files_to_cmake_system_prefix_path)
-    set(_programfiles "")
-    foreach(v "ProgramW6432" "ProgramFiles" "ProgramFiles(x86)")
-        if(DEFINED "ENV{${v}}")
-            file(TO_CMAKE_PATH "$ENV{${v}}" _env_programfiles)
-            list(APPEND _programfiles "${_env_programfiles}")
-            unset(_env_programfiles)
-        endif()
-    endforeach()
-    if(DEFINED "ENV{SystemDrive}")
-        foreach(d "Program Files" "Program Files (x86)")
-            if(EXISTS "$ENV{SystemDrive}/${d}")
-                list(APPEND _programfiles "$ENV{SystemDrive}/${d}")
-            endif()
-        endforeach()
-    endif()
-    if(_programfiles)
-        list(REMOVE_DUPLICATES _programfiles)
-        list(APPEND CMAKE_SYSTEM_PREFIX_PATH ${_programfiles})
-    endif()
-    unset(_programfiles)
-endmacro()
-
-add_win32_program_files_to_cmake_system_prefix_path()
 
 if (NOT CMAKE_FIND_NO_INSTALL_PREFIX) # Add other locations.
     list(APPEND CMAKE_SYSTEM_PREFIX_PATH "${CMAKE_INSTALL_PREFIX}") # Project install destination.
@@ -174,15 +58,15 @@ list(APPEND CMAKE_SYSTEM_LIBRARY_PATH /bin)
 list(APPEND CMAKE_SYSTEM_PROGRAM_PATH)
 
 
-# Non "standard" but common install prefixes
-list(APPEND CMAKE_SYSTEM_PREFIX_PATH
-    # "${Z_${MSYSTEM}_ROOT_DIR}/usr/X11R6"
-    # "${Z_${MSYSTEM}_ROOT_DIR}/usr/pkg"
-    # "${Z_${MSYSTEM}_ROOT_DIR}/opt"
-    # "${Z_${MSYSTEM}_ROOT_DIR}/x86_64-w64-mingw32"
-)
-if(DEFINED MSYS2_DXSDK_DIR) # This should probably be some sort of 'COMPATIBILITY' switcheroo...
-    list(APPEND CMAKE_SYSTEM_PREFIX_PATH "${MSYS2_DXSDK_DIR}")
+# # Non "standard" but common install prefixes
+# list(APPEND CMAKE_SYSTEM_PREFIX_PATH
+#     # "${Z_${MSYSTEM}_ROOT_DIR}/usr/X11R6"
+#     # "${Z_${MSYSTEM}_ROOT_DIR}/usr/pkg"
+#     # "${Z_${MSYSTEM}_ROOT_DIR}/opt"
+#     # "${Z_${MSYSTEM}_ROOT_DIR}/x86_64-w64-mingw32"
+# )
+if(DEFINED MSYS_DXSDK_DIR) # This should probably be some sort of 'COMPATIBILITY' switcheroo...
+    list(APPEND CMAKE_SYSTEM_PREFIX_PATH "${MSYS_DXSDK_DIR}")
 endif()
 
 # List common include file locations not under the common prefixes.
@@ -405,48 +289,6 @@ set_property(GLOBAL PROPERTY FIND_LIBRARY_USE_LIBX32_PATHS TRUE)
 # set(CMAKE_SYSTEM_NAME "MINGW64_NT" CACHE STRING "The name of the operating system for which CMake is to build." FORCE)
 # set(CMAKE_SYSTEM_VERSION "${CMAKE_HOST_SYSTEM_VERSION}" CACHE STRING "The version of the operating system for which CMake is to build." FORCE)
 # #set(CMAKE_SYSTEM "${CMAKE_SYSTEM_PROCESSOR}-${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_VERSION}" CACHE STRING "Composite name of operating system CMake is compiling for.." FORCE)
-
-# if(ENABLE_${MSYSTEM})
-#     set(${MSYSTEM}_ROOT                    "${Z_${MSYSTEM}_ROOT_DIR}")            # CACHE PATH      "<MINGW64>: Root of the build system." FORCE)
-
-#     set(${MSYSTEM}_PREFIX                  "${MINGW64_ROOT}")                  # CACHE PATH      "<MINGW64>: Sub-system prefix." FORCE)
-#     set(${MSYSTEM}_BUILD_PREFIX            "${MINGW64_PREFIX}/usr")            # CACHE PATH      "<MINGW64>: Sub-system prefix." FORCE)
-#     set(MINGW64_INSTALL_PREFIX          "${MINGW64_PREFIX}/usr/local")      # CACHE PATH      "<MINGW64>: Sub-system prefix." FORCE)
-
-#     set(MINGW64_INCLUDEDIR              "${MINGW64_PREFIX}/include")        # CACHE PATH      "<MINGW64>: Sub-system prefix." FORCE)
-#     set(MINGW64_SRCDIR                  "${MINGW64_PREFIX}/src")            # CACHE PATH      "<MINGW64>: Sub-system prefix." FORCE)
-#     set(MINGW64_SYSCONFDIRDIR           "${MINGW64_PREFIX}/etc")            # CACHE PATH      "<MINGW64>: Sub-system prefix." FORCE)
-
-#     set(MINGW64_DATAROOTDIR             "${MINGW64_PREFIX}/share")          # CACHE PATH      "<MINGW64>: Sub-system prefix." FORCE)
-#     set(MINGW64_DATADIR                 "${MINGW64_DATAROOTDIR}")           # CACHE PATH      "<MINGW64>: Sub-system prefix." FORCE)
-#     set(MINGW64_DOCDIR                  "${MINGW64_DATAROOTDIR}/doc")       # CACHE PATH      "<MINGW64>: Sub-system prefix." FORCE)
-#     set(MINGW64_MANDIR                  "${MINGW64_DATAROOTDIR}/man")       # CACHE PATH      "<MINGW64>: Sub-system prefix." FORCE)
-#     set(MINGW64_INFODIR                 "${MINGW64_DATAROOTDIR}/info")      # CACHE PATH      "<MINGW64>: Sub-system prefix." FORCE)
-#     set(MINGW64_LOCALEDIR               "${MINGW64_DATAROOTDIR}/locale")    # CACHE PATH      "<MINGW64>: Sub-system prefix." FORCE)
-
-#     set(MINGW64_CMAKEDIR                "${MINGW64_DATAROOTDIR}/cmake")     # CACHE PATH      "<MINGW64>: Sub-system prefix." FORCE)
-
-#     set(MINGW64_EXEC_PREFIX             "${MINGW64_PREFIX}")                # CACHE PATH      "<MINGW64>: Sub-system prefix." FORCE)
-#     set(MINGW64_BINDIR                  "${MINGW64_EXEC_PREFIX}/bin")       # CACHE PATH      "<MINGW64>: Sub-system prefix." FORCE)
-#     set(MINGW64_SBINDIR                 "${MINGW64_EXEC_PREFIX}/sbin")      # CACHE PATH      "<MINGW64>: Sub-system prefix." FORCE)
-#     set(MINGW64_LIBDIR                  "${MINGW64_EXEC_PREFIX}/lib")       # CACHE PATH      "<MINGW64>: Sub-system prefix." FORCE)
-#     set(MINGW64_LIBEXECDIR              "${MINGW64_EXEC_PREFIX}/libexec")   # CACHE PATH      "<MINGW64>: Sub-system prefix." FORCE)
-
-#     # DirectX compatibility environment variable
-#     set(MINGW64_DXSDK_DIR               "${MINGW64_ROOT}/x86_64-w64-mingw32")   # CACHE PATH "<MINGW64>: DirectX compatibility environment variable." FORCE)
-
-#     # set(ACLOCAL_PATH "${Z_MSYS_ROOT}/${MINGW_PREFIX}/share/aclocal" "${Z_MSYS_ROOT}/usr/share" CACHE PATH "By default, aclocal searches for .m4 files in the following directories." FORCE)
-#     set(MINGW64_ACLOCAL_PATH)
-#     list(APPEND MINGW64_ACLOCAL_PATH "${Z_MINGW64_ROOT_DIR}/share/aclocal")
-#     list(APPEND MINGW64_ACLOCAL_PATH "${Z_MINGW64_ROOT_DIR}/usr/share")
-#     set(MINGW64_ACLOCAL_PATH "${MINGW64_ACLOCAL_PATH}") # CACHE PATH "<MINGW64>: DirectX compatibility environment variable." FORCE)
-
-#     # set(PKG_CONFIG_PATH "${Z_MSYS_ROOT}/${MINGW_PREFIX}/lib/pkgconfig" "${Z_MSYS_ROOT}/${MINGW_PREFIX}/share/pkgconfig" CACHE PATH "A colon-separated (on Windows, semicolon-separated) list of directories to search for .pc files. The default directory will always be searched after searching the path." FORCE)
-#     set(MINGW64_PKG_CONFIG_PATH)
-#     list(APPEND MINGW64_PKG_CONFIG_PATH "${Z_MINGW64_ROOT_DIR}/lib/pkgconfig")
-#     list(APPEND MINGW64_PKG_CONFIG_PATH "${Z_MINGW64_ROOT_DIR}/share/pkgconfig")
-#     set(MINGW64_PKG_CONFIG_PATH "${MINGW64_PKG_CONFIG_PATH}") # CACHE PATH "<MINGW64>: DirectX compatibility environment variable." FORCE)
-# endif()
 
 #[===[
 set(CMAKE_SYSTEM_PREFIX_PATH

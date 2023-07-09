@@ -1,234 +1,14 @@
 
-# Detect msys2.ini to figure MSYS_ROOT_DIR
-set(Z_MSYS_ROOT_DIR_CANDIDATE "${CMAKE_CURRENT_LIST_DIR}")
-while(NOT DEFINED Z_MSYS_ROOT_DIR)
-    if(EXISTS "${Z_MSYS_ROOT_DIR_CANDIDATE}msys2.ini")
-        message(STATUS "Found ${Z_MSYS_ROOT_DIR_CANDIDATE}msys2.ini")
-        set(Z_MSYS_ROOT_DIR "${Z_MSYS_ROOT_DIR_CANDIDATE}msys64" CACHE INTERNAL "msys root directory")
-    elseif(EXISTS "${Z_MSYS_ROOT_DIR_CANDIDATE}msys64/msys2.ini")
-        message(STATUS "Found ${Z_MSYS_ROOT_DIR_CANDIDATE}msys64/msys2.ini")
-        set(Z_MSYS_ROOT_DIR "${Z_MSYS_ROOT_DIR_CANDIDATE}msys64" CACHE INTERNAL "msys root directory")
-    elseif(IS_DIRECTORY "${Z_MSYS_ROOT_DIR_CANDIDATE}")
-        get_filename_component(Z_MSYS_ROOT_DIR_TEMP "${Z_MSYS_ROOT_DIR_CANDIDATE}" DIRECTORY)
-        if(Z_MSYS_ROOT_DIR_TEMP STREQUAL Z_MSYS_ROOT_DIR_CANDIDATE)
-            message(FATAL_ERROR "We have reached the root of the drive without finding '/msys2.ini'")
-            break() # If unchanged, we have reached the root of the drive without finding '/msys2.ini'.
-        endif()
-        set(Z_MSYS_ROOT_DIR_CANDIDATE "${Z_MSYS_ROOT_DIR_TEMP}")
-        unset(Z_MSYS_ROOT_DIR_TEMP)
-    else()
-        break()
-    endif()
-endwhile()
-unset(Z_MSYS_ROOT_DIR_CANDIDATE)
+message(STATUS "Enter: ${CMAKE_CURRENT_LIST_FILE}")
 
-#
-#Add the program-files folder(s) to the list of installation
-#prefixes.
-#
-#Windows 64-bit Binary:
-#
-#    ENV{ProgramFiles(x86)} = [C:\Program Files (x86)]
-#    ENV{ProgramFiles}      = [C:\Program Files]
-#    ENV{ProgramW6432}      = [C:\Program Files] or <not set>
-#
-#Windows 32-bit Binary on 64-bit Windows:
-#
-#    ENV{ProgramFiles(x86)} = [C:\Program Files (x86)]
-#    ENV{ProgramFiles}      = [C:\Program Files (x86)]
-#    ENV{ProgramW6432}      = [C:\Program Files]
-#
-#Reminder when adding new locations computed from environment variables
-#please make sure to keep Help/variable/CMAKE_SYSTEM_PREFIX_PATH.rst
-#synchronized
-macro(add_win32_program_files_to_cmake_system_prefix_path)
-    set(_programfiles "")
-    foreach(v "ProgramW6432" "ProgramFiles" "ProgramFiles(x86)")
-        if(DEFINED "ENV{${v}}")
-            file(TO_CMAKE_PATH "$ENV{${v}}" _env_programfiles)
-            list(APPEND _programfiles "${_env_programfiles}")
-            unset(_env_programfiles)
-        endif()
-    endforeach()
-    if(DEFINED "ENV{SystemDrive}")
-        foreach(d "Program Files" "Program Files (x86)")
-            if(EXISTS "$ENV{SystemDrive}/${d}")
-                list(APPEND _programfiles "$ENV{SystemDrive}/${d}")
-            endif()
-        endforeach()
-    endif()
-    if(_programfiles)
-        list(REMOVE_DUPLICATES _programfiles)
-        list(APPEND CMAKE_SYSTEM_PREFIX_PATH ${_programfiles})
-    endif()
-    unset(_programfiles)
-endmacro()
-
-add_win32_program_files_to_cmake_system_prefix_path()
-
-#
-#if MSYS_PATH_TYPE == "-inherit"
-#
-#    Inherit previous path. Note that this will make all of the
-#    Windows path available in current shell, with possible
-#    interference in project builds.
-#
-#if MSYS_PATH_TYPE == "-minimal"
-#
-#if MSYS_PATH_TYPE == "-strict"
-#
-#    Do not inherit any path configuration, and allow for full
-#    customization of external path. This is supposed to be used
-#    in special cases such as debugging without need to change
-#    this file, but not daily usage.
-#
-macro(set_msystem_path_type)
-
-    if(NOT DEFINED MSYS_PATH_TYPE)
-        set(MSYS_PATH_TYPE "inherit")
-    endif()
-    set(MSYS_PATH_TYPE "${MSYS_PATH_TYPE}" CACHE STRING " " FORCE)
-
-    if(ENV{VERBOSE})
-        message(STATUS "Msys64 path type: '${MSYS_PATH_TYPE}'")
-    endif()
-
-    if(MSYS_PATH_TYPE STREQUAL "strict")
-
-        # Do not inherit any path configuration, and allow for full customization
-        # of external path. This is supposed to be used in special cases such as
-        # debugging without need to change this file, but not daily usage.
-        unset(ORIGINAL_PATH)
-
-    elseif(MSYS_PATH_TYPE STREQUAL "inherit")
-
-        # Inherit previous path. Note that this will make all of the Windows path
-        # available in current run, with possible interference in project builds.
-        set(ORIGINAL_PATH "$ENV{Path}" CACHE PATH "<PATH> environment variable." FORCE)
-
-    elseif(MSYS_PATH_TYPE STREQUAL "minimal")
-
-        # WIN_ROOT="$(PATH=${MSYS2_PATH} exec cygpath -Wu)"
-        if(DEFINED ENV{WINDIR})
-            set(WIN_ROOT "$ENV{WINDIR}" CACHE FILEPATH "" FORCE)
-        else()
-            if(DEFINED ENV{HOMEDRIVE})
-                set(WIN_ROOT "$ENV{HOMEDRIVE}/Windows" CACHE FILEPATH "" FORCE)
-            else()
-                message(FATAL_ERROR "HELP!")
-            endif()
-        endif()
-
-        set(ORIGINAL_PATH)
-        list(APPEND ORIGINAL_PATH "${WIN_ROOT}/System32")
-        list(APPEND ORIGINAL_PATH "${WIN_ROOT}")
-        list(APPEND ORIGINAL_PATH "${WIN_ROOT}/System32/Wbem")
-
-        if(DEFINED Z_MSYS_POWERSHELL_PATH)
-            list(APPEND ORIGINAL_PATH "${Z_MSYS_POWERSHELL_PATH}")
-        else()
-            list(APPEND ORIGINAL_PATH "${WIN_ROOT}/System32/WindowsPowerShell/v1.0/")
-        endif()
-
-        set(ORIGINAL_PATH "${ORIGINAL_PATH}" CACHE PATH "<PATH> environment variable." FORCE)
-
-    endif()
-
-endmacro()
-
-function(z_add_msystem_path_to_cmake_path list suffix)
-    string(TOLOWER "${MSYSTEM}" _msystem_lower)
-    set(msys_paths
-        "${Z_MSYS_ROOT_DIR}/${_msystem_lower}${suffix}"
-
-        #"${Z_MSYS_ROOT_DIR}/${_msystem_lower}/debug${suffix}"
-    )
-    # if(NOT DEFINED CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE MATCHES "^[Dd][Ee][Bb][Uu][Gg]$")
-    #     list(REVERSE msys_paths) # Debug build: Put Debug paths before Release paths.
-    # endif()
-
-    if(MSYS_PREFER_SYSTEM_LIBS)
-        list(APPEND "${list}" "${msys_paths}")
-    else()
-        list(INSERT "${list}" "0" "${msys_paths}") # CMake 3.15 is required for list(PREPEND ...).
-    endif()
-    set("${list}" "${${list}}" PARENT_SCOPE)
-endfunction()
-z_add_msystem_path_to_cmake_path(CMAKE_PREFIX_PATH "")
-z_add_msystem_path_to_cmake_path(CMAKE_LIBRARY_PATH "/lib/manual-link")
-z_add_msystem_path_to_cmake_path(CMAKE_FIND_ROOT_PATH "")
+# message(STATUS "MSYSTEM Platform info loading...")
 
 
-#[===[.md:
-# z_msys_set_powershell_path
+#set(UNIX 1) # Don't set 'UNIX' for MinGW!!! ;)
+set(MINGW 1) # ``True`` when using MinGW
+set(WIN32 1) # Set to ``True`` when the target system is Windows, including Win64.
 
-Gets either the path to powershell or powershell core,
-and places it in the variable Z_MSYS_POWERSHELL_PATH.
-#]===]
-function(z_msys_set_powershell_path)
-    # Attempt to use pwsh if it is present; otherwise use powershell
-    if(NOT DEFINED Z_MSYS_POWERSHELL_PATH)
-        find_program(Z_MSYS_PWSH_PATH pwsh)
-        if(Z_MSYS_PWSH_PATH)
-            set(Z_MSYS_POWERSHELL_PATH "${Z_MSYS_PWSH_PATH}" CACHE INTERNAL "The path to the PowerShell implementation to use.")
-        else()
-            message(DEBUG "msys2: Could not find PowerShell Core; falling back to PowerShell")
-            find_program(Z_MSYS_BUILTIN_POWERSHELL_PATH powershell REQUIRED)
-            if(Z_MSYS_BUILTIN_POWERSHELL_PATH)
-                set(Z_MSYS_POWERSHELL_PATH "${Z_MSYS_BUILTIN_POWERSHELL_PATH}" CACHE INTERNAL "The path to the PowerShell implementation to use.")
-            else()
-                message(WARNING "msys2: Could not find PowerShell; using static string 'powershell.exe'")
-                set(Z_MSYS_POWERSHELL_PATH "powershell.exe" CACHE INTERNAL "The path to the PowerShell implementation to use.")
-            endif()
-        endif()
-    endif() # Z_MSYS_POWERSHELL_PATH
-endfunction()
 
-z_msys_set_powershell_path()
-set_msystem_path_type()
-
-# Later, this triggers 'include("CMakeFind${CMAKE_EXTRA_GENERATOR}" OPTIONAL)'
-# Which picks up several useful include dirs...
-set(CMAKE_EXTRA_GENERATOR "MSYS Makefiles" CACHE STRING "" FORCE)
-
-set(MSYS_PATH)
-if(EXISTS "${Z_MSYS_ROOT_DIR}/usr/local/bin")
-    list(APPEND MSYS_PATH "${Z_MSYS_ROOT_DIR}/usr/local/bin")
-endif()
-if(EXISTS "${Z_MSYS_ROOT_DIR}/usr/bin")
-    list(APPEND MSYS_PATH "${Z_MSYS_ROOT_DIR}/usr/bin")
-endif()
-if(EXISTS "${Z_MSYS_ROOT_DIR}/bin")
-    list(APPEND MSYS_PATH "${Z_MSYS_ROOT_DIR}/bin")
-endif()
-
-set(MSYS_MANPATH)
-if(EXISTS "${Z_MSYS_ROOT_DIR}/usr/local/man")
-    list(APPEND MANPATH "${Z_MSYS_ROOT_DIR}/usr/local/man")
-endif()
-if(EXISTS "${Z_MSYS_ROOT_DIR}/usr/share/man")
-    list(APPEND MANPATH "${Z_MSYS_ROOT_DIR}/usr/share/man")
-endif()
-if(EXISTS "${Z_MSYS_ROOT_DIR}/usr/man")
-    list(APPEND MANPATH "${Z_MSYS_ROOT_DIR}/usr/man")
-endif()
-if(EXISTS "${Z_MSYS_ROOT_DIR}/share/man")
-    list(APPEND MANPATH "${Z_MSYS_ROOT_DIR}/share/man")
-endif()
-
-set(MSYS_INFOPATH)
-if(EXISTS "${Z_MSYS_ROOT_DIR}/usr/local/info")
-    list(APPEND INFOPATH "${Z_MSYS_ROOT_DIR}/usr/local/info")
-endif()
-if(EXISTS "${Z_MSYS_ROOT_DIR}/usr/share/info")
-    list(APPEND INFOPATH "${Z_MSYS_ROOT_DIR}/usr/share/info")
-endif()
-if(EXISTS "${Z_MSYS_ROOT_DIR}/usr/info")
-    list(APPEND INFOPATH "${Z_MSYS_ROOT_DIR}/usr/info")
-endif()
-if(EXISTS "${Z_MSYS_ROOT_DIR}/share/info")
-    list(APPEND INFOPATH "${Z_MSYS_ROOT_DIR}/share/info")
-endif()
 
 option(OPTION_USE_DSX_BINUTILS "(Inactive) Use the BinUtils programs found under '<rootDir>/<packagePrefix>' for DirectX compatibility instead of standard BinUtils." OFF)
 mark_as_advanced(OPTION_USE_DSX_BINUTILS)
@@ -282,8 +62,6 @@ mark_as_advanced(OPTION_LTO)
 # else()
 #     set(OPTION_STRIP_FLAG !strip CACHE STRING "A negated option will do the opposite of the comments below." FORCE)
 # endif()
-
-# # And so forth, or nah...?
 
 if(OPTION_DOCS)
     set(OPTION_DOCS_FLAG docs) # CACHE STRING "A negated option will do the opposite of the comments below." FORCE)
@@ -400,18 +178,10 @@ set(MSYS_BUILDENV "${MSYS_BUILDENV}" CACHE STRING "A negated environment option 
 option(OPTION_ENABLE_DLAGENTS "" ON)
 mark_as_advanced(OPTION_ENABLE_DLAGENTS)
 if(OPTION_ENABLE_DLAGENTS)
-    include(DLAGENTS)
+    include(DLAGENTS OPTIONAL)
 endif()
 
-# If one CMAKE_FIND_ROOT_PATH_MODE_* variables is set to ONLY, to  make sure that ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}
-# and ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug are searched, it is not sufficient to just add them to CMAKE_FIND_ROOT_PATH,
-# as CMAKE_FIND_ROOT_PATH specify "one or more directories to be prepended to all other search directories", so to make sure that
-# the libraries are searched as they are, it is necessary to add "/" to the CMAKE_PREFIX_PATH
-if(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE STREQUAL "ONLY" OR
-    CMAKE_FIND_ROOT_PATH_MODE_LIBRARY STREQUAL "ONLY" OR
-    CMAKE_FIND_ROOT_PATH_MODE_PACKAGE STREQUAL "ONLY")
-    list(APPEND CMAKE_PREFIX_PATH "${Z_MSYS_ROOT_DIR}/")
-endif()
+
 
 if(MSYSTEM STREQUAL "MINGW32")
 
@@ -517,34 +287,73 @@ elseif (MSYSTEM STREQUAL "UCRT64")
 
     set(_CMAKE_TOOLCHAIN_PREFIX "${MSYSTEM_CHOST}" CACHE STRING "If the internal cmake variable _CMAKE_TOOLCHAIN_PREFIX is set, this is used as prefix for the Binary utils (e.g. arm-elf-g++.exe, arm-elf-ar.exe etc.)" FORCE)
 
-    find_program(CC "${Z_MSYS_ROOT_DIR}/ucrt64/bin/gcc.exe")
-    if(CC)
-        mark_as_advanced(CC)
-        set(ENV{CC} "${CC}")
-        set(ENV{CFLAGS} "-march=nocona -msahf -mtune=generic -pipe -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong")
-    else()
-        message(WARNING "Could not set <CC> using path '${Z_MSYS_ROOT_DIR}/ucrt64/bin/gcc.exe'"
-                        "You might need to run 'pacman -S ${MSYSTEM_CHOST}-toolchain' before
-                        trying again."
-        )
-        unset(CC)
-    endif(CC)
+    # if(NOT DEFINED CFLAGS)
+    #     set(CFLAGS) # Start a new list, if one doesn't exists
+    # endif()
+    # string(APPEND CFLAGS "-march=nocona ")
+    # string(APPEND CFLAGS "-msahf ")
+    # string(APPEND CFLAGS "-mtune=generic ")
+    # string(APPEND CFLAGS "-pipe ")
+    # string(APPEND CFLAGS "-Wp,-D_FORTIFY_SOURCE=2 ")
+    # string(APPEND CFLAGS "-fstack-protector-strong ")
+    # string(STRIP "${CFLAGS}" CFLAGS)
+    # set(ENV{CFLAGS} "${CFLAGS}")
+    # message(STATUS "CFLAGS = $ENV{CFLAGS}")
 
-    find_program(CXX "${Z_MSYS_ROOT_DIR}/ucrt64/bin/g++.exe")
-    if(CXX)
-        mark_as_advanced(CXX)
-        set(ENV{CXX} "${CXX}")
-        set(ENV{CXXFLAGS} "-march=nocona -msahf -mtune=generic -pipe")
-    else()
-        message(WARNING "Could not set <CC> using path '${Z_MSYS_ROOT_DIR}/ucrt64/bin/g++.exe'"
-                        "You might need to run 'pacman -S ${MSYSTEM_CHOST}-toolchain' before
-                        trying again."
-        )
-        unset(CXX)
-    endif(CXX)
+    # if(NOT DEFINED CXXFLAGS)
+    #     set(CXXFLAGS)
+    # endif()
+    # string(APPEND CXXFLAGS "-march=nocona ")
+    # string(APPEND CXXFLAGS "-msahf ")
+    # string(APPEND CXXFLAGS "-mtune=generic ")
+    # # string(APPEND CXXFLAGS "-std=") # STD version
+    # # string(APPEND CXXFLAGS "-stdlib=") # STD lib
+    # string(APPEND CXXFLAGS "-pipe ")
+    # string(STRIP "${CXXFLAGS}" CXXFLAGS)
+    # set(ENV{CXXFLAGS} "${CXXFLAGS}")
+    # message(STATUS "CXXFLAGS = $ENV{CXXFLAGS}")
 
-    set(ENV{CPPFLAGS} "-D__USE_MINGW_ANSI_STDIO=1")
-    set(ENV{LDFLAGS} "-pipe")
+    # if(NOT DEFINED CPPFLAGS)
+    #     set(CPPFLAGS)
+    # endif()
+    # string(APPEND CPPFLAGS "-D__USE_MINGW_ANSI_STDIO=1 ")
+    # string(STRIP "${CPPFLAGS}" CPPFLAGS)
+    # set(ENV{CPPFLAGS} "${CPPFLAGS}")
+    # message(STATUS "CPPFLAGS = $ENV{CPPFLAGS}")
+
+    # if(NOT DEFINED LDFLAGS)
+    #     set(LDFLAGS)
+    # endif()
+    # string(APPEND LDFLAGS "-pipe ")
+    # string(STRIP "${LDFLAGS}" LDFLAGS)
+    # set(ENV{LDFLAGS} "${LDFLAGS}")
+    # message(STATUS "LDFLAGS = $ENV{LDFLAGS}")
+
+    # find_program(CC "${Z_MSYS_ROOT_DIR}/ucrt64/bin/gcc.exe" NO_CACHE)
+    # if(CC)
+    #     mark_as_advanced(CC)
+    #     set(ENV{CC} "${CC}")
+    #     message(STATUS "CC = $ENV{CC}")
+    # else()
+    #     message(WARNING "Could not set <CC> using path '${Z_MSYS_ROOT_DIR}/ucrt64/bin/gcc.exe'"
+    #                     "You might need to run 'pacman -S ${MSYSTEM_CHOST}-toolchain' before
+    #                     trying again."
+    #     )
+    #     unset(CC)
+    # endif(CC)
+
+    # find_program(CXX "${Z_MSYS_ROOT_DIR}/ucrt64/bin/g++.exe" NO_CACHE)
+    # if(CXX)
+    #     mark_as_advanced(CXX)
+    #     set(ENV{CXX} "${CXX}")
+    #     message(STATUS "CXX = $ENV{CXX}")
+    # else()
+    #     message(WARNING "Could not set <CC> using path '${Z_MSYS_ROOT_DIR}/ucrt64/bin/g++.exe'"
+    #                     "You might need to run 'pacman -S ${MSYSTEM_CHOST}-toolchain' before
+    #                     trying again."
+    #     )
+    #     unset(CXX)
+    # endif(CXX)
 
     # MAN_DIRS=("${MINGW_PREFIX#/}"{{,/local}{,/share},/opt/*}/{man,info})
     # DOC_DIRS=("${MINGW_PREFIX#/}"/{,local/}{,share/}{doc,gtk-doc})
@@ -816,3 +625,6 @@ else()
     set(WIN32 1) # Set to ``True`` when the target system is Windows, including Win64.
 
 endif()
+
+# message(STATUS "...MSYSTEM Platform info loaded.")
+message(STATUS "Exit: ${CMAKE_CURRENT_LIST_FILE}")
