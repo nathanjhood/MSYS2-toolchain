@@ -172,8 +172,17 @@ Provides a minimal set of paths from the Windows environment's system folder; no
 
 Do not inherit any paths from the Windows environment, and allow for full customization of external paths. This is supposed to be used in special cases such as debugging without need to change this file, but not daily usage.
 
-</br>
-Note that in all cases above, the paths in question are *appended* to the list of paths for the selected MSYSTEM. There exists some experimental behaviour for *prepending* any inherited Windows paths, which means that they would be scanned first when CMake is searching for tools during its' run (in cases where the tool(s) in question haven't (yet) been specified in the current process).
+## <b>OPTION_MSYS_PREFER_MSYSTEM_PATHS</b>
+
+If set to 'ON', the paths under the current 'MSYSTEM' directory will be scanned before the '\<msysRoot\>/usr' directory during CMake's file/program/lib lookup routines.
+
+Accepts a Boolean value. Defaults to "<b>ON</b>".
+
+## <b>OPTION_MSYS_PREFER_WIN32_PATHS</b>
+
+If set to 'ON', the paths under the calling environment's 'PATH' variable will be scanned before any other paths, during CMake's file/program/lib lookup routines.
+
+Accepts a Boolean value. Defaults to "<b>OFF</b>".
 
 ## <b>OPTION_USE_DSX_BINUTILS</b> (coming soon!)
 
@@ -214,6 +223,8 @@ The main files at the core of the project are:
 * 'scripts/toolchains/\<MSYSTEM\>.cmake'
 
 * 'scripts/cmake/Modules/Platform/MSYSTEM.cmake'
+
+* 'scripts/cmake/Modules/Platform/MSYSTEM-initialize.cmake'
 
 * 'scripts/cmake/Modules/Platform/MSYSTEM-\<COMPILER_ID\>.cmake'
 
