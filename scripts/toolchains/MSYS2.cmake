@@ -39,7 +39,7 @@ while(NOT DEFINED Z_MSYS2_ROOT_DIR)
 endwhile()
 unset(Z_MSYS2_ROOT_DIR_CANDIDATE)
 
-foreach(lang C CXX ASM Fortran OBJC OBJCXX)
+foreach(lang C CXX) # Fortran OBJC OBJCXX ASM
 
     set(CMAKE_${lang}_COMPILER_TARGET "x86_64-w64-mingw32" CACHE STRING "The target for cross-compiling, if supported. '--target=x86_64-w64-mingw32'")
 
@@ -51,19 +51,19 @@ mark_as_advanced(CMAKE_C_COMPILER)
 find_program(CMAKE_CXX_COMPILER "${Z_MSYS2_ROOT_DIR}/bin/x86_64-w64-mingw32-g++.exe")
 mark_as_advanced(CMAKE_CXX_COMPILER)
 
-find_program(CMAKE_Fortran_COMPILER "${Z_MSYS2_ROOT_DIR}/bin/x86_64-w64-mingw32-gfortran.exe")
-mark_as_advanced(CMAKE_Fortran_COMPILER)
+# find_program(CMAKE_Fortran_COMPILER "${Z_MSYS2_ROOT_DIR}/bin/x86_64-w64-mingw32-gfortran.exe")
+# mark_as_advanced(CMAKE_Fortran_COMPILER)
 
-find_program(CMAKE_OBJC_COMPILER "${Z_MSYS2_ROOT_DIR}/bin/x86_64-w64-mingw32-gcc.exe")
-mark_as_advanced(CMAKE_OBJC_COMPILER)
+# find_program(CMAKE_OBJC_COMPILER "${Z_MSYS2_ROOT_DIR}/bin/x86_64-w64-mingw32-gcc.exe")
+# mark_as_advanced(CMAKE_OBJC_COMPILER)
 
-find_program(CMAKE_OBJCXX_COMPILER "${Z_MSYS2_ROOT_DIR}/bin/x86_64-w64-mingw32-g++.exe")
-mark_as_advanced(CMAKE_OBJCXX_COMPILER)
+# find_program(CMAKE_OBJCXX_COMPILER "${Z_MSYS2_ROOT_DIR}/bin/x86_64-w64-mingw32-g++.exe")
+# mark_as_advanced(CMAKE_OBJCXX_COMPILER)
 
-if(NOT DEFINED CMAKE_ASM_COMPILER)
-    find_program(CMAKE_ASM_COMPILER "${Z_MSYS2_ROOT_DIR}/bin/as.exe")
-endif()
-mark_as_advanced(CMAKE_ASM_COMPILER)
+# if(NOT DEFINED CMAKE_ASM_COMPILER)
+#     find_program(CMAKE_ASM_COMPILER "${Z_MSYS2_ROOT_DIR}/bin/as.exe")
+# endif()
+# mark_as_advanced(CMAKE_ASM_COMPILER)
 
 find_program(CMAKE_RC_COMPILER "${Z_MSYS2_ROOT_DIR}/bin/windres.exe")
 mark_as_advanced(CMAKE_RC_COMPILER)

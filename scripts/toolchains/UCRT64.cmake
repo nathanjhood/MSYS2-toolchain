@@ -1,3 +1,5 @@
+message(STATUS "Enter: ${CMAKE_CURRENT_LIST_FILE}")
+
 if(NOT _MSYS_UCRT64_TOOLCHAIN)
 set(_MSYS_UCRT64_TOOLCHAIN 1)
 
@@ -41,15 +43,41 @@ while(NOT DEFINED Z_UCRT64_ROOT_DIR)
 endwhile()
 unset(Z_UCRT64_ROOT_DIR_CANDIDATE)
 
+find_program(CC "${Z_UCRT64_ROOT_DIR}/bin/x86_64-w64-mingw32-gcc.exe")
+if(CC)
+    mark_as_advanced(CC)
+    set(ENV{CC} "${CC}")
+else()
+    unset(CC)
+endif()
+
+find_program(CXX "${Z_UCRT64_ROOT_DIR}/bin/x86_64-w64-mingw32-g++.exe")
+if(CXX)
+    mark_as_advanced(CXX)
+    set(ENV{CXX} "${CXX}")
+else()
+    unset(CXX)
+endif()
+
 foreach(lang C CXX) # ASM Fortran OBJC OBJCXX
 
     set(CMAKE_${lang}_COMPILER_TARGET "x86_64-w64-mingw32" CACHE STRING "The target for cross-compiling, if supported. '--target=x86_64-w64-mingw32'")
 
 endforeach()
 
-#"C:\msys64\ucrt64\bin\x86_64-w64-mingw32-gfortran.exe"
-find_program(CMAKE_C_COMPILER "${Z_UCRT64_ROOT_DIR}/bin/x86_64-w64-mingw32-gcc.exe")
-mark_as_advanced(CMAKE_C_COMPILER)
+
+# #"C:\msys64\ucrt64\bin\x86_64-w64-mingw32-gfortran.exe"
+# find_program(CMAKE_C_COMPILER "${Z_UCRT64_ROOT_DIR}/bin/x86_64-w64-mingw32-gcc.exe")
+# mark_as_advanced(CMAKE_C_COMPILER)
+
+if(NOT DEFINED CMAKE_C_COMPILER)
+    if(ENV{CC})
+        find_program(CMAKE_C_COMPILER "$ENV{CC}")
+    else()
+        find_program(CMAKE_C_COMPILER "${Z_UCRT64_ROOT_DIR}/bin/x86_64-w64-mingw32-gcc.exe")
+    endif()
+    mark_as_advanced(CMAKE_C_COMPILER)
+endif()
 
 #"C:\msys64\ucrt64\bin\x86_64-w64-mingw32-gfortran.exe"
 find_program(CMAKE_CXX_COMPILER "${Z_UCRT64_ROOT_DIR}/bin/x86_64-w64-mingw32-g++.exe")
@@ -87,6 +115,52 @@ get_property(_CMAKE_IN_TRY_COMPILE GLOBAL PROPERTY IN_TRY_COMPILE)
 
 # The following flags come from 'PORT' files (i.e., build config files for packages)
 if(NOT _CMAKE_IN_TRY_COMPILE)
+
+    if(NOT DEFINED LDFLAGS)
+        set(LDFLAGS)
+    endif()
+    string(APPEND LDFLAGS "-pipe ")
+    string(STRIP "${LDFLAGS}" LDFLAGS)
+    set(ENV{LDFLAGS} "${LDFLAGS}")
+    unset(LDFLAGS)
+    message(STATUS "LDFLAGS = $ENV{LDFLAGS}")
+
+    if(NOT DEFINED CFLAGS)
+        set(CFLAGS) # Start a new list, if one doesn't exists
+    endif()
+    string(APPEND CFLAGS "-march=nocona ")
+    string(APPEND CFLAGS "-msahf ")
+    string(APPEND CFLAGS "-mtune=generic ")
+    string(APPEND CFLAGS "-pipe ")
+    string(APPEND CFLAGS "-Wp,-D_FORTIFY_SOURCE=2 ")
+    string(APPEND CFLAGS "-fstack-protector-strong ")
+    string(STRIP "${CFLAGS}" CFLAGS)
+    set(ENV{CFLAGS} "${CFLAGS}")
+    unset(CFLAGS)
+    message(STATUS "CFLAGS = $ENV{CFLAGS}")
+
+    if(NOT DEFINED CXXFLAGS)
+        set(CXXFLAGS)
+    endif()
+    string(APPEND CXXFLAGS "-march=nocona ")
+    string(APPEND CXXFLAGS "-msahf ")
+    string(APPEND CXXFLAGS "-mtune=generic ")
+    # string(APPEND CXXFLAGS "-std=") # STD version
+    # string(APPEND CXXFLAGS "-stdlib=") # STD lib
+    string(APPEND CXXFLAGS "-pipe ")
+    string(STRIP "${CXXFLAGS}" CXXFLAGS)
+    set(ENV{CXXFLAGS} "${CXXFLAGS}")
+    unset(CXXFLAGS)
+    message(STATUS "CXXFLAGS = $ENV{CXXFLAGS}")
+
+    if(NOT DEFINED CPPFLAGS)
+        set(CPPFLAGS)
+    endif()
+    string(APPEND CPPFLAGS "-D__USE_MINGW_ANSI_STDIO=1 ")
+    string(STRIP "${CPPFLAGS}" CPPFLAGS)
+    set(ENV{CPPFLAGS} "${CPPFLAGS}")
+    unset(CPPFLAGS)
+    message(STATUS "CPPFLAGS = $ENV{CPPFLAGS}")
 
     string(APPEND CMAKE_C_FLAGS_INIT                        " ${MSYS_C_FLAGS} ")
     string(APPEND CMAKE_C_FLAGS_DEBUG_INIT                  " ${MSYS_C_FLAGS_DEBUG} ")
@@ -237,3 +311,5 @@ endif()
 # set(CMAKE_OBJCXX_IMPLICIT_LINK_LIBRARIES "mingw32;gcc;moldname;mingwex;kernel32;pthread;advapi32;shell32;user32;kernel32;mingw32;gcc;moldname;mingwex;kernel32")
 # set(CMAKE_OBJCXX_IMPLICIT_LINK_DIRECTORIES "C:/msys64/ucrt64/lib/gcc/x86_64-w64-mingw32/13.1.0;C:/msys64/ucrt64/lib/gcc;C:/msys64/ucrt64/x86_64-w64-mingw32/lib;C:/msys64/ucrt64/lib")
 # set(CMAKE_OBJCXX_IMPLICIT_LINK_FRAMEWORK_DIRECTORIES "")
+
+message(STATUS "Exit: ${CMAKE_CURRENT_LIST_FILE}")
