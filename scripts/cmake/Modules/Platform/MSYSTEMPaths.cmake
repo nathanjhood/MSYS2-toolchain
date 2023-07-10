@@ -11,12 +11,20 @@ if(__MSYSTEM_PATHS_INCLUDED)
 endif()
 set(__MSYSTEM_PATHS_INCLUDED 1)
 
-# message(WARNING "ping")
 
-#set(UNIX 1) # Don't set 'UNIX' for MinGW!!! ;)
+# unset(UNIX) # Don't set 'UNIX' for MinGW!!! ;)
 set(MINGW 1) # ``True`` when using MinGW
 set(WIN32 1) # Set to ``True`` when the target system is Windows, including Win64.
 
+
+if(NOT DEFINED CMAKE_SYSTEM_PREFIX_PATH)
+    set(CMAKE_SYSTEM_PREFIX_PATH)
+endif()
+# # also add the install directory of the running cmake to the search directories
+# # CMAKE_ROOT is CMAKE_INSTALL_PREFIX/share/cmake, so we need to go two levels up
+# get_filename_component(_CMAKE_INSTALL_DIR "${CMAKE_ROOT}" PATH)
+# get_filename_component(_CMAKE_INSTALL_DIR "${_CMAKE_INSTALL_DIR}" PATH)
+# list(APPEND CMAKE_SYSTEM_PREFIX_PATH "${_CMAKE_INSTALL_DIR}")
 
 # Reminder when adding new locations computed from environment variables
 # please make sure to keep Help/variable/CMAKE_SYSTEM_PREFIX_PATH.rst
@@ -27,10 +35,10 @@ list(APPEND CMAKE_SYSTEM_PREFIX_PATH
     "${MSYS_PATH}"
 
     # CMake install location
-    "${_CMAKE_INSTALL_DIR}"
+    #"${_CMAKE_INSTALL_DIR}"
 )
 
-if (NOT CMAKE_FIND_NO_INSTALL_PREFIX) # Add other locations.
+if(NOT CMAKE_FIND_NO_INSTALL_PREFIX) # Add other locations.
     list(APPEND CMAKE_SYSTEM_PREFIX_PATH "${CMAKE_INSTALL_PREFIX}") # Project install destination.
     if(CMAKE_STAGING_PREFIX)
         list(APPEND CMAKE_SYSTEM_PREFIX_PATH "${CMAKE_STAGING_PREFIX}") # User-supplied staging prefix.
@@ -43,7 +51,8 @@ if(CMAKE_CROSSCOMPILING AND NOT CMAKE_HOST_SYSTEM_NAME MATCHES "Windows")
     list(APPEND CMAKE_SYSTEM_PREFIX_PATH /)
 endif()
 
-list(APPEND CMAKE_SYSTEM_INCLUDE_PATH)
+# list(APPEND CMAKE_SYSTEM_INCLUDE_PATH)
+
 
 # mingw can also link against dlls which can also be in '/bin', so list this too
 if (NOT CMAKE_FIND_NO_INSTALL_PREFIX)
@@ -52,11 +61,9 @@ if (NOT CMAKE_FIND_NO_INSTALL_PREFIX)
         list(APPEND CMAKE_SYSTEM_LIBRARY_PATH "${CMAKE_STAGING_PREFIX}/bin")
     endif()
 endif()
-list(APPEND CMAKE_SYSTEM_LIBRARY_PATH "${_CMAKE_INSTALL_DIR}/bin")
-list(APPEND CMAKE_SYSTEM_LIBRARY_PATH /bin)
-
-list(APPEND CMAKE_SYSTEM_PROGRAM_PATH)
-
+# list(APPEND CMAKE_SYSTEM_LIBRARY_PATH "${_CMAKE_INSTALL_DIR}/bin")
+# list(APPEND CMAKE_SYSTEM_LIBRARY_PATH /bin)
+# list(APPEND CMAKE_SYSTEM_PROGRAM_PATH)
 
 # # Non "standard" but common install prefixes
 # list(APPEND CMAKE_SYSTEM_PREFIX_PATH
