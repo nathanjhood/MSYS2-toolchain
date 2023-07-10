@@ -69,16 +69,17 @@ if(DEFINED MSYS_DXSDK_DIR) # This should probably be some sort of 'COMPATIBILITY
     list(APPEND CMAKE_SYSTEM_PREFIX_PATH "${MSYS_DXSDK_DIR}")
 endif()
 
-# List common include file locations not under the common prefixes.
-list(APPEND CMAKE_SYSTEM_INCLUDE_PATH
-    # X11
-    "${Z_${MSYSTEM}_ROOT_DIR}/usr/include/X11"
-)
-
-list(APPEND CMAKE_SYSTEM_LIBRARY_PATH
-    # X11
-    "${Z_${MSYSTEM}_ROOT_DIR}/usr/lib/X11"
-)
+option(OPTION_ENABLE_X11 "Adds '/include/X11' to 'CMAKE_SYSTEM_INCLUDE_PATH', and '/lib/X11' to 'CMAKE_SYSTEM_LIBRARY_PATH' for lookup." ON)
+if(OPTION_ENABLE_X11)
+    list(APPEND CMAKE_SYSTEM_INCLUDE_PATH
+        # X11
+        "${Z_${MSYSTEM}_ROOT_DIR}/include/X11"
+    )
+    list(APPEND CMAKE_SYSTEM_LIBRARY_PATH
+        # X11
+        "${Z_${MSYSTEM}_ROOT_DIR}/lib/X11"
+    )
+endif()
 
 list(APPEND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES
     "${Z_${MSYSTEM}_ROOT_DIR}/lib"
