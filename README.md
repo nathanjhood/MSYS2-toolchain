@@ -184,6 +184,12 @@ If set to 'ON', the paths under the calling environment's 'PATH' variable will b
 
 Accepts a Boolean value. Defaults to "<b>OFF</b>".
 
+## <b>OPTION_ENABLE_X11</b>
+
+Adds '\<msystemRoot\>/include/X11' to 'CMAKE_SYSTEM_INCLUDE_PATH', and '\<msystemRoot\>/lib/X11' 'to CMAKE_SYSTEM_LIBRARY_PATH' for lookup.
+
+Accepts a Boolean value. Defaults to "<b>OFF</b>".
+
 ## <b>OPTION_USE_DSX_BINUTILS</b> (coming soon!)
 
 Also very much worth noting is that several sub-systems offer "DSX-compatibility" GNU Bin Utils, located various differently-named directories here and there. It seems at least a fun idea to leverage a ```cmake_option(OPTION_USE_DSX_BINUTILS)``` or similar, which likewise would favour these directories during file lookups for the tools in question. Again, this is actually all *pretty much* made possible, in fact quite easy, in CMake's design. Currently there are so very many features, permutations, varieties across the entire project that this concept hasn't yet been explored further, but stay tuned.
