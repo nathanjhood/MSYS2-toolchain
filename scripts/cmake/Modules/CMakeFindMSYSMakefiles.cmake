@@ -1,6 +1,9 @@
 # Distributed under the OSI-approved BSD 3-Clause License.  See accompanying
 # file Copyright.txt or https://cmake.org/licensing for details.
-message(STATUS "Enter: ${CMAKE_CURRENT_LIST_FILE}")
+
+if(TRACE_MODE)
+    message("Enter: ${CMAKE_CURRENT_LIST_FILE}")
+endif()
 
 if(NOT _MSYSTEM_MAKEFILE_GENERATOR)
 set(_MSYSTEM_MAKEFILE_GENERATOR 1) # include guard
@@ -8,6 +11,7 @@ set(_MSYSTEM_MAKEFILE_GENERATOR 1) # include guard
 message(STATUS "Loading ${CONTITLE} Makefile generator...")
 
 if(MINGW)
+
     find_program(MAKE "mingw32-make.exe"
     PATHS
     # # Typical install path for 64-bit MSYS2 MINGW64 toolchain (https://repo.msys2.org/distrib/msys2-x86_64-latest.sfx.exe)
@@ -18,7 +22,12 @@ if(MINGW)
     REQUIRED
     DOC "Makefile generator."
 )
+    if(NOT MAKE)
+        message(FATAL_ERROR "Getting ${Z_${MSYSTEM}_ROOT_DIR}/bin/mingw32-make.exe failed")
+    endif()
+
 elseif(MSYS)
+
     find_program(MAKE "make.exe"
     PATHS
     # # Typical install path for 64-bit MSYS2 MINGW64 toolchain (https://repo.msys2.org/distrib/msys2-x86_64-latest.sfx.exe)
@@ -29,18 +38,29 @@ elseif(MSYS)
     REQUIRED
     DOC "Makefile generator."
 )
+    if(NOT MAKE)
+        message(FATAL_ERROR "Getting ${Z_MSYS_ROOT_DIR}/usr/bin/make.exe failed")
+    endif()
+# else()
+#     message(FATAL_ERROR "We shouldnt be here now")
 endif()
 
 if(MAKE)
     mark_as_advanced(MAKE)
 
-    set(CMAKE_VERBOSE_MAKEFILE FALSE CACHE BOOL "If this value is on, makefiles will be generated without the .SILENT directive, and all commands will be echoed to the console during the make.  This is useful for debugging only. With Visual Studio IDE projects all commands are done without /nologo.")
+    if(NOT DEFINED CMAKE_VERBOSE_MAKEFILE)
+        set(CMAKE_VERBOSE_MAKEFILE FALSE CACHE BOOL "If this value is on, makefiles will be generated without the .SILENT directive, and all commands will be echoed to the console during the make.  This is useful for debugging only. With Visual Studio IDE projects all commands are done without /nologo.")
+    endif()
 
-    set(CMAKE_EXPORT_COMPILE_COMMANDS "$ENV{CMAKE_EXPORT_COMPILE_COMMANDS}" CACHE BOOL "Enable/Disable output of compile commands during generation.")
-    mark_as_advanced(CMAKE_EXPORT_COMPILE_COMMANDS)
+    if(NOT DEFINED CMAKE_EXPORT_COMPILE_COMMANDS)
+        set(CMAKE_EXPORT_COMPILE_COMMANDS "$ENV{CMAKE_EXPORT_COMPILE_COMMANDS}" CACHE BOOL "Enable/Disable output of compile commands during generation.")
+        mark_as_advanced(CMAKE_EXPORT_COMPILE_COMMANDS)
+    endif()
 
-    if(DEFINED ENV{CMAKE_COLOR_DIAGNOSTICS} AND NOT DEFINED CACHE{CMAKE_COLOR_DIAGNOSTICS})
-    set(CMAKE_COLOR_DIAGNOSTICS $ENV{CMAKE_COLOR_DIAGNOSTICS} CACHE BOOL "Enable colored diagnostics throughout.")
+    if(NOT DEFINED CMAKE_COLOR_DIAGNOSTICS)
+        if(DEFINED ENV{CMAKE_COLOR_DIAGNOSTICS} AND NOT DEFINED CACHE{CMAKE_COLOR_DIAGNOSTICS})
+        set(CMAKE_COLOR_DIAGNOSTICS $ENV{CMAKE_COLOR_DIAGNOSTICS} CACHE BOOL "Enable colored diagnostics throughout.")
+        endif()
     endif()
 
     if(NOT DEFINED CMAKE_COLOR_DIAGNOSTICS)
@@ -77,11 +97,11 @@ if(MAKE)
     endif()
 
     string(STRIP "${MAKEFLAGS}" MAKEFLAGS)
-    set(MAKEFLAGS "${MAKEFLAGS}") # CACHE STRING "" FORCE)
+    set(MAKEFLAGS "${MAKEFLAGS}")
     set(ENV{MAKEFLAGS} "${MAKEFLAGS}")
 
 
-    set(MAKE_COMMAND "${MAKE} ${MAKEFLAGS}") # CACHE STRING "" FORCE)
+    set(MAKE_COMMAND "${MAKE} ${MAKEFLAGS}")
     mark_as_advanced(MAKE_COMMAND)
 
     set(CMAKE_EXTRA_GENERATOR "${MAKE}")
@@ -99,4 +119,6 @@ endif()
 
 endif(NOT _MSYSTEM_MAKEFILE_GENERATOR) # Include guard
 
-message(STATUS "Exit: ${CMAKE_CURRENT_LIST_FILE}")
+if(TRACE_MODE)
+    message("Exit: ${CMAKE_CURRENT_LIST_FILE}")
+endif()
