@@ -21,8 +21,6 @@ elseif(MSYS_TARGET_ARCHITECTURE STREQUAL "arm")
 elseif(MSYS_TARGET_ARCHITECTURE STREQUAL "arm64")
     set(CMAKE_SYSTEM_PROCESSOR aarch64 CACHE STRING "When not cross-compiling, this variable has the same value as the ``CMAKE_HOST_SYSTEM_PROCESSOR`` variable.")
 endif()
-#set(CMAKE_SYSTEM_PROCESSOR "x86_64" CACHE STRING "When not cross-compiling, this variable has the same value as the ``CMAKE_HOST_SYSTEM_PROCESSOR`` variable." FORCE) # include(Platform/${CMAKE_EFFECTIVE_SYSTEM_NAME}-${CMAKE_CXX_COMPILER_ID}-CXX-${CMAKE_SYSTEM_PROCESSOR} OPTIONAL RESULT_VARIABLE _INCLUDED_FILE)                             #CACHE STRING "When not cross-compiling, this variable has the same value as the ``CMAKE_HOST_SYSTEM_PROCESSOR`` variable." FORCE)
-
 
 # Detect <Z_MSYS_ROOT_DIR>/ucrt64.ini to figure UCRT64_ROOT_DIR
 set(Z_UCRT64_ROOT_DIR_CANDIDATE "${CMAKE_CURRENT_LIST_DIR}")
@@ -43,63 +41,132 @@ while(NOT DEFINED Z_UCRT64_ROOT_DIR)
 endwhile()
 unset(Z_UCRT64_ROOT_DIR_CANDIDATE)
 
-find_program(CC "${Z_UCRT64_ROOT_DIR}/bin/x86_64-w64-mingw32-gcc.exe")
-if(CC)
-    mark_as_advanced(CC)
-    set(ENV{CC} "${CC}")
-else()
-    unset(CC)
-endif()
-
-find_program(CXX "${Z_UCRT64_ROOT_DIR}/bin/x86_64-w64-mingw32-g++.exe")
-if(CXX)
-    mark_as_advanced(CXX)
-    set(ENV{CXX} "${CXX}")
-else()
-    unset(CXX)
-endif()
-
 foreach(lang C CXX) # ASM Fortran OBJC OBJCXX
 
     set(CMAKE_${lang}_COMPILER_TARGET "x86_64-w64-mingw32" CACHE STRING "The target for cross-compiling, if supported. '--target=x86_64-w64-mingw32'")
 
 endforeach()
+    # -std=<value>                Language standard to compile for
+    # -stdlib++-isystem <directory> Use directory as the C++ standard library include path
+    # -stdlib=<value>             C++ standard library to use
+    # -rtlib=<value>              Compiler runtime library to use
+    # -shared-libsan              Dynamically link the sanitizer runtime
+    # -static-libsan              Statically link the sanitizer runtime
 
+    # -Wa,<options>               Pass comma-separated <options> on to the assembler.
+    # -Wp,<options>               Pass comma-separated <options> on to the preprocessor.
+    # -Wl,<options>               Pass comma-separated <options> on to the linker.
 
-# #"C:\msys64\ucrt64\bin\x86_64-w64-mingw32-gfortran.exe"
-# find_program(CMAKE_C_COMPILER "${Z_UCRT64_ROOT_DIR}/bin/x86_64-w64-mingw32-gcc.exe")
-# mark_as_advanced(CMAKE_C_COMPILER)
+    # -Xassembler <arg>           Pass <arg> on to the assembler.
+    # -Xpreprocessor <arg>        Pass <arg> on to the preprocessor.
+    # -Xlinker <arg>              Pass <arg> on to the linker.
 
-if(NOT DEFINED CMAKE_C_COMPILER)
-    if(ENV{CC})
-        find_program(CMAKE_C_COMPILER "$ENV{CC}")
-    else()
-        find_program(CMAKE_C_COMPILER "${Z_UCRT64_ROOT_DIR}/bin/x86_64-w64-mingw32-gcc.exe")
-    endif()
-    mark_as_advanced(CMAKE_C_COMPILER)
-endif()
+    # -save-temps                 Do not delete intermediate files.
+    # -save-temps=<arg>           Do not delete intermediate files.
+
+    # -pipe                       Use pipes rather than intermediate files.
+    # -time                       Time the execution of each subprocess.
+    # -specs=<file>               Override built-in specs with the contents of <file>.
+    # -std=<standard>             Assume that the input sources are for <standard>.
+    # --sysroot=<directory>       Use <directory> as the root directory for headers and libraries.
+    # -B <directory>              Add <directory> to the compiler's search paths.
+    # -v                          Display the programs invoked by the compiler.
+    # -###                        Like -v but options quoted and commands not executed.
+    # -E                          Preprocess only; do not compile, assemble or link.
+    # -S                          Compile only; do not assemble or link.
+    # -c                          Compile and assemble, but do not link.
+    # -o <file>                   Place the output into <file>.
+    # -pie                        Create a dynamically linked position independent executable.
+    # -shared                     Create a shared library.
+
+    # -x <language>               Specify the language of the following input files.
+    #                             Permissible languages include: c c++ assembler none
+    #                             'none' means revert to the default behavior of
+    #                             guessing the language based on the file's extension.
+
+    # --extra-warnings            Same as -Wextra.
+    # --pedantic-errors           Same as -pedantic-errors.
+
+    # -fpic                       Generate position-independent code if possible (small mode).
+    # -fPIC                       Generate position-independent code if possible (large mode).
+    # -fpie                       Generate position-independent code for executables if possible (small mode).
+    # -fPIE                       Generate position-independent code for executables if possible (large mode).
+    # -fplt                       Use PLT for PIC calls (-fno-plt: load the address from GOT at call site).
+
+    # -O<number>                  Set optimization level to <number>.
+    # -Ofast                      Optimize for speed disregarding exact standards compliance.
+    # -Og                         Optimize for debugging experience rather than speed or size.
+    # -Os                         Optimize for space rather than speed.
+    # -Oz                         Optimize for space aggressively rather than speed.
+
+    # -gtoggle                    Toggle debug information generation.
+    # -g                          Generate debug information in default format.
+    # -ggdb                       Generate debug information in default extended format.
+    # -gbtf                       Generate BTF debug information at default level.
+    # -gcodeview                  Generate debug information in CodeView format.
+    # -gctf                       Generate CTF debug information at default level.
+    # -gvms                       Generate debug information in VMS format.
+
+    # -gdwarf                     Generate debug information in default version of DWARF format.
+    # -gdwarf-                    Generate debug information in DWARF v2 (or later) format.
+    # -gdwarf32                   Use 32-bit DWARF format when emitting DWARF debug information.
+    # -gdwarf64                   Use 64-bit DWARF format when emitting DWARF debug information.
+    # -gpubnames                  Generate DWARF pubnames and pubtypes sections.
+    # -ggnu-pubnames              Generate DWARF pubnames and pubtypes sections with GNU extensions.
+    # -gno-pubnames               Don't generate DWARF pubnames and pubtypes sections.
+    # -gstrict-dwarf              Don't emit DWARF additions beyond selected version.
+    # -gsplit-dwarf               Generate debug information in separate .dwo files.
+
+    # -fdbg-cnt-list              List all available debugging counters with their limits and counts.
+    # -fdbg-cnt=<counter>[:<lower_limit1>-]<upper_limit1>[:<lower_limit2>-<upper_limit2>:...][,<counter>:...] Set the debug counter limit.
+    # -fdebug-prefix-map=<old>=<new> Map one directory name to another in debug information.
+    # -fdebug-types-section       Output .debug_types section when using DWARF v4 debuginfo.
+
+    # -gz                         Generate compressed debug sections.
+    # -gz=<format>                Generate compressed debug sections in format <format>.
+
+    # -fuse-ld=bfd                Use the bfd linker instead of the default linker.
+    # -fuse-ld=gold               Use the gold linker instead of the default linker.
+    # -fuse-ld=lld                Use the lld LLVM linker instead of the default linker.
+    # -fuse-ld=mold               Use the Modern linker (MOLD) linker instead of the default linker.
+
+    # -flto                       Enable link-time optimization.
+    # -flto-compression-level=<0,19> Use zlib/zstd compression level <number> for IL.
+    # -flto-odr-type-merging      Does nothing.  Preserved for backward compatibility.
+    # -flto-partition=            Specify the algorithm to partition symbols and vars at linktime.
+    # -flto-repor                 Report various link-time optimization statistics.
+    # -flto-report-wpa            Report various link-time optimization statistics for WPA only.
+    # -flto=                      Link-time optimization with number of parallel jobs or jobserver.
+
+    # -fstack-protector-all       Enable stack protectors for all functions
+    # -fstack-protector-strong    Enable stack protectors for some functions vulnerable to stack smashing. Compared to -fstack-protector, this uses a stronger heuristic that includes functions containing arrays of any size (and any type), as well as any calls to alloca or the taking of an address from a local variable
+    # -fstack-protector           Enable stack protectors for some functions vulnerable to stack smashing. This uses a loose heuristic which considers functions vulnerable if they contain a char (or 8bit integer) array or constant sized calls to alloca, which are of greater size than ssp-buffer-size (default: 8 bytes). All variable sized calls to alloca are considered vulnerable
+
+find_program(CMAKE_C_COMPILER "${Z_UCRT64_ROOT_DIR}/bin/x86_64-w64-mingw32-gcc.exe")
+mark_as_advanced(CMAKE_C_COMPILER)
+
 
 #"C:\msys64\ucrt64\bin\x86_64-w64-mingw32-gfortran.exe"
 find_program(CMAKE_CXX_COMPILER "${Z_UCRT64_ROOT_DIR}/bin/x86_64-w64-mingw32-g++.exe")
 mark_as_advanced(CMAKE_CXX_COMPILER)
 
-# #"C:\msys64\ucrt64\bin\x86_64-w64-mingw32-gfortran.exe"
-# find_program(CMAKE_Fortran_COMPILER "${Z_UCRT64_ROOT_DIR}/bin/x86_64-w64-mingw32-gfortran.exe")
-# mark_as_advanced(CMAKE_Fortran_COMPILER)
+#"C:\msys64\ucrt64\bin\x86_64-w64-mingw32-gfortran.exe"
+find_program(CMAKE_Fortran_COMPILER "${Z_UCRT64_ROOT_DIR}/bin/x86_64-w64-mingw32-gfortran.exe")
+mark_as_advanced(CMAKE_Fortran_COMPILER)
 
-# #"C:\msys64\ucrt64\bin\x86_64-w64-mingw32-gfortran.exe"
-# find_program(CMAKE_OBJCXX_COMPILER "${Z_UCRT64_ROOT_DIR}/bin/x86_64-w64-mingw32-gcc.exe")
-# mark_as_advanced(CMAKE_OBJC_COMPILER)
+#"C:\msys64\ucrt64\bin\x86_64-w64-mingw32-gfortran.exe"
+find_program(CMAKE_OBJC_COMPILER "${Z_UCRT64_ROOT_DIR}/bin/x86_64-w64-mingw32-gcc.exe")
+mark_as_advanced(CMAKE_OBJC_COMPILER)
 
-# #"C:\msys64\ucrt64\bin\x86_64-w64-mingw32-gfortran.exe"
-# find_program(CMAKE_OBJCXX_COMPILER "${Z_UCRT64_ROOT_DIR}/bin/x86_64-w64-mingw32-g++.exe")
-# mark_as_advanced(CMAKE_OBJCXX_COMPILER)
+#"C:\msys64\ucrt64\bin\x86_64-w64-mingw32-gfortran.exe"
+find_program(CMAKE_OBJCXX_COMPILER "${Z_UCRT64_ROOT_DIR}/bin/x86_64-w64-mingw32-g++.exe")
+mark_as_advanced(CMAKE_OBJCXX_COMPILER)
 
-# #"C:\msys64\ucrt64\bin\x86_64-w64-mingw32-gfortran.exe"
-# if(NOT DEFINED CMAKE_ASM_COMPILER)
-#     find_program(CMAKE_ASM_COMPILER "${Z_UCRT64_ROOT_DIR}/bin/as.exe")
-#     mark_as_advanced(CMAKE_ASM_COMPILER)
-# endif()
+#"C:\msys64\ucrt64\bin\x86_64-w64-mingw32-gfortran.exe"
+if(NOT DEFINED CMAKE_ASM_COMPILER)
+    find_program(CMAKE_ASM_COMPILER "${Z_UCRT64_ROOT_DIR}/bin/as.exe")
+    mark_as_advanced(CMAKE_ASM_COMPILER)
+endif()
 
 #"C:\msys64\ucrt64\bin\x86_64-w64-mingw32-gfortran.exe"
 find_program(CMAKE_RC_COMPILER "${Z_UCRT64_ROOT_DIR}/bin/windres.exe")
@@ -119,7 +186,7 @@ if(NOT _CMAKE_IN_TRY_COMPILE)
     if(NOT DEFINED LDFLAGS)
         set(LDFLAGS)
     endif()
-    string(APPEND LDFLAGS "-pipe ")
+    string(APPEND LDFLAGS "-pipe ") # Use pipes rather than intermediate files.
     string(STRIP "${LDFLAGS}" LDFLAGS)
     set(ENV{LDFLAGS} "${LDFLAGS}")
     unset(LDFLAGS)
@@ -131,7 +198,7 @@ if(NOT _CMAKE_IN_TRY_COMPILE)
     string(APPEND CFLAGS "-march=nocona ")
     string(APPEND CFLAGS "-msahf ")
     string(APPEND CFLAGS "-mtune=generic ")
-    string(APPEND CFLAGS "-pipe ")
+    string(APPEND CFLAGS "-pipe ") # Use pipes rather than intermediate files.
     string(APPEND CFLAGS "-Wp,-D_FORTIFY_SOURCE=2 ")
     string(APPEND CFLAGS "-fstack-protector-strong ")
     string(STRIP "${CFLAGS}" CFLAGS)
@@ -174,29 +241,29 @@ if(NOT _CMAKE_IN_TRY_COMPILE)
     string(APPEND CMAKE_CXX_FLAGS_MINSIZEREL_INIT           " ${MSYS_CXX_FLAGS_MINSIZEREL} ")
     string(APPEND CMAKE_CXX_FLAGS_RELWITHDEBINFO_INIT       " ${MSYS_CXX_FLAGS_RELWITHDEBINFO} ")
 
-    # string(APPEND CMAKE_ASM_FLAGS_INIT                      " ${MSYS_ASM_FLAGS} ")
-    # string(APPEND CMAKE_ASM_FLAGS_DEBUG_INIT                " ${MSYS_ASM_FLAGS_DEBUG} ")
-    # string(APPEND CMAKE_ASM_FLAGS_RELEASE_INIT              " ${MSYS_ASM_FLAGS_RELEASE} ")
-    # string(APPEND CMAKE_ASM_FLAGS_MINSIZEREL_INIT           " ${MSYS_ASM_FLAGS_MINSIZEREL} ")
-    # string(APPEND CMAKE_ASM_FLAGS_RELWITHDEBINFO_INIT       " ${MSYS_ASM_FLAGS_RELWITHDEBINFO} ")
+    string(APPEND CMAKE_ASM_FLAGS_INIT                      " ${MSYS_ASM_FLAGS} ")
+    string(APPEND CMAKE_ASM_FLAGS_DEBUG_INIT                " ${MSYS_ASM_FLAGS_DEBUG} ")
+    string(APPEND CMAKE_ASM_FLAGS_RELEASE_INIT              " ${MSYS_ASM_FLAGS_RELEASE} ")
+    string(APPEND CMAKE_ASM_FLAGS_MINSIZEREL_INIT           " ${MSYS_ASM_FLAGS_MINSIZEREL} ")
+    string(APPEND CMAKE_ASM_FLAGS_RELWITHDEBINFO_INIT       " ${MSYS_ASM_FLAGS_RELWITHDEBINFO} ")
 
-    # string(APPEND CMAKE_Fortran_FLAGS_INIT                  " ${MSYS_Fortran_FLAGS} ")
-    # string(APPEND CMAKE_Fortran_FLAGS_DEBUG_INIT            " ${MSYS_Fortran_FLAGS_DEBUG} ")
-    # string(APPEND CMAKE_Fortran_FLAGS_RELEASE_INIT          " ${MSYS_Fortran_FLAGS_RELEASE} ")
-    # string(APPEND CMAKE_Fortran_FLAGS_MINSIZEREL_INIT       " ${MSYS_Fortran_FLAGS_MINSIZEREL} ")
-    # string(APPEND CMAKE_Fortran_FLAGS_RELWITHDEBINFO_INIT   " ${MSYS_Fortran_FLAGS_RELWITHDEBINFO} ")
+    string(APPEND CMAKE_Fortran_FLAGS_INIT                  " ${MSYS_Fortran_FLAGS} ")
+    string(APPEND CMAKE_Fortran_FLAGS_DEBUG_INIT            " ${MSYS_Fortran_FLAGS_DEBUG} ")
+    string(APPEND CMAKE_Fortran_FLAGS_RELEASE_INIT          " ${MSYS_Fortran_FLAGS_RELEASE} ")
+    string(APPEND CMAKE_Fortran_FLAGS_MINSIZEREL_INIT       " ${MSYS_Fortran_FLAGS_MINSIZEREL} ")
+    string(APPEND CMAKE_Fortran_FLAGS_RELWITHDEBINFO_INIT   " ${MSYS_Fortran_FLAGS_RELWITHDEBINFO} ")
 
-    # string(APPEND CMAKE_OBJC_FLAGS_INIT                     " ${MSYS_OBJC_FLAGS} ")
-    # string(APPEND CMAKE_OBJC_FLAGS_DEBUG_INIT               " ${MSYS_OBJC_FLAGS_DEBUG} ")
-    # string(APPEND CMAKE_OBJC_FLAGS_RELEASE_INIT             " ${MSYS_OBJC_FLAGS_RELEASE} ")
-    # string(APPEND CMAKE_OBJC_FLAGS_MINSIZEREL_INIT          " ${MSYS_OBJC_FLAGS_MINSIZEREL} ")
-    # string(APPEND CMAKE_OBJC_FLAGS_RELWITHDEBINFO_INIT      " ${MSYS_OBJC_FLAGS_RELWITHDEBINFO} ")
+    string(APPEND CMAKE_OBJC_FLAGS_INIT                     " ${MSYS_OBJC_FLAGS} ")
+    string(APPEND CMAKE_OBJC_FLAGS_DEBUG_INIT               " ${MSYS_OBJC_FLAGS_DEBUG} ")
+    string(APPEND CMAKE_OBJC_FLAGS_RELEASE_INIT             " ${MSYS_OBJC_FLAGS_RELEASE} ")
+    string(APPEND CMAKE_OBJC_FLAGS_MINSIZEREL_INIT          " ${MSYS_OBJC_FLAGS_MINSIZEREL} ")
+    string(APPEND CMAKE_OBJC_FLAGS_RELWITHDEBINFO_INIT      " ${MSYS_OBJC_FLAGS_RELWITHDEBINFO} ")
 
-    # string(APPEND CMAKE_OBJCXX_FLAGS_INIT                   " ${MSYS_OBJCXX_FLAGS} ")
-    # string(APPEND CMAKE_OBJCXX_FLAGS_DEBUG_INIT             " ${MSYS_OBJCXX_FLAGS_DEBUG} ")
-    # string(APPEND CMAKE_OBJCXX_FLAGS_RELEASE_INIT           " ${MSYS_OBJCXX_FLAGS_RELEASE} ")
-    # string(APPEND CMAKE_OBJCXX_FLAGS_MINSIZEREL_INIT        " ${MSYS_OBJCXX_FLAGS_MINSIZEREL} ")
-    # string(APPEND CMAKE_OBJCXX_FLAGS_RELWITHDEBINFO_INIT    " ${MSYS_OBJCXX_FLAGS_RELWITHDEBINFO} ")
+    string(APPEND CMAKE_OBJCXX_FLAGS_INIT                   " ${MSYS_OBJCXX_FLAGS} ")
+    string(APPEND CMAKE_OBJCXX_FLAGS_DEBUG_INIT             " ${MSYS_OBJCXX_FLAGS_DEBUG} ")
+    string(APPEND CMAKE_OBJCXX_FLAGS_RELEASE_INIT           " ${MSYS_OBJCXX_FLAGS_RELEASE} ")
+    string(APPEND CMAKE_OBJCXX_FLAGS_MINSIZEREL_INIT        " ${MSYS_OBJCXX_FLAGS_MINSIZEREL} ")
+    string(APPEND CMAKE_OBJCXX_FLAGS_RELWITHDEBINFO_INIT    " ${MSYS_OBJCXX_FLAGS_RELWITHDEBINFO} ")
 
     string(APPEND CMAKE_RC_FLAGS_INIT                       " ${MSYS_RC_FLAGS} ")
     string(APPEND CMAKE_RC_FLAGS_DEBUG_INIT                 " ${MSYS_RC_FLAGS_DEBUG} ")
