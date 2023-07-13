@@ -6,6 +6,8 @@
 
 # message("Reading MSYS.cmake from the top...")
 
+#set(CMAKE_TOOLCHAIN_FILE "${CMAKE_CURRENT_LIST_FILE}" CACHE STRING "" FORCE)
+
 # Mark variables as used so cmake doesn't complain about them
 mark_as_advanced(CMAKE_TOOLCHAIN_FILE)
 
@@ -51,29 +53,17 @@ endif()
 cmake_policy(PUSH)
 cmake_policy(VERSION 3.7.2)
 
-include(CMakeDependentOption)
+if(MSYS_TOOLCHAIN)
+    # message("Leaving MSYS.cmake at ${CMAKE_CURRENT_LIST_LINE}")
+    cmake_policy(POP)
+    return()
+endif()
 
+message(STATUS "Msys2 Build system loading...")
 # message("Reading MSYS.cmake from ${CMAKE_CURRENT_LIST_LINE}")
 
-# set(TOOLCHAIN_LIST)
-# list(APPEND TOOLCHAIN_LIST "x86_64-pc-windows-msys") # (usr)
-# list(APPEND TOOLCHAIN_LIST "x86_64-w64-windows-gnu") # (clang64)
-# list(APPEND TOOLCHAIN_LIST "i686-w64-mingw32") # (opt)
-# list(APPEND TOOLCHAIN_LIST "x86_64-w64-mingw32") # (opt)
-# list(APPEND TOOLCHAIN_LIST "x86_64-pc-msys") # (usr)
-# list(APPEND TOOLCHAIN_LIST "x86_64-w64-mingw32") # (mingw64)
-# list(APPEND TOOLCHAIN_LIST "x86_64-w64-mingw32") # (ucrt64)
+include(CMakeDependentOption)
 
-# Prevents multiple inclusions...
-# if(MSYS_TOOLCHAIN)
-#     # message("Leaving MSYS.cmake at ${CMAKE_CURRENT_LIST_LINE}")
-#     cmake_policy(POP)
-#     return()
-# endif()
-
-# if(DEFINED MSYSTEM)
-#     set(MSYSTEM "${MSYSTEM}" CACHE STRING "<MSYSTEM>" FORCE)
-# endif()
 
 # MSYS toolchain options.
 if(DEFINED ENV{VERBOSE})
@@ -82,8 +72,6 @@ endif()
 option(MSYS_VERBOSE "Enables messages from the MSYS toolchain for debugging purposes." ON)
 mark_as_advanced(MSYS_VERBOSE)
 
-message(STATUS "Msys2 Build system loading...")
-
 if(MSYS_VERBOSE)
     set(CMAKE_VERBOSE_MAKEFILE ON CACHE BOOL "Enable verbose output from Makefile builds." FORCE)
 endif()
@@ -91,7 +79,7 @@ endif()
 option(MSYS_APPLOCAL_DEPS "Automatically copy dependencies into the output directory for executables." ON)
 option(X_MSYS_APPLOCAL_DEPS_INSTALL "(experimental) Automatically copy dependencies into the install target directory for executables. Requires CMake 3.14." OFF)
 option(X_MSYS_APPLOCAL_DEPS_SERIALIZED "(experimental) Add USES_TERMINAL to MSYS_APPLOCAL_DEPS to force serialization." OFF)
-option(MSYS_PREFER_SYSTEM_LIBS "Appends the msys paths to CMAKE_PREFIX_PATH, CMAKE_LIBRARY_PATH and CMAKE_FIND_ROOT_PATH so that <MSYSTEM> libraries/packages are found after MSYS2 libraries/packages." OFF)
+option(MSYS_PREFER_SYSTEM_LIBS "Appends the msys64 paths to CMAKE_PREFIX_PATH, CMAKE_LIBRARY_PATH and CMAKE_FIND_ROOT_PATH so that <MSYSTEM> libraries/packages are found after msys64 libraries/packages." OFF)
 # if(MSYS_PREFER_SYSTEM_LIBS)
 #     message(WARNING "MSYS_PREFER_SYSTEM_LIBS has been deprecated. Use empty overlay ports instead.")
 # endif()
@@ -179,59 +167,47 @@ function(z_msys_set_powershell_path)
     endif() # Z_MSYS_POWERSHELL_PATH
 endfunction()
 
-macro(z_msys_find_toolchains_dir)
+# Determine whether the toolchain is loaded during a try-compile configuration
+get_property(Z_MSYS_CMAKE_IN_TRY_COMPILE GLOBAL PROPERTY IN_TRY_COMPILE)
+
+if(DEFINED MSYSTEM)
+
     # Detect MINGW64.cmake to figure MSYS_TOOLCHAINS_ROOT_DIR
-    set(Z_MSYS_TOOLCHAINS_ROOT_DIR_CANDIDATE "${CMAKE_CURRENT_LIST_DIR}")
-    while(NOT DEFINED Z_MSYS_TOOLCHAINS_ROOT_DIR)
-        if(EXISTS "${Z_MSYS_TOOLCHAINS_ROOT_DIR_CANDIDATE}/MINGW64.cmake")
-            set(Z_MSYS_TOOLCHAINS_ROOT_DIR "${Z_MSYS_TOOLCHAINS_ROOT_DIR_CANDIDATE}/toolchains" CACHE INTERNAL "msys root directory")
-        elseif(EXISTS "${Z_MSYS_TOOLCHAINS_ROOT_DIR_CANDIDATE}/toolchains/MINGW64.cmake")
-            set(Z_MSYS_TOOLCHAINS_ROOT_DIR "${Z_MSYS_TOOLCHAINS_ROOT_DIR_CANDIDATE}/toolchains" CACHE INTERNAL "msys root directory")
-        elseif(IS_DIRECTORY "${Z_MSYS_TOOLCHAINS_ROOT_DIR_CANDIDATE}")
-            get_filename_component(Z_MSYS_TOOLCHAINS_ROOT_DIR "${Z_MSYS_TOOLCHAINS_ROOT_DIR_CANDIDATE}" DIRECTORY)
-            if(Z_MSYS_TOOLCHAINS_ROOT_DIR STREQUAL Z_MSYS_TOOLCHAINS_ROOT_DIR_CANDIDATE)
-                z_msys_add_fatal_error("Unable to determine default chainload toolchain files directory!")
+    set(Z_MSYSTEM_TOOLCHAINS_ROOT_DIR_CANDIDATE "${CMAKE_CURRENT_LIST_DIR}")
+    while(NOT DEFINED Z_MSYSTEM_TOOLCHAINS_ROOT_DIR)
+        if(EXISTS "${Z_MSYSTEM_TOOLCHAINS_ROOT_DIR_CANDIDATE}/MINGW64.cmake")
+            set(Z_MSYSTEM_TOOLCHAINS_ROOT_DIR "${Z_MSYSTEM_TOOLCHAINS_ROOT_DIR_CANDIDATE}/toolchains" CACHE INTERNAL "msys root directory")
+        elseif(EXISTS "${Z_MSYSTEM_TOOLCHAINS_ROOT_DIR_CANDIDATE}/toolchains/MINGW64.cmake")
+            set(Z_MSYSTEM_TOOLCHAINS_ROOT_DIR "${Z_MSYSTEM_TOOLCHAINS_ROOT_DIR_CANDIDATE}/toolchains" CACHE INTERNAL "msys root directory")
+        elseif(IS_DIRECTORY "${Z_MSYSTEM_TOOLCHAINS_ROOT_DIR_CANDIDATE}")
+            get_filename_component(Z_MSYSTEM_TOOLCHAINS_ROOT_DIR "${Z_MSYSTEM_TOOLCHAINS_ROOT_DIR_CANDIDATE}" DIRECTORY)
+            if(Z_MSYSTEM_TOOLCHAINS_ROOT_DIR STREQUAL Z_MSYSTEM_TOOLCHAINS_ROOT_DIR_CANDIDATE)
+                #z_msys_add_fatal_error("Unable to determine default chainload toolchain files directory!")
                 break() # If unchanged, we have reached the root of the drive without finding 'MINGW64.cmake'.
             endif()
-            set(Z_MSYS_TOOLCHAINS_ROOT_DIR_CANDIDATE "${Z_MSYS_TOOLCHAINS_ROOT_DIR}")
-            unset(Z_MSYS_TOOLCHAINS_ROOT_DIR)
+            set(Z_MSYSTEM_TOOLCHAINS_ROOT_DIR_CANDIDATE "${Z_MSYSTEM_TOOLCHAINS_ROOT_DIR}")
+            unset(Z_MSYSTEM_TOOLCHAINS_ROOT_DIR)
         else()
             break()
         endif()
     endwhile()
-    unset(Z_MSYS_TOOLCHAINS_ROOT_DIR_CANDIDATE)
-endmacro()
+    unset(Z_MSYSTEM_TOOLCHAINS_ROOT_DIR_CANDIDATE)
 
+    if(NOT Z_MSYSTEM_TOOLCHAINS_ROOT_DIR)
+        z_msys_add_fatal_error("Unable to determine default chainload toolchain files directory!")
+    endif()
 
+    # If we got this far, then both our MSYSTEM and chainload files dir are valid, so try to use them
+    set(MSYS_CHAINLOAD_TOOLCHAIN_FILE "${Z_MSYSTEM_TOOLCHAINS_ROOT_DIR}/${MSYSTEM}.cmake" CACHE FILEPATH "" FORCE)
+    mark_as_advanced(MSYS_CHAINLOAD_TOOLCHAIN_FILE)
+    include("${MSYS_CHAINLOAD_TOOLCHAIN_FILE}" OPTIONAL RESULT_VARIABLE _chainload_found)
 
-# Determine whether the toolchain is loaded during a try-compile configuration
-get_property(Z_MSYS_CMAKE_IN_TRY_COMPILE GLOBAL PROPERTY IN_TRY_COMPILE)
+    # If the exact MSYSTEM chainload file couldn't be loaded, bounce back
+    if(NOT _chainload_found)
+        z_msys_add_fatal_error("Failed to find chainload toolchain file for ${MSYSTEM}!")
+    endif()
+    unset(_chainload_found)
 
-# # Tricky default selection business!
-# # we actually need this var to vacate to avoid multiple inclusion.
-# # When the var clears on a re-run and lands on a fall-through value, we
-# # end up including this file without the intention of doing so.
-# # Honestly, this is probably best handled on the CLI/invocation...
-# if(MSYS_CHAINLOAD_TOOLCHAIN_FILE)
-#     include("${MSYS_CHAINLOAD_TOOLCHAIN_FILE}")
-#     unset(MSYS_CHAINLOAD_TOOLCHAIN_FILE)
-# elseif(DEFINED Z_MSYS_CHAINLOAD_TOOLCHAIN_FILE)
-#     set(MSYS_CHAINLOAD_TOOLCHAIN_FILE "${Z_MSYS_CHAINLOAD_TOOLCHAIN_FILE}")
-#     include("${MSYS_CHAINLOAD_TOOLCHAIN_FILE}")
-#     unset(MSYS_CHAINLOAD_TOOLCHAIN_FILE)
-# elseif(DEFINED MSYSTEM)
-#     z_msys_find_toolchains_dir()
-#     set(MSYS_CHAINLOAD_TOOLCHAIN_FILE "${Z_MSYS_TOOLCHAINS_ROOT_DIR}/${MSYSTEM}.cmake")
-#     include("${MSYS_CHAINLOAD_TOOLCHAIN_FILE}")
-#     unset(MSYS_CHAINLOAD_TOOLCHAIN_FILE)
-# else()
-#     unset(MSYS_CHAINLOAD_TOOLCHAIN_FILE)
-# endif()
-
-if(DEFINED MSYSTEM)
-    z_msys_find_toolchains_dir()
-    set(MSYS_CHAINLOAD_TOOLCHAIN_FILE "${Z_MSYS_TOOLCHAINS_ROOT_DIR}/${MSYSTEM}.cmake")
-    include("${MSYS_CHAINLOAD_TOOLCHAIN_FILE}")
 endif()
 
 if(MSYS_TOOLCHAIN)
@@ -367,10 +343,11 @@ else()
 	    set(Z_MSYS_TARGET_TRIPLET_ARCH riscv64)
         else()
             if(Z_MSYS_CMAKE_IN_TRY_COMPILE)
-                message(STATUS "Unable to determine target architecture, continuing without msys.")
+                #message(STATUS "Unable to determine target architecture, continuing without msys.")
+                z_msys_add_fatal_error("Unable to determine target architecture")
             else()
-                message(WARNING "Unable to determine target architecture, continuing without msys.")
-                #z_msys_add_fatal_error("Unable to determine target architecture")
+                #message(WARNING "Unable to determine target architecture, continuing without msys.")
+                z_msys_add_fatal_error("Unable to determine target architecture")
             endif()
             set(MSYS_TOOLCHAIN ON)
             # message("Leaving MSYS.cmake at ${CMAKE_CURRENT_LIST_LINE}")
@@ -408,7 +385,7 @@ if(EMSCRIPTEN)
 endif()
 
 set(MSYS_TARGET_TRIPLET "${Z_MSYS_TARGET_TRIPLET_ARCH}-${Z_MSYS_TARGET_TRIPLET_PLAT}" CACHE STRING "Msys target triplet (ex. x86-windows)" FORCE)
-set(Z_MSYS_TOOLCHAIN_DIR "${CMAKE_CURRENT_LIST_DIR}")
+set(Z_MSYS_TOOLCHAIN_DIR "${CMAKE_CURRENT_LIST_DIR}" CACHE PATH "" FORCE)
 
 # Detect msys2.ini to figure MSYS_ROOT_DIR
 set(Z_MSYS_ROOT_DIR_CANDIDATE "${CMAKE_CURRENT_LIST_DIR}")
@@ -420,7 +397,8 @@ while(NOT DEFINED Z_MSYS_ROOT_DIR)
     elseif(IS_DIRECTORY "${Z_MSYS_ROOT_DIR_CANDIDATE}")
         get_filename_component(Z_MSYS_ROOT_DIR_TEMP "${Z_MSYS_ROOT_DIR_CANDIDATE}" DIRECTORY)
         if(Z_MSYS_ROOT_DIR_TEMP STREQUAL Z_MSYS_ROOT_DIR_CANDIDATE)
-            break() # If unchanged, we have reached the root of the drive without finding vcpkg.
+            #z_msys_add_fatal_error("Unable to determine default msys64 installation files directory!")
+            break() # If unchanged, we have reached the root of the drive without finding msys64.
         endif()
         set(Z_MSYS_ROOT_DIR_CANDIDATE "${Z_MSYS_ROOT_DIR_TEMP}")
         unset(Z_MSYS_ROOT_DIR_TEMP)
@@ -434,27 +412,27 @@ if(NOT Z_MSYS_ROOT_DIR)
     z_msys_add_fatal_error("Could not find '/msys2.ini'")
 endif()
 
-if(DEFINED MSYS_INSTALLED_DIR)
-    set(Z_MSYS_INSTALLED_DIR_INITIAL_VALUE "${MSYS_INSTALLED_DIR}")
-elseif(DEFINED _MSYS_INSTALLED_DIR)
-    set(Z_MSYS_INSTALLED_DIR_INITIAL_VALUE "${_MSYS_INSTALLED_DIR}")
+if(DEFINED MSYS_INSTALL_PATH)
+    set(Z_MSYS_INSTALL_PATH_INITIAL_VALUE "${MSYS_INSTALL_PATH}")
+elseif(DEFINED _MSYS_INSTALL_PATH)
+    set(Z_MSYS_INSTALL_PATH_INITIAL_VALUE "${_MSYS_INSTALL_PATH}")
 # elseif(MSYS_MANIFEST_MODE)
 #     set(Z_MSYS_INSTALLED_DIR_INITIAL_VALUE "${CMAKE_BINARY_DIR}/msys_installed")
 else()
-    set(Z_MSYS_INSTALLED_DIR_INITIAL_VALUE "${Z_MSYS_ROOT_DIR}/usr/local")
+    set(Z_MSYS_INSTALL_PATH_INITIAL_VALUE "${Z_MSYS_ROOT_DIR}")
 endif()
 
-set(MSYS_INSTALLED_DIR "${Z_MSYS_INSTALLED_DIR_INITIAL_VALUE}" CACHE PATH "The directory which contains the installed libraries for each triplet" FORCE)
-set(_MSYS_INSTALLED_DIR "${MSYS_INSTALLED_DIR}" CACHE PATH "The directory which contains the installed libraries for each triplet" FORCE)
+set(MSYS_INSTALL_PATH "${Z_MSYS_INSTALL_PATH_INITIAL_VALUE}" CACHE PATH "The directory which contains the installed libraries for each triplet" FORCE)
+set(_MSYS_INSTALL_PATH "${MSYS_INSTALL_PATH}" CACHE PATH "The directory which contains the installed libraries for each triplet" FORCE)
 
-function(z_msys_add_msys_to_cmake_path list suffix)
-    set(msys_paths
-        "${_MSYS_INSTALLED_DIR}/${MSYS_TARGET_TRIPLET}${suffix}"
-        "${_MSYS_INSTALLED_DIR}/${MSYS_TARGET_TRIPLET}/debug${suffix}"
+
+function(z_msys_add_msystem_to_cmake_path list suffix)
+    set(msys_paths "${_MSYS_INSTALL_PATH}/${MSYSTEM}${suffix}"
+        # "${_MSYS_INSTALL_PATH}/${MSYSTEM}/debug${suffix}"
     )
-    if(NOT DEFINED CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE MATCHES "^[Dd][Ee][Bb][Uu][Gg]$")
-        list(REVERSE msys_paths) # Debug build: Put Debug paths before Release paths.
-    endif()
+    # if(NOT DEFINED CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE MATCHES "^[Dd][Ee][Bb][Uu][Gg]$")
+    #     list(REVERSE msys_paths) # Debug build: Put Debug paths before Release paths.
+    # endif()
     if(MSYS_PREFER_SYSTEM_LIBS)
         list(APPEND "${list}" "${msys_paths}")
     else()
@@ -462,70 +440,162 @@ function(z_msys_add_msys_to_cmake_path list suffix)
     endif()
     set("${list}" "${${list}}" PARENT_SCOPE)
 endfunction()
-z_msys_add_msys_to_cmake_path(CMAKE_PREFIX_PATH "")
-z_msys_add_msys_to_cmake_path(CMAKE_LIBRARY_PATH "/lib/manual-link")
-z_msys_add_msys_to_cmake_path(CMAKE_FIND_ROOT_PATH "")
+z_msys_add_msystem_to_cmake_path(CMAKE_PREFIX_PATH "")
+z_msys_add_msystem_to_cmake_path(CMAKE_LIBRARY_PATH "/lib")
+z_msys_add_msystem_to_cmake_path(CMAKE_PROGRAM_PATH "/bin")
+z_msys_add_msystem_to_cmake_path(CMAKE_INCLUDE_PATH "/include")
+z_msys_add_msystem_to_cmake_path(CMAKE_FIND_ROOT_PATH "")
 
 if(NOT MSYS_PREFER_SYSTEM_LIBS)
     set(CMAKE_FIND_FRAMEWORK "LAST") # we assume that frameworks are usually system-wide libs, not msys-built
     set(CMAKE_FIND_APPBUNDLE "LAST") # we assume that appbundles are usually system-wide libs, not msys-built
 endif()
 
-# If one CMAKE_FIND_ROOT_PATH_MODE_* variables is set to ONLY, to  make sure that ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}
-# and ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug are searched, it is not sufficient to just add them to CMAKE_FIND_ROOT_PATH,
-# as CMAKE_FIND_ROOT_PATH specify "one or more directories to be prepended to all other search directories", so to make sure that
-# the libraries are searched as they are, it is necessary to add "/" to the CMAKE_PREFIX_PATH
+# If one CMAKE_FIND_ROOT_PATH_MODE_* variables is set to ONLY,
+# to  make sure that ${__MSYS_INSTALL_PATH}/${VCPKG_TARGET_TRIPLET}
+# is searched, it is not sufficient to just add them to CMAKE_FIND_ROOT_PATH,
+# as CMAKE_FIND_ROOT_PATH specify "one or more directories to be prepended
+# to all other search directories", so to make sure that the libraries are
+# searched as they are, it is necessary to add "/" to the CMAKE_PREFIX_PATH
 if(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE STREQUAL "ONLY" OR
     CMAKE_FIND_ROOT_PATH_MODE_LIBRARY STREQUAL "ONLY" OR
     CMAKE_FIND_ROOT_PATH_MODE_PACKAGE STREQUAL "ONLY")
     list(APPEND CMAKE_PREFIX_PATH "/")
 endif()
 
-set(MSYS_CMAKE_FIND_ROOT_PATH "${CMAKE_FIND_ROOT_PATH}" CACHE PATH "" STRING)
+set(MSYS_CMAKE_FIND_ROOT_PATH "${CMAKE_FIND_ROOT_PATH}" CACHE PATH ":`Semicolon-separated list <CMake Language Lists>` of root paths to search on the filesystem." STRING)
 
-# CMAKE_EXECUTABLE_SUFFIX is not yet defined
-if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
-    set(Z_MSYS_EXECUTABLE "${Z_MSYS_ROOT_DIR}/msys2.exe")
-    set(Z_MSYS_BOOTSTRAP_SCRIPT "${Z_VCPKG_ROOT_DIR}/autorebase.bat")
-else()
-    set(Z_MSYS_EXECUTABLE "${Z_MSYS_ROOT_DIR}/msys2")
-    set(Z_MSYS_BOOTSTRAP_SCRIPT "${Z_VCPKG_ROOT_DIR}/autorebase")
-endif()
+# # CMAKE_EXECUTABLE_SUFFIX is not yet defined
+# if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
+#     set(Z_MSYS_EXECUTABLE "${Z_MSYS_ROOT_DIR}/msys2.exe")
+#     set(Z_MSYS_BOOTSTRAP_SCRIPT "${Z_VCPKG_ROOT_DIR}/autorebase.bat")
+# else()
+#     set(Z_MSYS_EXECUTABLE "${Z_MSYS_ROOT_DIR}/msys2")
+#     set(Z_MSYS_BOOTSTRAP_SCRIPT "${Z_VCPKG_ROOT_DIR}/autorebase")
+# endif()
 
-option(MSYS_SETUP_CMAKE_PROGRAM_PATH  "Enable the setup of CMAKE_PROGRAM_PATH to msys paths" OFF)
+option(MSYS_SETUP_CMAKE_PROGRAM_PATH  "Enable the setup of msys paths for 'CMAKE_PROGRAM_PATH' (recommended)" ON)
 
 set(MSYS_CAN_USE_HOST_TOOLS OFF)
 if(DEFINED MSYS_HOST_TRIPLET AND NOT MSYS_HOST_TRIPLET STREQUAL "")
     set(MSYS_CAN_USE_HOST_TOOLS ON)
 endif()
-cmake_dependent_option(MSYS_USE_HOST_TOOLS "Setup CMAKE_PROGRAM_PATH to use host tools" ON "MSYS_CAN_USE_HOST_TOOLS" OFF)
+cmake_dependent_option(MSYS_USE_HOST_TOOLS "Setup CMAKE_PROGRAM_PATH to use msys64 tools" OFF "MSYS_CAN_USE_HOST_TOOLS" OFF)
 unset(MSYS_CAN_USE_HOST_TOOLS)
 
-if(MSYS_SETUP_CMAKE_PROGRAM_PATH)
-    set(tools_base_path "${MSYS_INSTALLED_DIR}/${MSYS_TARGET_TRIPLET}/tools")
+if(MSYS_SETUP_CMAKE_PROGRAM_PATH AND (DEFINED MSYSTEM))
+
+    string(TOLOWER "${MSYSTEM}" _msystem)
+
+    set(tools_base_path "${MSYS_INSTALL_PATH}/${_msystem}")
     if(MSYS_USE_HOST_TOOLS)
-        set(tools_base_path "${MSYS_INSTALLED_DIR}/${MSYS_HOST_TRIPLET}/tools")
+        set(tools_base_path "${MSYS_INSTALL_PATH}/usr")
     endif()
-    list(APPEND CMAKE_PROGRAM_PATH "${tools_base_path}")
+
+    set(Z_MSYS_TOOLS_DIR "${tools_base_path}" CACHE PATH "" FORCE)
+
     file(GLOB Z_MSYS_TOOLS_DIRS LIST_DIRECTORIES true "${tools_base_path}/*")
     file(GLOB Z_MSYS_TOOLS_FILES LIST_DIRECTORIES false "${tools_base_path}/*")
-    file(GLOB Z_MSYS_TOOLS_DIRS_BIN LIST_DIRECTORIES true "${tools_base_path}/*/bin")
-    file(GLOB Z_MSYS_TOOLS_FILES_BIN LIST_DIRECTORIES false "${tools_base_path}/*/bin")
-    list(REMOVE_ITEM Z_MSYS_TOOLS_DIRS ${Z_MSYS_TOOLS_FILES} "") # need at least one item for REMOVE_ITEM if CMake <= 3.19
+    file(GLOB_RECURSE Z_MSYS_TOOLS_DIRS_BIN LIST_DIRECTORIES true "${tools_base_path}/bin/*")
+    file(GLOB_RECURSE Z_MSYS_TOOLS_FILES_BIN LIST_DIRECTORIES false "${tools_base_path}/bin/*")
+    file(GLOB_RECURSE Z_MSYS_TOOLS_DIRS_LIB LIST_DIRECTORIES true "${tools_base_path}/lib/*")
+    file(GLOB_RECURSE Z_MSYS_TOOLS_FILES_LIB LIST_DIRECTORIES false "${tools_base_path}/lib/*")
+    file(GLOB_RECURSE Z_MSYS_TOOLS_DIRS_INC LIST_DIRECTORIES true "${tools_base_path}/include/*")
+    file(GLOB_RECURSE Z_MSYS_TOOLS_FILES_INC LIST_DIRECTORIES false "${tools_base_path}/include/*")
+
+    # need at least one item for REMOVE_ITEM if CMake <= 3.19
+    list(REMOVE_ITEM Z_MSYS_TOOLS_DIRS ${Z_MSYS_TOOLS_FILES} "")
     list(REMOVE_ITEM Z_MSYS_TOOLS_DIRS_BIN ${Z_MSYS_TOOLS_FILES_BIN} "")
+    list(REMOVE_ITEM Z_MSYS_TOOLS_DIRS_LIB ${Z_MSYS_TOOLS_FILES_LIB} "")
+    list(REMOVE_ITEM Z_MSYS_TOOLS_DIRS_INC ${Z_MSYS_TOOLS_FILES_INC} "")
+
     string(REPLACE "/bin" "" Z_MSYS_TOOLS_DIRS_TO_REMOVE "${Z_MSYS_TOOLS_DIRS_BIN}")
+    string(REPLACE "/lib" "" Z_MSYS_TOOLS_DIRS_TO_REMOVE "${Z_MSYS_TOOLS_DIRS_LIB}")
+    string(REPLACE "/include" "" Z_MSYS_TOOLS_DIRS_TO_REMOVE "${Z_MSYS_TOOLS_DIRS_INC}")
+
     list(REMOVE_ITEM Z_MSYS_TOOLS_DIRS ${Z_MSYS_TOOLS_DIRS_TO_REMOVE} "")
+
     list(APPEND Z_MSYS_TOOLS_DIRS ${Z_MSYS_TOOLS_DIRS_BIN})
-    foreach(Z_MSYS_TOOLS_DIR IN LISTS Z_MSYS_TOOLS_DIRS)
-        list(APPEND CMAKE_PROGRAM_PATH "${Z_MSYS_TOOLS_DIR}")
+    list(APPEND Z_MSYS_TOOLS_DIRS ${Z_MSYS_TOOLS_DIRS_LIB})
+    list(APPEND Z_MSYS_TOOLS_DIRS ${Z_MSYS_TOOLS_DIRS_INC})
+
+    if(NOT DEFINED CMAKE_SYSTEM_PROGRAM_PATH)
+        set(CMAKE_SYSTEM_PROGRAM_PATH)
+    endif()
+    list(APPEND CMAKE_SYSTEM_PROGRAM_PATH "${tools_base_path}")
+
+    foreach(Z_MSYS_TOOLS_DIRS_BIN IN LISTS Z_MSYS_TOOLS_DIRS_BIN)
+        list(APPEND CMAKE_SYSTEM_PROGRAM_PATH "${Z_MSYS_TOOLS_DIRS_BIN}")
     endforeach()
-    unset(Z_MSYS_TOOLS_DIR)
-    unset(Z_MSYS_TOOLS_DIRS)
-    unset(Z_MSYS_TOOLS_FILES)
-    unset(Z_MSYS_TOOLS_DIRS_BIN)
-    unset(Z_MSYS_TOOLS_FILES_BIN)
+
+    foreach(Z_MSYS_TOOLS_DIR IN LISTS Z_MSYS_TOOLS_DIRS)
+        list(APPEND CMAKE_SYSTEM_PROGRAM_PATH "${Z_MSYS_TOOLS_DIR}")
+    endforeach()
+
+    # unset(Z_MSYS_TOOLS_DIR)
+    # unset(Z_MSYS_TOOLS_DIRS)
+    # unset(Z_MSYS_TOOLS_FILES)
+    # unset(Z_MSYS_TOOLS_DIRS_BIN)
+    # unset(Z_MSYS_TOOLS_FILES_BIN)
+    # unset(Z_MSYS_TOOLS_DIRS_LIB)
+    # unset(Z_MSYS_TOOLS_FILES_LIB)
+    # unset(Z_MSYS_TOOLS_DIRS_INC)
+    # unset(Z_MSYS_TOOLS_FILES_INC)
+
+    if(DEFINED Z_MSYS_TOOLS_DIR)
+        set(Z_MSYS_TOOLS_DIR "${Z_MSYS_TOOLS_DIR}" CACHE PATH "" FORCE)
+    else()
+        z_msys_add_fatal_error("Z_MSYS_TOOLS_DIR not found?")
+    endif()
+
+    if(DEFINED Z_MSYS_TOOLS_DIRS)
+        set(Z_MSYS_TOOLS_DIRS "${Z_MSYS_TOOLS_DIRS}" CACHE PATH "" FORCE)
+    else()
+        z_msys_add_fatal_error("Z_MSYS_TOOLS_DIRS not found?")
+    endif()
+
+    if(DEFINED Z_MSYS_TOOLS_FILES AND (NOT Z_MSYS_TOOLS_FILES STREQUAL ""))
+        set(Z_MSYS_TOOLS_FILES "${Z_MSYS_TOOLS_FILES}" CACHE FILEPATH "" FORCE)
+    endif()
+
+    if(DEFINED Z_MSYS_TOOLS_DIRS_BIN AND (NOT Z_MSYS_TOOLS_DIRS_BIN STREQUAL ""))
+        set(Z_MSYS_TOOLS_DIRS_BIN "${Z_MSYS_TOOLS_DIRS_BIN}" CACHE PATH "" FORCE)
+    endif()
+
+    if(DEFINED Z_MSYS_TOOLS_FILES_BIN)
+        set(Z_MSYS_TOOLS_FILES_BIN "${Z_MSYS_TOOLS_FILES_BIN}" CACHE FILEPATH "" FORCE)
+    else()
+        z_msys_add_fatal_error("Z_MSYS_TOOLS_FILES_BIN not found?")
+    endif()
+
+    if(DEFINED Z_MSYS_TOOLS_DIRS_LIB)
+        set(Z_MSYS_TOOLS_DIRS_LIB "${Z_MSYS_TOOLS_DIRS_LIB}" CACHE PATH "" FORCE)
+    else()
+        z_msys_add_fatal_error("Z_MSYS_TOOLS_DIRS_LIB not found?")
+    endif()
+
+    if(DEFINED Z_MSYS_TOOLS_FILES_LIB)
+        set(Z_MSYS_TOOLS_FILES_LIB "${Z_MSYS_TOOLS_FILES_LIB}" CACHE FILEPATH "" FORCE)
+    else()
+        z_msys_add_fatal_error("Z_MSYS_TOOLS_FILES_LIB not found?")
+    endif()
+
+    if(DEFINED Z_MSYS_TOOLS_DIRS_INC)
+        set(Z_MSYS_TOOLS_DIRS_INC "${Z_MSYS_TOOLS_DIRS_INC}" CACHE PATH "" FORCE)
+    else()
+        z_msys_add_fatal_error("Z_MSYS_TOOLS_DIRS_INC not found?")
+    endif()
+
+    if(DEFINED Z_MSYS_TOOLS_FILES_INC)
+        set(Z_MSYS_TOOLS_FILES_INC "${Z_MSYS_TOOLS_FILES_INC}" CACHE FILEPATH "" FORCE)
+    else()
+        z_msys_add_fatal_error("Z_MSYS_TOOLS_FILES_INC not found?")
+    endif()
+
     unset(Z_MSYS_TOOLS_DIRS_TO_REMOVE)
+    unset(_msystem)
     unset(tools_base_path)
+
 endif()
 
 message(STATUS "Msys2 Build system loaded")
@@ -724,7 +794,9 @@ cmake_policy(VERSION 3.7.2)
 
 # message("Reading MSYS.cmake from ${CMAKE_CURRENT_LIST_LINE}")
 
+## This is the var that 'POP's us back out when this file re-runs from the top
 set(MSYS_TOOLCHAIN ON)
+
 set(Z_MSYS_UNUSED "${CMAKE_ERROR_ON_ABSOLUTE_INSTALL_DESTINATION}")
 set(Z_MSYS_UNUSED "${CMAKE_EXPORT_NO_PACKAGE_REGISTRY}")
 set(Z_MSYS_UNUSED "${CMAKE_FIND_PACKAGE_NO_PACKAGE_REGISTRY}")
