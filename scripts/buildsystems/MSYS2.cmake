@@ -1,5 +1,3 @@
-#!/usr/bin/env cmake
-
 ##-- For the original source code, please see:
 # vcpkg - C++ Library Manager for Windows, Linux, and MacOS
 # Copyright (c) Microsoft Corporation
@@ -53,6 +51,8 @@ endif()
 cmake_policy(PUSH)
 cmake_policy(VERSION 3.7.2)
 
+include(CMakeDependentOption)
+
 # message("Reading MSYS.cmake from ${CMAKE_CURRENT_LIST_LINE}")
 
 # set(TOOLCHAIN_LIST)
@@ -65,17 +65,15 @@ cmake_policy(VERSION 3.7.2)
 # list(APPEND TOOLCHAIN_LIST "x86_64-w64-mingw32") # (ucrt64)
 
 # Prevents multiple inclusions...
-if(MSYS_TOOLCHAIN)
-    # message("Leaving MSYS.cmake at ${CMAKE_CURRENT_LIST_LINE}")
-    cmake_policy(POP)
-    return()
-endif()
+# if(MSYS_TOOLCHAIN)
+#     # message("Leaving MSYS.cmake at ${CMAKE_CURRENT_LIST_LINE}")
+#     cmake_policy(POP)
+#     return()
+# endif()
 
-include(CMakeDependentOption)
-
-if(DEFINED MSYSTEM)
-    set(MSYSTEM "${MSYSTEM}" CACHE STRING "<MSYSTEM>" FORCE)
-endif()
+# if(DEFINED MSYSTEM)
+#     set(MSYSTEM "${MSYSTEM}" CACHE STRING "<MSYSTEM>" FORCE)
+# endif()
 
 # MSYS toolchain options.
 if(DEFINED ENV{VERBOSE})
@@ -204,28 +202,36 @@ macro(z_msys_find_toolchains_dir)
     unset(Z_MSYS_TOOLCHAINS_ROOT_DIR_CANDIDATE)
 endmacro()
 
+
+
 # Determine whether the toolchain is loaded during a try-compile configuration
 get_property(Z_MSYS_CMAKE_IN_TRY_COMPILE GLOBAL PROPERTY IN_TRY_COMPILE)
 
-# Tricky default selection business!
-# we actually need this var to vacate to avoid multiple inclusion.
-# When the var clears on a re-run and lands on a fall-through value, we
-# end up including this file without the intention of doing so.
-# Honestly, this is probably best handled on the CLI/invocation...
-if(MSYS_CHAINLOAD_TOOLCHAIN_FILE)
-    include("${MSYS_CHAINLOAD_TOOLCHAIN_FILE}")
-    unset(MSYS_CHAINLOAD_TOOLCHAIN_FILE)
-elseif(DEFINED Z_MSYS_CHAINLOAD_TOOLCHAIN_FILE)
-    set(MSYS_CHAINLOAD_TOOLCHAIN_FILE "${Z_MSYS_CHAINLOAD_TOOLCHAIN_FILE}")
-    include("${MSYS_CHAINLOAD_TOOLCHAIN_FILE}")
-    unset(MSYS_CHAINLOAD_TOOLCHAIN_FILE)
-elseif(DEFINED MSYSTEM)
+# # Tricky default selection business!
+# # we actually need this var to vacate to avoid multiple inclusion.
+# # When the var clears on a re-run and lands on a fall-through value, we
+# # end up including this file without the intention of doing so.
+# # Honestly, this is probably best handled on the CLI/invocation...
+# if(MSYS_CHAINLOAD_TOOLCHAIN_FILE)
+#     include("${MSYS_CHAINLOAD_TOOLCHAIN_FILE}")
+#     unset(MSYS_CHAINLOAD_TOOLCHAIN_FILE)
+# elseif(DEFINED Z_MSYS_CHAINLOAD_TOOLCHAIN_FILE)
+#     set(MSYS_CHAINLOAD_TOOLCHAIN_FILE "${Z_MSYS_CHAINLOAD_TOOLCHAIN_FILE}")
+#     include("${MSYS_CHAINLOAD_TOOLCHAIN_FILE}")
+#     unset(MSYS_CHAINLOAD_TOOLCHAIN_FILE)
+# elseif(DEFINED MSYSTEM)
+#     z_msys_find_toolchains_dir()
+#     set(MSYS_CHAINLOAD_TOOLCHAIN_FILE "${Z_MSYS_TOOLCHAINS_ROOT_DIR}/${MSYSTEM}.cmake")
+#     include("${MSYS_CHAINLOAD_TOOLCHAIN_FILE}")
+#     unset(MSYS_CHAINLOAD_TOOLCHAIN_FILE)
+# else()
+#     unset(MSYS_CHAINLOAD_TOOLCHAIN_FILE)
+# endif()
+
+if(DEFINED MSYSTEM)
     z_msys_find_toolchains_dir()
     set(MSYS_CHAINLOAD_TOOLCHAIN_FILE "${Z_MSYS_TOOLCHAINS_ROOT_DIR}/${MSYSTEM}.cmake")
     include("${MSYS_CHAINLOAD_TOOLCHAIN_FILE}")
-    unset(MSYS_CHAINLOAD_TOOLCHAIN_FILE)
-else()
-    unset(MSYS_CHAINLOAD_TOOLCHAIN_FILE)
 endif()
 
 if(MSYS_TOOLCHAIN)
@@ -363,8 +369,8 @@ else()
             if(Z_MSYS_CMAKE_IN_TRY_COMPILE)
                 message(STATUS "Unable to determine target architecture, continuing without msys.")
             else()
-                #message(WARNING "Unable to determine target architecture, continuing without msys.")
-                z_msys_add_fatal_error("Unable to determine target architecture")
+                message(WARNING "Unable to determine target architecture, continuing without msys.")
+                #z_msys_add_fatal_error("Unable to determine target architecture")
             endif()
             set(MSYS_TOOLCHAIN ON)
             # message("Leaving MSYS.cmake at ${CMAKE_CURRENT_LIST_LINE}")
@@ -373,6 +379,7 @@ else()
         endif()
     endif()
 endif()
+
 
 if(CMAKE_SYSTEM_NAME STREQUAL "WindowsStore" OR CMAKE_SYSTEM_NAME STREQUAL "WindowsPhone")
     set(Z_MSYS_TARGET_TRIPLET_PLAT uwp)
@@ -395,7 +402,6 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows" OR (NOT CMAKE_SYSTEM_NAME AND CMAKE_
 elseif(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD" OR (NOT CMAKE_SYSTEM_NAME AND CMAKE_HOST_SYSTEM_NAME STREQUAL "FreeBSD"))
     set(Z_MSYS_TARGET_TRIPLET_PLAT freebsd)
 endif()
-
 if(EMSCRIPTEN)
     set(Z_MSYS_TARGET_TRIPLET_ARCH wasm32)
     set(Z_MSYS_TARGET_TRIPLET_PLAT emscripten)
@@ -456,9 +462,9 @@ function(z_msys_add_msys_to_cmake_path list suffix)
     endif()
     set("${list}" "${${list}}" PARENT_SCOPE)
 endfunction()
-# z_msys_add_msys_to_cmake_path(CMAKE_PREFIX_PATH "")
-# z_msys_add_msys_to_cmake_path(CMAKE_LIBRARY_PATH "/lib/manual-link")
-# z_msys_add_msys_to_cmake_path(CMAKE_FIND_ROOT_PATH "")
+z_msys_add_msys_to_cmake_path(CMAKE_PREFIX_PATH "")
+z_msys_add_msys_to_cmake_path(CMAKE_LIBRARY_PATH "/lib/manual-link")
+z_msys_add_msys_to_cmake_path(CMAKE_FIND_ROOT_PATH "")
 
 if(NOT MSYS_PREFER_SYSTEM_LIBS)
     set(CMAKE_FIND_FRAMEWORK "LAST") # we assume that frameworks are usually system-wide libs, not msys-built
@@ -472,7 +478,7 @@ endif()
 if(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE STREQUAL "ONLY" OR
     CMAKE_FIND_ROOT_PATH_MODE_LIBRARY STREQUAL "ONLY" OR
     CMAKE_FIND_ROOT_PATH_MODE_PACKAGE STREQUAL "ONLY")
-    list(APPEND CMAKE_PREFIX_PATH "${Z_MSYS_ROOT_DIR}/")
+    list(APPEND CMAKE_PREFIX_PATH "/")
 endif()
 
 set(MSYS_CMAKE_FIND_ROOT_PATH "${CMAKE_FIND_ROOT_PATH}" CACHE PATH "" STRING)
@@ -487,6 +493,7 @@ else()
 endif()
 
 option(MSYS_SETUP_CMAKE_PROGRAM_PATH  "Enable the setup of CMAKE_PROGRAM_PATH to msys paths" OFF)
+
 set(MSYS_CAN_USE_HOST_TOOLS OFF)
 if(DEFINED MSYS_HOST_TRIPLET AND NOT MSYS_HOST_TRIPLET STREQUAL "")
     set(MSYS_CAN_USE_HOST_TOOLS ON)
@@ -711,280 +718,6 @@ if(X_MSYS_APPLOCAL_DEPS_INSTALL)
     endfunction()
 endif()
 
-#########################################################################
-# BUILD ENVIRONMENT
-#########################################################################
-#
-# Makepkg defaults: BUILDENV=(!distcc !color !ccache check !sign)
-#  A negated environment option will do the opposite of the comments below.
-#
-#-- distcc:   Use the Distributed C/C++/ObjC compiler
-#-- color:    Colorize output messages
-#-- ccache:   Use ccache to cache compilation
-#-- check:    Run the check() function if present in the PKGBUILD
-#-- sign:     Generate PGP signature file
-
-# option(ENABLE_DISTCC "Use the Distributed C/C++/ObjC compiler." OFF)
-# option(ENABLE_COLOR "Colorize output messages." ON)
-# option(ENABLE_CCACHE "Use ccache to cache compilation." OFF)
-# option(ENABLE_CHECK "Run the check() function if present in the build." ON)
-# option(ENABLE_SIGN "Generate PGP signature file." OFF)
-
-# if(NOT DEFINED BUILDENV)
-#     set(BUILDENV)
-#     list(APPEND BUILDENV "!distcc" "color" "!ccache" "check" "!sign")
-# endif()
-# set(BUILDENV "${BUILDENV}" CACHE STRING "A negated environment option will do the opposite of the comments below." FORCE)
-
-#-- If using DistCC, your MAKEFLAGS will also need modification. In addition,
-#-- specify a space-delimited list of hosts running in the DistCC cluster.
-#DISTCC_HOSTS=""
-#
-#-- Specify a directory for package building.
-#BUILDDIR=/tmp/makepkg
-
-#########################################################################
-# GLOBAL PACKAGE OPTIONS
-#   These are default values for the options=() settings
-#########################################################################
-#
-# Makepkg defaults: OPTIONS=(!strip docs libtool staticlibs emptydirs !zipman !purge !debug !lto)
-#  A negated option will do the opposite of the comments below.
-#
-#-- strip:      Strip symbols from binaries/libraries
-#-- docs:       Save doc directories specified by DOC_DIRS
-#-- libtool:    Leave libtool (.la) files in packages
-#-- staticlibs: Leave static library (.a) files in packages
-#-- emptydirs:  Leave empty directories in packages
-#-- zipman:     Compress manual (man and info) pages in MAN_DIRS with gzip
-#-- purge:      Remove files specified by PURGE_TARGETS
-#-- debug:      Add debugging flags as specified in DEBUG_* variables
-#-- lto:        Add compile flags for building with link time optimization
-
-
-# Options handler...
-
-# option(OPTION_DOCS "Save doc directories specified by <DOC_DIRS>." ON)
-# option(OPTION_LIBTOOL "Leave libtool (.la) files in packages." OFF)
-# option(OPTION_STATIC_LIBS "Leave static library (.a) files in packages." ON)
-# option(OPTION_EMPTY_DIRS "Leave empty directories in packages." ON)
-# option(OPTION_ZIPMAN "Compress manual (man and info) pages in <MAN_DIRS> with gzip." ON)
-# option(OPTION_PURGE "Remove files specified by <PURGE_TARGETS>." ON)
-# option(OPTION_DEBUG "Add debugging flags as specified in <DEBUG_*> variables." OFF)
-# option(OPTION_LTO "Add compile flags for building with link time optimization." OFF)
-
-# option(OPTION_STRIP "Strip symbols from binaries/libraries." ON)
-# if(OPTION_STRIP)
-#     set(OPTION_STRIP_FLAG strip CACHE STRING "A negated option will do the opposite of the comments below." FORCE)
-#     #-- Options to be used when stripping binaries. See `man strip' for details.
-#     if(NOT DEFINED STRIP_BINARIES)
-#         set(STRIP_BINARIES --strip-all CACHE STRING "Options to be used when stripping binaries. See `man strip' for details." FORCE)
-#     endif()
-# else()
-#     set(OPTION_STRIP_FLAG !strip CACHE STRING "A negated option will do the opposite of the comments below." FORCE)
-# endif()
-
-# # And so forth, or nah...?
-
-# if(OPTION_DOCS)
-#     set(OPTION_DOCS_FLAG docs CACHE STRING "A negated option will do the opposite of the comments below." FORCE)
-# else()
-#     set(OPTION_DOCS_FLAG !docs CACHE STRING "A negated option will do the opposite of the comments below." FORCE)
-# endif()
-
-# if(OPTION_LIBTOOL)
-#     set(OPTION_LIBTOOL_FLAG libtool CACHE STRING "A negated option will do the opposite of the comments below." FORCE)
-# else()
-#     set(OPTION_LIBTOOL_FLAG !libtool CACHE STRING "A negated option will do the opposite of the comments below." FORCE)
-# endif()
-
-# if(OPTION_STATIC_LIBS)
-#     set(OPTION_STATIC_LIBS_FLAG staticlibs CACHE STRING "A negated option will do the opposite of the comments below." FORCE)
-# else()
-#     set(OPTION_STATIC_LIBS_FLAG !staticlibs CACHE STRING "A negated option will do the opposite of the comments below." FORCE)
-# endif()
-
-# if(OPTION_EMPTY_DIRS)
-#     set(OPTION_EMPTY_DIRS_FLAG emptydirs CACHE STRING "A negated option will do the opposite of the comments below." FORCE)
-# else()
-#     set(OPTION_EMPTY_DIRS_FLAG !emptydirs CACHE STRING "A negated option will do the opposite of the comments below." FORCE)
-# endif()
-
-# if(OPTION_ZIPMAN)
-#     set(OPTION_ZIPMAN_FLAG zipman CACHE STRING "A negated option will do the opposite of the comments below." FORCE)
-# else()
-#     set(OPTION_ZIPMAN_FLAG !zipman CACHE STRING "A negated option will do the opposite of the comments below." FORCE)
-# endif()
-
-# if(OPTION_PURGE)
-#     set(OPTION_PURGE_FLAG purge CACHE STRING "A negated option will do the opposite of the comments below." FORCE)
-# else()
-#     set(OPTION_PURGE_FLAG !purge CACHE STRING "A negated option will do the opposite of the comments below." FORCE)
-# endif()
-
-# if(OPTION_DEBUG)
-#     set(OPTION_DEBUG_FLAG debug CACHE STRING "A negated option will do the opposite of the comments below." FORCE)
-# else()
-#     set(OPTION_DEBUG_FLAG !debug CACHE STRING "A negated option will do the opposite of the comments below." FORCE)
-# endif()
-
-# if(OPTION_LTO)
-#     set(OPTION_LTO_FLAG lto CACHE STRING "A negated option will do the opposite of the comments below." FORCE)
-# else()
-#     set(OPTION_LTO_FLAG !lto CACHE STRING "A negated option will do the opposite of the comments below." FORCE)
-# endif()
-
-# if(NOT DEFINED OPTIONS)
-#     set(OPTIONS "${OPTION_STRIP_FLAG} ${OPTION_DOCS_FLAG} ${OPTION_LIBTOOL_FLAG} ${OPTION_STATIC_LIBS_FLAG} ${OPTION_EMPTY_DIRS_FLAG} ${OPTION_ZIPMAN_FLAG} ${OPTION_PURGE_FLAG} ${OPTION_DEBUG_FLAG} ${OPTION_LTO_FLAG}")
-# endif()
-# set(OPTIONS "${OPTIONS}" CACHE STRING "These are the values for the CMake 'option()' settings." FORCE)
-
-# # if(NOT DEFINED OPTIONS)
-# #     set(OPTIONS "" CACHE STRING "")
-# #     list(APPEND OPTIONS strip docs !libtool staticlibs emptydirs zipman purge !debug !lto)
-# # endif()
-
-# #-- File integrity checks to use. Valid: md5, sha1, sha256, sha384, sha512
-# if(NOT DEFINED INTEGRITY_CHECK OR (INTEGRITY_CHECK STREQUAL ""))
-#     set(INTEGRITY_CHECK sha256)
-# endif()
-# set(INTEGRITY_CHECK "${INTEGRITY_CHECK}" CACHE STRING "File integrity checks to use. Valid: md5, sha1, sha256, sha384, sha512" FORCE)
-
-# #-- Options to be used when stripping shared libraries. See `man strip' for details.
-# set(STRIP_SHARED --strip-unneeded CACHE STRING "Options to be used when stripping shared libraries. See `man strip' for details." FORCE)
-# #-- Options to be used when stripping static libraries. See `man strip' for details.
-# set(STRIP_STATIC --strip-debug CACHE STRING "Options to be used when stripping static libraries. See `man strip' for details." FORCE)
-
-# #-- Manual (man and info) directories to compress (if zipman is specified)
-# if(NOT DEFINED MAN_DIRS)
-#     if(DEFINED MINGW_PREFIX)
-#         set(MAN_DIRS "\"\${MINGW_PREFIX#/}\"{{,/local}{,/share},/opt/*}/{man,info}" CACHE STRING "Manual (man and info) directories to compress (if zipman is specified)" FORCE)
-#     else()
-#         set(MAN_DIRS "{{,usr/}{,local/}{,share/},opt/*/}{man,info} mingw{32,64}{{,/local}{,/share},/opt/*}/{man,info}" CACHE STRING "Manual (man and info) directories to compress (if zipman is specified)" FORCE)
-#     endif()
-# endif()
-# #-- Doc directories to remove (if !docs is specified)
-# if(NOT DEFINED DOC_DIRS)
-#     if(DEFINED MINGW_PREFIX)
-#         set(DOC_DIRS "\"\${MINGW_PREFIX#/}\"/{,local/}{,share/}{doc,gtk-doc}" CACHE STRING "Doc directories to remove (if !docs is specified)" FORCE)
-#     else()
-#         set(DOC_DIRS "{,usr/}{,local/}{,share/}{doc,gtk-doc} mingw{32,64}/{,local/}{,share/}{doc,gtk-doc} opt/*/{doc,gtk-doc}" CACHE STRING "Doc directories to remove (if !docs is specified)" FORCE)
-#     endif()
-# endif()
-# #-- Files to be removed from all packages (if purge is specified)
-# if(NOT DEFINED PURGE_TARGETS)
-#     if(DEFINED MINGW_PREFIX)
-#         set(PURGE_TARGETS "{,usr/}{,share}/info/dir mingw{32,64}/{,share}/info/dir .packlist *.pod" CACHE STRING "Files to be removed from all packages (if purge is specified)" FORCE)
-#     else()
-#         set(PURGE_TARGETS "\"\${MINGW_PREFIX#/}\"/{,share}/info/dir .packlist *.pod" CACHE STRING "Files to be removed from all packages (if purge is specified)" FORCE)
-#     endif()
-# endif()
-
-
-# #########################################################################
-# # PACKAGE OUTPUT
-# #########################################################################
-# #
-# # Default: put built package and cached source in build directory.
-# #
-# #########################################################################
-
-# #-- Destination: specify a fixed directory where all packages will be placed
-# if(NOT DEFINED PKGDEST)
-#     set(PKGDEST "/var/packages-mingw64") # If not yet defined, set a default...
-# endif() # ...then, write the resulting definition to the cache, with a description attached.
-# set(PKGDEST "${PKGDEST}" CACHE PATH "Destination: specify a fixed directory where all packages will be placed." FORCE)
-
-# #-- Source cache: specify a fixed directory where source files will be cached
-# if(NOT DEFINED SRCDEST)
-#     set(SRCDEST "/var/sources")
-# endif()
-# set(SRCDEST "${SRCDEST}" CACHE PATH "Source cache: specify a fixed directory where source files will be cached." FORCE)
-
-# #-- Source packages: specify a fixed directory where all src packages will be placed
-# if(NOT DEFINED SRCPKGDEST)
-#     set(SRCPKGDEST "/var/srcpackages-mingw64")
-# endif()
-# set(SRCPKGDEST "${SRCPKGDEST}" CACHE PATH "Source packages: specify a fixed directory where all src packages will be placed" FORCE)
-
-# #-- Log files: specify a fixed directory where all log files will be placed
-# if(NOT DEFINED LOGDEST)
-#     set(LOGDEST "/var/makepkglogs")
-# endif()
-# set(LOGDEST "${LOGDEST}" CACHE PATH "Log files: specify a fixed directory where all log files will be placed" FORCE)
-
-# #########################################################################
-# # EXTENSION DEFAULTS
-# #########################################################################
-
-# set(MSYS_PKGEXT ".pkg.tar.zst" CACHE STRING "File extension to use for packages." FORCE)
-# set(MSYS_SRCEXT ".src.tar.zst" CACHE STRING "File extension to use for packages containing source code." FORCE)
-
-# #########################################################################
-# # OTHER
-# #########################################################################
-
-# #-- Command used to run pacman as root, instead of trying sudo and su
-# if(NOT DEFINED PACMAN_AUTH)
-#     set(PACMAN_AUTH "()")
-# endif()
-# set(PACMAN_AUTH "${PACMAN_AUTH}") # CACHE STRING "Command used to run pacman as root, instead of trying sudo and su" FORCE)
-
-# #-- Packager: name/email of the person or organization building packages
-# if(DEFINED PACKAGER)
-#     set(PACKAGER "${PACKAGER}") # CACHE STRING "Packager: name/email of the person or organization building packages (optional)." FORCE)
-# else()
-#     set(PACKAGER "John Doe <john@doe.com>") # CACHE STRING "Packager: name/email of the person or organization building packages (Default)." FORCE)
-# endif()
-
-# if(ENABLE_SIGN)
-#     #-- Specify a key to use for package signing
-#     if(DEFINED GPGKEY)
-#         set(GPGKEY "${GPGKEY}") # CACHE STRING "Specify a key to use for package signing (User-specified)." FORCE)
-#     elseif(DEFINED ENV{GPGKEY})
-#         set(GPGKEY "$ENV{GPGKEY}") # CACHE STRING "Specify a key to use for package signing (Environment-detected)." FORCE)
-#     else()
-#         set(GPGKEY "UNDEFINED") # CACHE STRING "Specify a key to use for package signing (Undefined)." FORCE)
-#     endif()
-# endif()
-
-
-# include("${Z_MSYS_ROOT_DIR}/scripts/cmake/msys_compression_defaults.cmake")
-
-
-#[===[.md
-
-# Todo
-
-#########################################################################
-# NOTES
-#########################################################################
-
-
-elseif(MSYSTEM STREQUAL CLANG64)
-    set(MSYSTEM_TITLE "MinGW Clang x64")
-    set(MSYSTEM_TOOLCHAIN_VARIANT llvm)
-    set(MSYSTEM_C_LIBRARY ucrt)
-    set(MSYSTEM_CXX_LIBRARY libc++)
-
-elseif(MSYSTEM STREQUAL CLANG32)
-    set(MSYSTEM_TITLE "MinGW Clang x32")
-    set(MSYSTEM_TOOLCHAIN_VARIANT llvm)
-    set(MSYSTEM_C_LIBRARY ucrt)
-    set(MSYSTEM_CXX_LIBRARY libc++)
-elseif(MSYSTEM STREQUAL MINGW64)
-    set(MSYSTEM_TITLE "MinGW x64")
-    set(MSYSTEM_TOOLCHAIN_VARIANT gcc)
-    set(MSYSTEM_C_LIBRARY msvcrt)
-    set(MSYSTEM_CXX_LIBRARY libstdc++)
-elseif(MSYSTEM STREQUAL MINGW32)
-    set(MSYSTEM_TITLE "MinGW x32")
-    set(MSYSTEM_TOOLCHAIN_VARIANT gcc)
-    set(MSYSTEM_C_LIBRARY msvcrt)
-    set(MSYSTEM_CXX_LIBRARY libstdc++)
-endif()
-
-#]===]
 
 cmake_policy(PUSH)
 cmake_policy(VERSION 3.7.2)
