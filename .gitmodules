@@ -1,0 +1,3 @@
+[submodule "tests/CMakeProject1"]
+	path = tests/CMakeProject1
+	url = ../../StoneyDSP/CMakeProject1.git
