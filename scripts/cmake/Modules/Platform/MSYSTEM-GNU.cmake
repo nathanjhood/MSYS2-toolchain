@@ -1,14 +1,20 @@
 # Distributed under the OSI-approved BSD 3-Clause License.  See accompanying
 # file Copyright.txt or https://cmake.org/licensing for details.
 
+if(TRACE_MODE)
+    message("Enter: ${CMAKE_CURRENT_LIST_FILE}")
+endif()
 
 # This module is shared by multiple languages; use include blocker.
 if(__MSYSTEM_COMPILER_GNU)
+    if(TRACE_MODE)
+        message("Exit: ${CMAKE_CURRENT_LIST_FILE}")
+    endif()
     return()
 endif()
 set(__MSYSTEM_COMPILER_GNU 1)
 
-# message(WARNING "ping")
+
 
 # TODO: Is -Wl,--enable-auto-import now always default?
 set(CMAKE_EXE_LINKER_FLAGS_INIT)
@@ -80,3 +86,7 @@ macro(__msystem_mingw_compiler_gnu lang)
     enable_language(RC)
 
 endmacro()
+
+if(TRACE_MODE)
+    message("Exit: ${CMAKE_CURRENT_LIST_FILE}")
+endif()

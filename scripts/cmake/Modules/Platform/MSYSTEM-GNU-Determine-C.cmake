@@ -1,4 +1,6 @@
-# message(WARNING "ping")
+if(TRACE_MODE)
+    message("Enter: ${CMAKE_CURRENT_LIST_FILE}")
+endif()
 
 if(NOT CMAKE_C_COMPILER_NAMES)
     set(CMAKE_C_COMPILER_NAMES)
@@ -7,4 +9,8 @@ if(NOT CMAKE_C_COMPILER_NAMES)
     list(APPEND CMAKE_C_COMPILER_NAMES gcc)
     list(APPEND CMAKE_C_COMPILER_NAMES cc)
     set(CMAKE_C_COMPILER_NAMES "${CMAKE_C_COMPILER_NAMES}")
+endif()
+
+if(TRACE_MODE)
+    message("Exit: ${CMAKE_CURRENT_LIST_FILE}")
 endif()

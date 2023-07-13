@@ -8,7 +8,9 @@ if(__MSYSTEM_COMPILER_CLANG)
 endif()
 set(__MSYSTEM_COMPILER_CLANG 1)
 
-# message(WARNING "ping")
+if(TRACE_MODE)
+    message("ping")
+endif()
 
 # TODO: Is -Wl,--enable-auto-import now always default?
 set(CMAKE_EXE_LINKER_FLAGS_INIT)
