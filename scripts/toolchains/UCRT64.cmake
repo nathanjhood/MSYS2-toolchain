@@ -1,5 +1,3 @@
-message(STATUS "Enter: ${CMAKE_CURRENT_LIST_FILE}")
-
 if(NOT _MSYS_UCRT64_TOOLCHAIN)
 set(_MSYS_UCRT64_TOOLCHAIN 1)
 
@@ -142,11 +140,99 @@ endforeach()
     # -fstack-protector-strong    Enable stack protectors for some functions vulnerable to stack smashing. Compared to -fstack-protector, this uses a stronger heuristic that includes functions containing arrays of any size (and any type), as well as any calls to alloca or the taking of an address from a local variable
     # -fstack-protector           Enable stack protectors for some functions vulnerable to stack smashing. This uses a loose heuristic which considers functions vulnerable if they contain a char (or 8bit integer) array or constant sized calls to alloca, which are of greater size than ssp-buffer-size (default: 8 bytes). All variable sized calls to alloca are considered vulnerable
 
+
+set(CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES)
+list(APPEND CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES "${Z_UCRT64_ROOT_DIR}/lib/gcc/x86_64-w64-mingw32/13.1.0/include")
+list(APPEND CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES "${Z_UCRT64_ROOT_DIR}/include")
+list(APPEND CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES "${Z_UCRT64_ROOT_DIR}/lib/gcc/x86_64-w64-mingw32/13.1.0/include-fixed")
+set(CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES "${CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES}" CACHE PATH "Directories implicitly searched by the compiler for header files." FORCE)
+mark_as_advanced(CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES)
+
+set(CMAKE_C_IMPLICIT_LINK_DIRECTORIES)
+list(APPEND CMAKE_C_IMPLICIT_LINK_DIRECTORIES "${Z_UCRT64_ROOT_DIR}/lib/gcc/x86_64-w64-mingw32/13.1.0")
+list(APPEND CMAKE_C_IMPLICIT_LINK_DIRECTORIES "${Z_UCRT64_ROOT_DIR}/lib/gcc")
+list(APPEND CMAKE_C_IMPLICIT_LINK_DIRECTORIES "${Z_UCRT64_ROOT_DIR}/x86_64-w64-mingw32/lib") # Hmm.... DSX dir??
+list(APPEND CMAKE_C_IMPLICIT_LINK_DIRECTORIES "${Z_UCRT64_ROOT_DIR}/lib")
+set(CMAKE_C_IMPLICIT_LINK_DIRECTORIES "${CMAKE_C_IMPLICIT_LINK_DIRECTORIES}" CACHE PATH "Implicit linker search path detected for language <C>." FORCE)
+mark_as_advanced(CMAKE_C_IMPLICIT_LINK_DIRECTORIES)
+
+set(CMAKE_C_IMPLICIT_LINK_FRAMEWORK_DIRECTORIES "" CACHE PATH "Implicit linker framework search path detected for language <C>." FORCE)
+mark_as_advanced(CMAKE_C_IMPLICIT_LINK_FRAMEWORK_DIRECTORIES)
+
+set(CMAKE_C_IMPLICIT_LINK_LIBRARIES)
+list(APPEND CMAKE_C_IMPLICIT_LINK_LIBRARIES "-mingw32")
+list(APPEND CMAKE_C_IMPLICIT_LINK_LIBRARIES "-gcc")
+list(APPEND CMAKE_C_IMPLICIT_LINK_LIBRARIES "-moldname")
+list(APPEND CMAKE_C_IMPLICIT_LINK_LIBRARIES "-mingwex")
+list(APPEND CMAKE_C_IMPLICIT_LINK_LIBRARIES "-kernel32")
+list(APPEND CMAKE_C_IMPLICIT_LINK_LIBRARIES "-pthread")
+list(APPEND CMAKE_C_IMPLICIT_LINK_LIBRARIES "-advapi32")
+list(APPEND CMAKE_C_IMPLICIT_LINK_LIBRARIES "-shell32")
+list(APPEND CMAKE_C_IMPLICIT_LINK_LIBRARIES "-user32")
+set(CMAKE_C_IMPLICIT_LINK_LIBRARIES "${CMAKE_C_IMPLICIT_LINK_LIBRARIES}" CACHE STRING "Implicit link libraries and flags detected for language <C>." FORCE)
+mark_as_advanced(CMAKE_C_IMPLICIT_LINK_LIBRARIES)
+
+set(CMAKE_C_SOURCE_FILE_EXTENSIONS)
+list(APPEND CMAKE_C_SOURCE_FILE_EXTENSIONS "c")
+list(APPEND CMAKE_C_SOURCE_FILE_EXTENSIONS "m")
+set(CMAKE_C_SOURCE_FILE_EXTENSIONS "${CMAKE_C_SOURCE_FILE_EXTENSIONS}" CACHE STRING "Extensions of source files for the given language <C>." FORCE)
+mark_as_advanced(CMAKE_C_SOURCE_FILE_EXTENSIONS)
+
 find_program(CMAKE_C_COMPILER "${Z_UCRT64_ROOT_DIR}/bin/x86_64-w64-mingw32-gcc.exe")
 mark_as_advanced(CMAKE_C_COMPILER)
 
 
-#"C:\msys64\ucrt64\bin\x86_64-w64-mingw32-gfortran.exe"
+set(CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES)
+list(APPEND CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES "${Z_UCRT64_ROOT_DIR}/include/c++/13.1.0")
+list(APPEND CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES "${Z_UCRT64_ROOT_DIR}/include/c++/13.1.0/x86_64-w64-mingw32")
+list(APPEND CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES "${Z_UCRT64_ROOT_DIR}/include/c++/13.1.0/backward")
+list(APPEND CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES "${Z_UCRT64_ROOT_DIR}/lib/gcc/x86_64-w64-mingw32/13.1.0/include")
+list(APPEND CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES "${Z_UCRT64_ROOT_DIR}/include")
+list(APPEND CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES "${Z_UCRT64_ROOT_DIR}/lib/gcc/x86_64-w64-mingw32/13.1.0/include-fixed")
+set(CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES "${CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES}" CACHE PATH "Directories implicitly searched by the compiler for header files." FORCE)
+mark_as_advanced(CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES)
+
+set(CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES)
+list(APPEND CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES "${Z_UCRT64_ROOT_DIR}/lib/gcc/x86_64-w64-mingw32/13.1.0")
+list(APPEND CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES "${Z_UCRT64_ROOT_DIR}/lib/gcc")
+list(APPEND CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES "${Z_UCRT64_ROOT_DIR}/x86_64-w64-mingw32/lib") # Hmm.... DSX dir??
+list(APPEND CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES "${Z_UCRT64_ROOT_DIR}/lib")
+set(CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES "${CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES}" CACHE PATH "Implicit linker search path detected for language <C>." FORCE)
+mark_as_advanced(CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES)
+
+set(CMAKE_CXX_IMPLICIT_LINK_FRAMEWORK_DIRECTORIES "" CACHE PATH "Implicit linker framework search path detected for language <C>." FORCE)
+mark_as_advanced(CMAKE_CXX_IMPLICIT_LINK_FRAMEWORK_DIRECTORIES)
+
+set(CMAKE_CXX_IMPLICIT_LINK_LIBRARIES)
+list(APPEND CMAKE_CXX_IMPLICIT_LINK_LIBRARIES "-stdc++")
+list(APPEND CMAKE_CXX_IMPLICIT_LINK_LIBRARIES "-mingw32")
+list(APPEND CMAKE_CXX_IMPLICIT_LINK_LIBRARIES "-gcc_s")
+list(APPEND CMAKE_CXX_IMPLICIT_LINK_LIBRARIES "-gcc")
+list(APPEND CMAKE_CXX_IMPLICIT_LINK_LIBRARIES "-moldname")
+list(APPEND CMAKE_CXX_IMPLICIT_LINK_LIBRARIES "-mingwex")
+list(APPEND CMAKE_CXX_IMPLICIT_LINK_LIBRARIES "-kernel32")
+list(APPEND CMAKE_CXX_IMPLICIT_LINK_LIBRARIES "-pthread")
+list(APPEND CMAKE_CXX_IMPLICIT_LINK_LIBRARIES "-advapi32")
+list(APPEND CMAKE_CXX_IMPLICIT_LINK_LIBRARIES "-shell32")
+list(APPEND CMAKE_CXX_IMPLICIT_LINK_LIBRARIES "-user32")
+set(CMAKE_CXX_IMPLICIT_LINK_LIBRARIES "${CMAKE_CXX_IMPLICIT_LINK_LIBRARIES}" CACHE STRING "Implicit link libraries and flags detected for language <C>." FORCE)
+mark_as_advanced(CMAKE_CXX_IMPLICIT_LINK_LIBRARIES)
+
+set(CMAKE_CXX_SOURCE_FILE_EXTENSIONS)
+list(APPEND CMAKE_CXX_SOURCE_FILE_EXTENSIONS "C")
+list(APPEND CMAKE_CXX_SOURCE_FILE_EXTENSIONS "M")
+list(APPEND CMAKE_CXX_SOURCE_FILE_EXTENSIONS "c++")
+list(APPEND CMAKE_CXX_SOURCE_FILE_EXTENSIONS "cc")
+list(APPEND CMAKE_CXX_SOURCE_FILE_EXTENSIONS "cpp")
+list(APPEND CMAKE_CXX_SOURCE_FILE_EXTENSIONS "cxx")
+list(APPEND CMAKE_CXX_SOURCE_FILE_EXTENSIONS "mm")
+list(APPEND CMAKE_CXX_SOURCE_FILE_EXTENSIONS "mpp")
+list(APPEND CMAKE_CXX_SOURCE_FILE_EXTENSIONS "CPP")
+list(APPEND CMAKE_CXX_SOURCE_FILE_EXTENSIONS "ixx")
+list(APPEND CMAKE_CXX_SOURCE_FILE_EXTENSIONS "cppm")
+set(CMAKE_CXX_SOURCE_FILE_EXTENSIONS "${CMAKE_CXX_SOURCE_FILE_EXTENSIONS}" CACHE STRING "Extensions of source files for the given language <C>." FORCE)
+mark_as_advanced(CMAKE_CXX_SOURCE_FILE_EXTENSIONS)
+
 find_program(CMAKE_CXX_COMPILER "${Z_UCRT64_ROOT_DIR}/bin/x86_64-w64-mingw32-g++.exe")
 mark_as_advanced(CMAKE_CXX_COMPILER)
 
@@ -154,7 +240,7 @@ mark_as_advanced(CMAKE_CXX_COMPILER)
 find_program(CMAKE_Fortran_COMPILER "${Z_UCRT64_ROOT_DIR}/bin/x86_64-w64-mingw32-gfortran.exe")
 mark_as_advanced(CMAKE_Fortran_COMPILER)
 
-#"C:\msys64\ucrt64\bin\x86_64-w64-mingw32-gfortran.exe"
+
 find_program(CMAKE_OBJC_COMPILER "${Z_UCRT64_ROOT_DIR}/bin/x86_64-w64-mingw32-gcc.exe")
 mark_as_advanced(CMAKE_OBJC_COMPILER)
 
@@ -190,7 +276,7 @@ if(NOT _CMAKE_IN_TRY_COMPILE)
     string(STRIP "${LDFLAGS}" LDFLAGS)
     set(ENV{LDFLAGS} "${LDFLAGS}")
     unset(LDFLAGS)
-    message(STATUS "LDFLAGS = $ENV{LDFLAGS}")
+    # message(STATUS "LDFLAGS = $ENV{LDFLAGS}")
 
     if(NOT DEFINED CFLAGS)
         set(CFLAGS) # Start a new list, if one doesn't exists
@@ -204,7 +290,7 @@ if(NOT _CMAKE_IN_TRY_COMPILE)
     string(STRIP "${CFLAGS}" CFLAGS)
     set(ENV{CFLAGS} "${CFLAGS}")
     unset(CFLAGS)
-    message(STATUS "CFLAGS = $ENV{CFLAGS}")
+    # message(STATUS "CFLAGS = $ENV{CFLAGS}")
 
     if(NOT DEFINED CXXFLAGS)
         set(CXXFLAGS)
@@ -218,7 +304,7 @@ if(NOT _CMAKE_IN_TRY_COMPILE)
     string(STRIP "${CXXFLAGS}" CXXFLAGS)
     set(ENV{CXXFLAGS} "${CXXFLAGS}")
     unset(CXXFLAGS)
-    message(STATUS "CXXFLAGS = $ENV{CXXFLAGS}")
+    # message(STATUS "CXXFLAGS = $ENV{CXXFLAGS}")
 
     if(NOT DEFINED CPPFLAGS)
         set(CPPFLAGS)
@@ -227,7 +313,7 @@ if(NOT _CMAKE_IN_TRY_COMPILE)
     string(STRIP "${CPPFLAGS}" CPPFLAGS)
     set(ENV{CPPFLAGS} "${CPPFLAGS}")
     unset(CPPFLAGS)
-    message(STATUS "CPPFLAGS = $ENV{CPPFLAGS}")
+    # message(STATUS "CPPFLAGS = $ENV{CPPFLAGS}")
 
     string(APPEND CMAKE_C_FLAGS_INIT                        " ${MSYS_C_FLAGS} ")
     string(APPEND CMAKE_C_FLAGS_DEBUG_INIT                  " ${MSYS_C_FLAGS_DEBUG} ")

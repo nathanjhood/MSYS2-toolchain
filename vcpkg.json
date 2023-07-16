@@ -1,0 +1,30 @@
+{
+    "name": "msys2-toolchain",
+    "version": "1.0.0-56e14ea77bba9a03eb176bcbbbb31b6de4e56288",
+    "homepage": "https://github.com/StoneyDSP/MSYS2-toolchain.git",
+    "description": "",
+    "dependencies": [
+      {
+        "name": "vcpkg-cmake",
+        "host": true
+      },
+      {
+        "name": "vcpkg-cmake-config",
+        "host": true
+      },
+      {
+        "name": "vcpkg-cmake-get-vars",
+        "host": true
+      },
+      {
+        "name": "vcpkg-gfortran",
+        "host": true
+      },
+      {
+        "name": "vcpkg-msbuild",
+        "host": true
+      }
+    ],
+
+    "default-features": []
+  }
