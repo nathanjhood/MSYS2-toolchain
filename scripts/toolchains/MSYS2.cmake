@@ -1,7 +1,7 @@
 if(NOT _MSYS_MSYS2_TOOLCHAIN)
 set(_MSYS_MSYS2_TOOLCHAIN 1)
 
-message(STATUS "MSYS2 MSYS toolchain loading...")
+message(STATUS "MSYS2 x64 toolchain loading...")
 
 if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
     set(CMAKE_CROSSCOMPILING OFF CACHE BOOL "")
@@ -28,6 +28,7 @@ while(NOT DEFINED Z_MSYS2_ROOT_DIR)
     elseif(IS_DIRECTORY "${Z_MSYS2_ROOT_DIR_CANDIDATE}")
         get_filename_component(Z_MSYS2_ROOT_DIR_TEMP "${Z_MSYS2_ROOT_DIR_CANDIDATE}" DIRECTORY)
         if(Z_MSYS2_ROOT_DIR_TEMP STREQUAL Z_MSYS2_ROOT_DIR_CANDIDATE)
+            message(WARNING "Could not find 'msys2.ini'... Check your installation!")
             break() # If unchanged, we have reached the root of the drive without finding vcpkg.
         endif()
         set(Z_MSYS2_ROOT_DIR_CANDIDATE "${Z_MSYS2_ROOT_DIR_TEMP}")
@@ -41,14 +42,14 @@ unset(Z_MSYS2_ROOT_DIR_CANDIDATE)
 
 foreach(lang C CXX) # Fortran OBJC OBJCXX ASM
 
-    set(CMAKE_${lang}_COMPILER_TARGET "x86_64-w64-mingw32" CACHE STRING "The target for cross-compiling, if supported. '--target=x86_64-w64-mingw32'")
+    set(CMAKE_${lang}_COMPILER_TARGET "x86_64-pc-windows-msys" CACHE STRING "The target for cross-compiling, if supported. '--target=x86_64-w64-mingw32'")
 
 endforeach()
 
-find_program(CMAKE_C_COMPILER "${Z_MSYS2_ROOT_DIR}/bin/x86_64-w64-mingw32-gcc.exe")
+find_program(CMAKE_C_COMPILER "${Z_MSYS2_ROOT_DIR}/bin/x86_64-pc-msys-gcc")
 mark_as_advanced(CMAKE_C_COMPILER)
 
-find_program(CMAKE_CXX_COMPILER "${Z_MSYS2_ROOT_DIR}/bin/x86_64-w64-mingw32-g++.exe")
+find_program(CMAKE_CXX_COMPILER "${Z_MSYS2_ROOT_DIR}/bin/x86_64-pc-msys-g++")
 mark_as_advanced(CMAKE_CXX_COMPILER)
 
 # find_program(CMAKE_Fortran_COMPILER "${Z_MSYS2_ROOT_DIR}/bin/x86_64-w64-mingw32-gfortran.exe")
@@ -195,6 +196,6 @@ if(NOT _CMAKE_IN_TRY_COMPILE)
 
 endif()
 
-message(STATUS "MinGW UCRT x64 toolchain loaded")
+message(STATUS "MSYS2 x64 toolchain loaded")
 
 endif()
