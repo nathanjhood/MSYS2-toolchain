@@ -425,26 +425,27 @@ endif()
 set(MSYS_INSTALL_PATH "${Z_MSYS_INSTALL_PATH_INITIAL_VALUE}" CACHE PATH "The directory which contains the installed libraries for each triplet" FORCE)
 set(_MSYS_INSTALL_PATH "${MSYS_INSTALL_PATH}" CACHE PATH "The directory which contains the installed libraries for each triplet" FORCE)
 
+## MSYSTEM isn't always defined when it should be...
+# function(z_msys_add_msystem_to_cmake_path list suffix)
 
-function(z_msys_add_msystem_to_cmake_path list suffix)
-    set(msys_paths "${_MSYS_INSTALL_PATH}/${MSYSTEM}${suffix}"
-        # "${_MSYS_INSTALL_PATH}/${MSYSTEM}/debug${suffix}"
-    )
-    # if(NOT DEFINED CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE MATCHES "^[Dd][Ee][Bb][Uu][Gg]$")
-    #     list(REVERSE msys_paths) # Debug build: Put Debug paths before Release paths.
-    # endif()
-    if(MSYS_PREFER_SYSTEM_LIBS)
-        list(APPEND "${list}" "${msys_paths}")
-    else()
-        list(INSERT "${list}" "0" "${msys_paths}") # CMake 3.15 is required for list(PREPEND ...).
-    endif()
-    set("${list}" "${${list}}" PARENT_SCOPE)
-endfunction()
-z_msys_add_msystem_to_cmake_path(CMAKE_PREFIX_PATH "")
-z_msys_add_msystem_to_cmake_path(CMAKE_LIBRARY_PATH "/lib")
-z_msys_add_msystem_to_cmake_path(CMAKE_PROGRAM_PATH "/bin")
-z_msys_add_msystem_to_cmake_path(CMAKE_INCLUDE_PATH "/include")
-z_msys_add_msystem_to_cmake_path(CMAKE_FIND_ROOT_PATH "")
+#     set(msys_paths "${_MSYS_INSTALL_PATH}/${MSYSTEM}${suffix}"
+#         # "${_MSYS_INSTALL_PATH}/${MSYSTEM}/debug${suffix}"
+#     )
+#     # if(NOT DEFINED CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE MATCHES "^[Dd][Ee][Bb][Uu][Gg]$")
+#     #     list(REVERSE msys_paths) # Debug build: Put Debug paths before Release paths.
+#     # endif()
+#     if(MSYS_PREFER_SYSTEM_LIBS)
+#         list(APPEND "${list}" "${msys_paths}")
+#     else()
+#         list(INSERT "${list}" "0" "${msys_paths}") # CMake 3.15 is required for list(PREPEND ...).
+#     endif()
+#     set("${list}" "${${list}}" PARENT_SCOPE)
+# endfunction()
+# z_msys_add_msystem_to_cmake_path(CMAKE_PREFIX_PATH "")
+# z_msys_add_msystem_to_cmake_path(CMAKE_LIBRARY_PATH "/lib")
+# z_msys_add_msystem_to_cmake_path(CMAKE_PROGRAM_PATH "/bin")
+# z_msys_add_msystem_to_cmake_path(CMAKE_INCLUDE_PATH "/include")
+# z_msys_add_msystem_to_cmake_path(CMAKE_FIND_ROOT_PATH "")
 
 if(NOT MSYS_PREFER_SYSTEM_LIBS)
     set(CMAKE_FIND_FRAMEWORK "LAST") # we assume that frameworks are usually system-wide libs, not msys-built
@@ -519,18 +520,25 @@ if(MSYS_SETUP_CMAKE_PROGRAM_PATH AND (DEFINED MSYSTEM))
     list(APPEND Z_MSYS_TOOLS_DIRS ${Z_MSYS_TOOLS_DIRS_LIB})
     list(APPEND Z_MSYS_TOOLS_DIRS ${Z_MSYS_TOOLS_DIRS_INC})
 
+    if(NOT DEFINED CMAKE_SYSTEM_PREFIX_PATH)
+        set(CMAKE_SYSTEM_PREFIX_PATH)
+    endif()
+    list(APPEND CMAKE_SYSTEM_PREFIX_PATH "${tools_base_path}")
+
     if(NOT DEFINED CMAKE_SYSTEM_PROGRAM_PATH)
         set(CMAKE_SYSTEM_PROGRAM_PATH)
     endif()
-    list(APPEND CMAKE_SYSTEM_PROGRAM_PATH "${tools_base_path}")
+    list(APPEND CMAKE_SYSTEM_PROGRAM_PATH "${tools_base_path}/bin")
 
-    foreach(Z_MSYS_TOOLS_DIRS_BIN IN LISTS Z_MSYS_TOOLS_DIRS_BIN)
-        list(APPEND CMAKE_SYSTEM_PROGRAM_PATH "${Z_MSYS_TOOLS_DIRS_BIN}")
-    endforeach()
+    if(NOT DEFINED CMAKE_SYSTEM_INCLUDE_PATH)
+        set(CMAKE_SYSTEM_INCLUDE_PATH)
+    endif()
+    list(APPEND CMAKE_SYSTEM_INCLUDE_PATH "${tools_base_path}/include")
 
-    foreach(Z_MSYS_TOOLS_DIR IN LISTS Z_MSYS_TOOLS_DIRS)
-        list(APPEND CMAKE_SYSTEM_PROGRAM_PATH "${Z_MSYS_TOOLS_DIR}")
-    endforeach()
+    if(NOT DEFINED CMAKE_SYSTEM_LIBRARY_PATH)
+        set(CMAKE_SYSTEM_LIBRARY_PATH)
+    endif()
+    list(APPEND CMAKE_SYSTEM_LIBRARY_PATH "${tools_base_path}/lib")
 
     # unset(Z_MSYS_TOOLS_DIR)
     # unset(Z_MSYS_TOOLS_DIRS)
