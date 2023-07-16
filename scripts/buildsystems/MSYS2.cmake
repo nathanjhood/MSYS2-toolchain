@@ -606,6 +606,42 @@ if(MSYS_SETUP_CMAKE_PROGRAM_PATH AND (DEFINED MSYSTEM))
 
 endif()
 
+
+
+## Excellent flag handling from {fmt}!
+option(OPTION_ENABLE_WERROR_FLAG "Halt the compilation with an error on compiler warnings." OFF)
+option(OPTION_ENABLE_PEDANTIC_FLAGS "Enable extra warnings and expensive tests." OFF)
+
+if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+	set(PEDANTIC_COMPILE_FLAGS -pedantic-errors -Wall -Wextra -pedantic -Wold-style-cast -Wundef -Wredundant-decls -Wwrite-strings -Wpointer-arith -Wcast-qual -Wformat=2 -Wmissing-include-dirs -Wcast-align -Wctor-dtor-privacy -Wdisabled-optimization -Winvalid-pch -Woverloaded-virtual -Wconversion -Wundef -Wno-ctor-dtor-privacy -Wno-format-nonliteral)
+	if (NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.6)
+		set(PEDANTIC_COMPILE_FLAGS ${PEDANTIC_COMPILE_FLAGS} -Wno-dangling-else -Wno-unused-local-typedefs)
+	endif ()
+	if (NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS 5.0)
+		set(PEDANTIC_COMPILE_FLAGS ${PEDANTIC_COMPILE_FLAGS} -Wdouble-promotion	-Wtrampolines -Wzero-as-null-pointer-constant -Wuseless-cast -Wvector-operation-performance -Wsized-deallocation -Wshadow)
+	endif ()
+	if (NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS 6.0)
+		set(PEDANTIC_COMPILE_FLAGS ${PEDANTIC_COMPILE_FLAGS} -Wshift-overflow=2 -Wnull-dereference -Wduplicated-cond)
+	endif ()
+	set(WERROR_FLAG -Werror)
+  endif ()
+
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    include(CheckCXXCompilerFlag)
+	set(PEDANTIC_COMPILE_FLAGS -Wall -Wextra -pedantic -Wconversion -Wundef -Wdeprecated -Wweak-vtables -Wshadow -Wno-gnu-zero-variadic-macro-arguments)
+	check_cxx_compiler_flag(-Wzero-as-null-pointer-constant HAS_NULLPTR_WARNING)
+	if (HAS_NULLPTR_WARNING)
+	  set(PEDANTIC_COMPILE_FLAGS ${PEDANTIC_COMPILE_FLAGS} -Wzero-as-null-pointer-constant)
+	endif ()
+	set(WERROR_FLAG -Werror)
+endif ()
+
+if (MSVC)
+	set(PEDANTIC_COMPILE_FLAGS /W3)
+	set(WERROR_FLAG /WX)
+endif ()
+
+
 message(STATUS "Msys2 Build system loaded")
 
 cmake_policy(POP)
@@ -656,6 +692,12 @@ function(add_executable)
         set_target_properties("${target_name}" PROPERTIES VS_USER_PROPS do_not_import_user.props)
         set_target_properties("${target_name}" PROPERTIES VS_GLOBAL_MsysEnabled false)
     endif()
+    if (OPTION_ENABLE_WERROR_FLAG)
+        target_compile_options("${target_name}" PRIVATE "${WERROR_FLAG}")
+    endif ()
+    if (OPTION_ENABLE_PEDANTIC_FLAGS)
+        target_compile_options("${target_name}" PRIVATE "${PEDANTIC_COMPILE_FLAGS}")
+    endif ()
 endfunction()
 
 function(add_library)
@@ -685,6 +727,12 @@ function(add_library)
         set_target_properties("${target_name}" PROPERTIES VS_USER_PROPS do_not_import_user.props)
         set_target_properties("${target_name}" PROPERTIES VS_GLOBAL_MsysEnabled false)
     endif()
+    if (OPTION_ENABLE_WERROR_FLAG)
+        target_compile_options("${target_name}" PRIVATE "${WERROR_FLAG}")
+    endif ()
+    if (OPTION_ENABLE_PEDANTIC_FLAGS)
+        target_compile_options("${target_name}" PRIVATE "${PEDANTIC_COMPILE_FLAGS}")
+    endif ()
 endfunction()
 
 # This is an experimental function to enable applocal install of dependencies as part of the `make install` process
