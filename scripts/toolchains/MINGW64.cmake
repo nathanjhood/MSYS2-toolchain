@@ -295,6 +295,6 @@ if(NOT _CMAKE_IN_TRY_COMPILE)
 
 endif()
 
-message(STATUS "MinGW x64 toolchain loaded")
+message(STATUS "MinGW GNU x64 toolchain loaded")
 
 endif()
