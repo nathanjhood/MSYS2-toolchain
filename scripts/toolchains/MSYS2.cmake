@@ -8,7 +8,7 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
 endif()
 
 # Need to override MinGW from MSYS_CMAKE_SYSTEM_NAME
-set(CMAKE_SYSTEM_NAME "MSYSTEM" CACHE STRING "The name of the operating system for which CMake is to build." FORCE)
+set(CMAKE_SYSTEM_NAME "MSYS" CACHE STRING "The name of the operating system for which CMake is to build." FORCE)
 
 if(MSYS_TARGET_ARCHITECTURE STREQUAL "x86")
     set(CMAKE_SYSTEM_PROCESSOR i686 CACHE STRING "When not cross-compiling, this variable has the same value as the ``CMAKE_HOST_SYSTEM_PROCESSOR`` variable.")
@@ -46,10 +46,10 @@ foreach(lang C CXX) # Fortran OBJC OBJCXX ASM
 
 endforeach()
 
-find_program(CMAKE_C_COMPILER "${Z_MSYS2_ROOT_DIR}/bin/x86_64-pc-msys-gcc")
+find_program(CMAKE_C_COMPILER "${Z_MSYS2_ROOT_DIR}/bin/x86_64-pc-msys-gcc.exe" NO_DEFAULT_PATH)
 mark_as_advanced(CMAKE_C_COMPILER)
 
-find_program(CMAKE_CXX_COMPILER "${Z_MSYS2_ROOT_DIR}/bin/x86_64-pc-msys-g++")
+find_program(CMAKE_CXX_COMPILER "/usr/bin/x86_64-pc-msys-g++.exe")
 mark_as_advanced(CMAKE_CXX_COMPILER)
 
 # find_program(CMAKE_Fortran_COMPILER "${Z_MSYS2_ROOT_DIR}/bin/x86_64-w64-mingw32-gfortran.exe")
