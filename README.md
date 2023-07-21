@@ -1,6 +1,8 @@
 # MSYS2 toolchain
 
-Full CMake build support for all <a href="">Msys64</a> sub-systems, with optonal <a href="">vcpkg</a> integration.
+Full CMake build support for all <a href="msys2.org">Msys64</a> sub-systems, with optonal <a href="">vcpkg</a> integration.
+
+Currently being developed in tandem with my specialized fork of <a href="https://github.com/StoneyDSP/msys2-pacman.git">MSYS2-Pacman</a>, with the aim of bringing the building of package binaries from hosted source repositories to msys2 environments for Windows.
 
 # <b>Usage</b>
 
