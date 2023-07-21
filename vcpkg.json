@@ -1,6 +1,6 @@
 {
     "name": "msys2-toolchain",
-    "version": "1.0.1-20f54f64617ed17d65d028ae7cc2a430284fa194",
+    "version": "1.0.1-80eaadb1a7e79c06e478e4953046ea53142b4db1",
     "homepage": "https://github.com/StoneyDSP/MSYS2-toolchain.git",
     "description": "",
     "dependencies": [
