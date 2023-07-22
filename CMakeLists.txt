@@ -2,7 +2,7 @@
 cmake_minimum_required(VERSION 3.14...3.27 FATAL_ERROR)
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/scripts/cmake/Modules" "${CMAKE_MODULE_PATH}")
 
-project(test)
+project(msystem)
 set(PROJECT_VERSION_MAJOR 1)
 set(PROJECT_VERSION_MINOR 0)
 set(PROJECT_VERSION_PATCH 0)
@@ -12,7 +12,12 @@ set(PROJECT_VERSION_TWEAK "${git_revision}")
 set (${PROJECT_NAME}_VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}-${PROJECT_VERSION_TWEAK}" CACHE STRING "Value given to the ``VERSION`` option of the most recent call to the ``project()`` command, if any." FORCE)
 
 
-option(OPTION_BUILD_TEST_PROJECT "" ON)
+option(OPTION_BUILD_PACMAN "" ON)
+if(OPTION_BUILD_PACMAN)
+    add_subdirectory(pacman)
+endif()
+
+option(OPTION_BUILD_TEST_PROJECT "" OFF)
 if(OPTION_BUILD_TEST_PROJECT)
     add_subdirectory(tests/CMakeProject1)
 endif()
