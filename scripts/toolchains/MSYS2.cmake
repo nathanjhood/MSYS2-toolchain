@@ -3,6 +3,10 @@ set(_MSYS_MSYS2_TOOLCHAIN 1)
 
 message(STATUS "MSYS2 x64 toolchain loading...")
 
+set(CMAKE_SYSROOT "/usr" CACHE PATH "Path to pass to the compiler in the ``--sysroot`` flag." FORCE)
+set(CMAKE_SYSROOT_COMPILE "/usr" CACHE PATH "Path to pass to the compiler in the ``--sysroot`` flag when compiling source files." FORCE)
+set(CMAKE_SYSROOT_LINK "/usr" CACHE PATH "Path to pass to the compiler in the ``--sysroot`` flag when linking." FORCE)
+
 if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
     set(CMAKE_CROSSCOMPILING OFF CACHE BOOL "")
 endif()
@@ -20,163 +24,173 @@ elseif(MSYS_TARGET_ARCHITECTURE STREQUAL "arm64")
     set(CMAKE_SYSTEM_PROCESSOR aarch64 CACHE STRING "When not cross-compiling, this variable has the same value as the ``CMAKE_HOST_SYSTEM_PROCESSOR`` variable.")
 endif()
 
-# Detect <Z_MSYS_ROOT_DIR>/msys2.ini to figure MSYS2_ROOT_DIR
-set(Z_MSYS2_ROOT_DIR_CANDIDATE "${CMAKE_CURRENT_LIST_DIR}")
-while(NOT DEFINED Z_MSYS2_ROOT_DIR)
-    if(EXISTS "${Z_MSYS2_ROOT_DIR_CANDIDATE}msys64/msys2.ini")
-        set(Z_MSYS2_ROOT_DIR "${Z_MSYS2_ROOT_DIR_CANDIDATE}msys64/usr" CACHE INTERNAL "MinGW UCRT x64 root directory")
-    elseif(IS_DIRECTORY "${Z_MSYS2_ROOT_DIR_CANDIDATE}")
-        get_filename_component(Z_MSYS2_ROOT_DIR_TEMP "${Z_MSYS2_ROOT_DIR_CANDIDATE}" DIRECTORY)
-        if(Z_MSYS2_ROOT_DIR_TEMP STREQUAL Z_MSYS2_ROOT_DIR_CANDIDATE)
-            message(WARNING "Could not find 'msys2.ini'... Check your installation!")
-            break() # If unchanged, we have reached the root of the drive without finding vcpkg.
-        endif()
-        set(Z_MSYS2_ROOT_DIR_CANDIDATE "${Z_MSYS2_ROOT_DIR_TEMP}")
-        unset(Z_MSYS2_ROOT_DIR_TEMP)
-    else()
-        message(WARNING "Could not find 'msys2.ini'... Check your installation!")
-        break()
-    endif()
-endwhile()
-unset(Z_MSYS2_ROOT_DIR_CANDIDATE)
+# # Detect <Z_MSYS_ROOT_DIR>/msys2.ini to figure MSYS2_ROOT_DIR
+# set(Z_MSYS2_ROOT_DIR_CANDIDATE "${CMAKE_CURRENT_LIST_DIR}")
+# while(NOT DEFINED Z_MSYS2_ROOT_DIR)
+#     if(EXISTS "${Z_MSYS2_ROOT_DIR_CANDIDATE}msys64/msys2.ini")
+#         set(Z_MSYS2_ROOT_DIR "${Z_MSYS2_ROOT_DIR_CANDIDATE}msys64/usr" CACHE INTERNAL "MSYS2 x64 root directory")
+#     elseif(IS_DIRECTORY "${Z_MSYS2_ROOT_DIR_CANDIDATE}")
+#         get_filename_component(Z_MSYS2_ROOT_DIR_TEMP "${Z_MSYS2_ROOT_DIR_CANDIDATE}" DIRECTORY)
+#         if(Z_MSYS2_ROOT_DIR_TEMP STREQUAL Z_MSYS2_ROOT_DIR_CANDIDATE)
+#             message(WARNING "Could not find 'msys2.ini'... Check your installation!")
+#             break() # If unchanged, we have reached the root of the drive without finding vcpkg.
+#         endif()
+#         set(Z_MSYS2_ROOT_DIR_CANDIDATE "${Z_MSYS2_ROOT_DIR_TEMP}")
+#         unset(Z_MSYS2_ROOT_DIR_TEMP)
+#     else()
+#         message(WARNING "Could not find 'msys2.ini'... Check your installation!")
+#         break()
+#     endif()
+# endwhile()
+# unset(Z_MSYS2_ROOT_DIR_CANDIDATE)
+
+set(Z_MSYS2_ROOT_DIR "/usr" CACHE PATH "MSYS2 x64 root directory")
+
+## Set Env vars
+# set(ENV{CARCH} "x86_64")
+# set(ENV{CHOST} "x86_64-pc-msys")
+# set(ENV{CC} "gcc")
+# set(ENV{CXX} "g++")
+# set(ENV{CPPFLAGS} "")
+# set(ENV{CFLAGS} "-march=nocona -msahf -mtune=generic -O2 -pipe")
+# set(ENV{CXXFLAGS} "-march=nocona -msahf -mtune=generic -O2 -pipe")
+# set(ENV{LDFLAGS} "-pipe")
+# set(ENV{DEBUG_CFLAGS} "-ggdb -Og")
+# set(ENV{DEBUG_CXXFLAGS} "-ggdb -Og")
 
 foreach(lang C CXX) # Fortran OBJC OBJCXX ASM
 
-    set(CMAKE_${lang}_COMPILER_TARGET "x86_64-pc-windows-msys" CACHE STRING "The target for cross-compiling, if supported. '--target=x86_64-w64-mingw32'")
+    set(CMAKE_${lang}_COMPILER_TARGET "x86_64-pc-msys" CACHE STRING "The target for cross-compiling, if supported. '--target=x86_64-w64-mingw32'")
+
+    set(CMAKE_${lang}_COMPILER_ID "GNU 11.3.0" CACHE STRING "")
+
+    # set(CMAKE_${lang}_COMPILER_FRONTEND_VARIANT "GNU" CACHE STRING "")
+    # set(CMAKE_${lang}_COMPILER_VERSION "11.3.0" CACHE STRING "")
 
 endforeach()
 
+set(CMAKE_MAKE_PROGRAM "/usr/bin/make.exe" CACHE FILEPATH "Tool that can launch the native build system." FORCE)
+
 set(CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES)
-list(APPEND CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES "${Z_MINGW64_ROOT_DIR}/lib/gcc/x86_64-pc-msys/11.3.0/include")
-list(APPEND CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES "${Z_MINGW64_ROOT_DIR}/lib/gcc/x86_64-pc-msys/11.3.0/include-fixed")
-list(APPEND CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES "${Z_MINGW64_ROOT_DIR}/include")
-set(CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES "${CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES}" CACHE PATH "Directories implicitly searched by the compiler for header files <C>.")
+list(APPEND CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES "/usr/lib/gcc/x86_64-pc-msys/11.3.0/include")
+list(APPEND CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES "/usr/lib/gcc/x86_64-pc-msys/11.3.0/include-fixed")
+list(APPEND CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES "/usr/include")
+set(CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES "${CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES}" CACHE PATH "Directories implicitly searched by the compiler for header files <C>." FORCE)
 mark_as_advanced(CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES)
 
 set(CMAKE_C_IMPLICIT_LINK_DIRECTORIES)
-list(APPEND CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES "${Z_MSYS2_ROOT_DIR}/lib/gcc/x86_64-pc-msys/11.3.0")
-list(APPEND CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES "${Z_MSYS2_ROOT_DIR}/lib/w32api")
-list(APPEND CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES "${Z_MSYS2_ROOT_DIR}/x86_64-pc-msys/lib/ldscripts") # Hmm.... DSX dir??
-list(APPEND CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES "${Z_MSYS2_ROOT_DIR}/lib")
-set(CMAKE_C_IMPLICIT_LINK_DIRECTORIES "${CMAKE_C_IMPLICIT_LINK_DIRECTORIES}" CACHE PATH "Implicit linker search path detected for language <C>.")
+list(APPEND CMAKE_C_IMPLICIT_LINK_DIRECTORIES "/usr/lib/gcc/x86_64-pc-msys/11.3.0")
+list(APPEND CMAKE_C_IMPLICIT_LINK_DIRECTORIES "/usr/lib/w32api")
+list(APPEND CMAKE_C_IMPLICIT_LINK_DIRECTORIES "/usr/x86_64-pc-msys/lib/ldscripts") # Hmm.... DSX dir??
+list(APPEND CMAKE_C_IMPLICIT_LINK_DIRECTORIES "/usr/lib")
+set(CMAKE_C_IMPLICIT_LINK_DIRECTORIES "${CMAKE_C_IMPLICIT_LINK_DIRECTORIES}" CACHE PATH "Implicit linker search path detected for language <C>." FORCE)
 mark_as_advanced(CMAKE_C_IMPLICIT_LINK_DIRECTORIES)
 
-set(CMAKE_C_IMPLICIT_LINK_FRAMEWORK_DIRECTORIES "" CACHE PATH "Implicit linker framework search path detected for language <C>.")
+set(CMAKE_C_IMPLICIT_LINK_FRAMEWORK_DIRECTORIES "" CACHE PATH "Implicit linker framework search path detected for language <C>." FORCE)
 mark_as_advanced(CMAKE_C_IMPLICIT_LINK_FRAMEWORK_DIRECTORIES)
 
-# set(CMAKE_C_IMPLICIT_LINK_LIBRARIES)
-# string(APPEND CMAKE_C_IMPLICIT_LINK_LIBRARIES "-mingw32" " ")
-# string(APPEND CMAKE_C_IMPLICIT_LINK_LIBRARIES "-gcc" " ")
-# string(APPEND CMAKE_C_IMPLICIT_LINK_LIBRARIES "-moldname" " ")
-# string(APPEND CMAKE_C_IMPLICIT_LINK_LIBRARIES "-mingwex" " ")
-# string(APPEND CMAKE_C_IMPLICIT_LINK_LIBRARIES "-kernel32" " ")
-# string(APPEND CMAKE_C_IMPLICIT_LINK_LIBRARIES "-pthread" " ")
-# string(APPEND CMAKE_C_IMPLICIT_LINK_LIBRARIES "-advapi32" " ")
-# string(APPEND CMAKE_C_IMPLICIT_LINK_LIBRARIES "-shell32" " ")
-# string(APPEND CMAKE_C_IMPLICIT_LINK_LIBRARIES "-user32" " ")
-# string(STRIP "${CMAKE_C_IMPLICIT_LINK_LIBRARIES}" CMAKE_C_IMPLICIT_LINK_LIBRARIES)
-# set(CMAKE_C_IMPLICIT_LINK_LIBRARIES "${CMAKE_C_IMPLICIT_LINK_LIBRARIES}" CACHE STRING "Implicit link libraries and flags detected for language <C>.")
-# mark_as_advanced(CMAKE_C_IMPLICIT_LINK_LIBRARIES)
+set(CMAKE_C_IMPLICIT_LINK_LIBRARIES)
+list(APPEND CMAKE_C_IMPLICIT_LINK_LIBRARIES
+    "-mingw32"
+    "-gcc"
+    "-moldname"
+    "-mingwex"
+    "-kernel32"
+    "-pthread"
+    "-advapi32"
+    "-shell32"
+    "-user32"
+)
+set(CMAKE_C_IMPLICIT_LINK_LIBRARIES "${CMAKE_C_IMPLICIT_LINK_LIBRARIES}" CACHE STRING "Implicit link libraries and flags detected for language <C>." FORCE)
+mark_as_advanced(CMAKE_C_IMPLICIT_LINK_LIBRARIES)
 
 set(CMAKE_C_SOURCE_FILE_EXTENSIONS)
-list(APPEND CMAKE_C_SOURCE_FILE_EXTENSIONS "c")
-list(APPEND CMAKE_C_SOURCE_FILE_EXTENSIONS "m")
-set(CMAKE_C_SOURCE_FILE_EXTENSIONS "${CMAKE_C_SOURCE_FILE_EXTENSIONS}" CACHE STRING "Extensions of source files for the given language <C>.")
+list(APPEND CMAKE_C_SOURCE_FILE_EXTENSIONS
+    "c"
+    "m"
+)
+set(CMAKE_C_SOURCE_FILE_EXTENSIONS "${CMAKE_C_SOURCE_FILE_EXTENSIONS}" CACHE STRING "Extensions of source files for the given language <C>." FORCE)
 mark_as_advanced(CMAKE_C_SOURCE_FILE_EXTENSIONS)
 
-find_program(CMAKE_C_COMPILER "${Z_MSYS2_ROOT_DIR}/bin/x86_64-pc-msys-gcc.exe" NO_DEFAULT_PATH)
+
+find_program(CMAKE_C_COMPILER "x86_64-pc-msys-gcc"
+    HINTS "/usr/bin"
+    REQUIRED
+    NO_DEFAULT_PATH
+)
 mark_as_advanced(CMAKE_C_COMPILER)
 
-
-#[===[
-
-    ```
-    "C:/msys64/usr/include",
-    "C:/msys64/usr/include/cygwin",
-    "C:/msys64/usr/include/w32api",
-
-    "C:/msys64/usr/lib/gcc/x86_64-pc-msys/11.3.0/include",
-    "C:/msys64/usr/lib/gcc/x86_64-pc-msys/11.3.0/include-fixed",
-
-    "C:/msys64/usr/lib/gcc/x86_64-pc-msys/11.3.0/include/c++",
-    "C:/msys64/usr/lib/gcc/x86_64-pc-msys/11.3.0/include/c++/backward",
-    "C:/msys64/usr/lib/gcc/x86_64-pc-msys/11.3.0/include/c++/bits",
-    "C:/msys64/usr/lib/gcc/x86_64-pc-msys/11.3.0/include/c++/debug",
-    "C:/msys64/usr/lib/gcc/x86_64-pc-msys/11.3.0/include/c++/decimal",
-    "C:/msys64/usr/lib/gcc/x86_64-pc-msys/11.3.0/include/c++/experimental",
-    // "C:/msys64/usr/lib/gcc/x86_64-pc-msys/11.3.0/include/c++/ext",
-    "C:/msys64/usr/lib/gcc/x86_64-pc-msys/11.3.0/include/c++/parallel",
-    "C:/msys64/usr/lib/gcc/x86_64-pc-msys/11.3.0/include/c++/pstl",
-    "C:/msys64/usr/lib/gcc/x86_64-pc-msys/11.3.0/include/c++/tr1",
-    "C:/msys64/usr/lib/gcc/x86_64-pc-msys/11.3.0/include/c++/tr2",
-
-    "C:/msys64/usr/lib/gcc/x86_64-pc-msys/11.3.0/include/c++/x86_64-pc-msys/bits",
-    "C:/msys64/usr/lib/gcc/x86_64-pc-msys/11.3.0/include/c++/x86_64-pc-msys/ext"
-    ```
-]===]
-
 set(CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES)
-list(APPEND CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES "${Z_MSYS2_ROOT_DIR}/include")
-list(APPEND CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES "${Z_MSYS2_ROOT_DIR}/include/cygwin")
-list(APPEND CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES "${Z_MSYS2_ROOT_DIR}/include/w32api")
-list(APPEND CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES "${Z_MSYS2_ROOT_DIR}/lib/gcc/x86_64-pc-msys/11.3.0/include/c++")
-list(APPEND CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES "${Z_MSYS2_ROOT_DIR}/lib/gcc/x86_64-pc-msys/11.3.0/include/c++/backward")
-list(APPEND CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES "${Z_MSYS2_ROOT_DIR}/lib/gcc/x86_64-pc-msys/11.3.0/include/c++/bits")
-list(APPEND CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES "${Z_MSYS2_ROOT_DIR}/lib/gcc/x86_64-pc-msys/11.3.0/include/c++/debug")
-list(APPEND CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES "${Z_MSYS2_ROOT_DIR}/lib/gcc/x86_64-pc-msys/11.3.0/include/c++/decimal")
-list(APPEND CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES "${Z_MSYS2_ROOT_DIR}/lib/gcc/x86_64-pc-msys/11.3.0/include/c++/ext")
-list(APPEND CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES "${Z_MSYS2_ROOT_DIR}/lib/gcc/x86_64-pc-msys/11.3.0/include/c++/parallel")
-list(APPEND CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES "${Z_MSYS2_ROOT_DIR}/lib/gcc/x86_64-pc-msys/11.3.0/include/c++/pstl")
-list(APPEND CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES "${Z_MSYS2_ROOT_DIR}/lib/gcc/x86_64-pc-msys/11.3.0/include/c++/tr1")
-list(APPEND CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES "${Z_MSYS2_ROOT_DIR}/lib/gcc/x86_64-pc-msys/11.3.0/include/c++/tr2")
-list(APPEND CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES "${Z_MSYS2_ROOT_DIR}/lib/gcc/x86_64-pc-msys/11.3.0/include/c++/x86_64-pc-msys/bits")
-list(APPEND CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES "${Z_MSYS2_ROOT_DIR}/lib/gcc/x86_64-pc-msys/11.3.0/include/c++/x86_64-pc-msys/ext")
-set(CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES "${CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES}" CACHE PATH "Directories implicitly searched by the compiler for header files <CXX>.")
+list(APPEND CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES "/usr/include")
+list(APPEND CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES "/usr/include/cygwin")
+list(APPEND CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES "/usr/include/w32api")
+# list(APPEND CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES "${Z_MSYS2_ROOT_DIR}/lib/gcc/x86_64-pc-msys/11.3.0/include/c++/...")
+list(APPEND CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES "/usr/lib/gcc/x86_64-pc-msys/11.3.0/include/c++")
+list(APPEND CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES "/usr/lib/gcc/x86_64-pc-msys/11.3.0/include/c++/backward")
+list(APPEND CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES "/usr/lib/gcc/x86_64-pc-msys/11.3.0/include/c++/bits")
+list(APPEND CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES "/usr/lib/gcc/x86_64-pc-msys/11.3.0/include/c++/debug")
+list(APPEND CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES "/usr/lib/gcc/x86_64-pc-msys/11.3.0/include/c++/decimal")
+list(APPEND CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES "/usr/lib/gcc/x86_64-pc-msys/11.3.0/include/c++/ext")
+list(APPEND CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES "/usr/lib/gcc/x86_64-pc-msys/11.3.0/include/c++/parallel")
+list(APPEND CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES "/usr/lib/gcc/x86_64-pc-msys/11.3.0/include/c++/pstl")
+list(APPEND CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES "/usr/lib/gcc/x86_64-pc-msys/11.3.0/include/c++/tr1")
+list(APPEND CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES "/usr/lib/gcc/x86_64-pc-msys/11.3.0/include/c++/tr2")
+list(APPEND CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES "/usr/lib/gcc/x86_64-pc-msys/11.3.0/include/c++/x86_64-pc-msys/bits")
+list(APPEND CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES "/usr/lib/gcc/x86_64-pc-msys/11.3.0/include/c++/x86_64-pc-msys/ext")
+set(CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES "${CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES}" CACHE PATH "Directories implicitly searched by the compiler for header files <CXX>." FORCE)
 mark_as_advanced(CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES)
 
 set(CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES)
-list(APPEND CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES "${Z_MSYS2_ROOT_DIR}/lib/gcc/x86_64-pc-msys/11.3.0")
-list(APPEND CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES "${Z_MSYS2_ROOT_DIR}/lib/w32api")
-list(APPEND CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES "${Z_MSYS2_ROOT_DIR}/x86_64-pc-msys/lib/ldscripts") # Hmm.... DSX dir??
-list(APPEND CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES "${Z_MSYS2_ROOT_DIR}/lib")
-set(CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES "${CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES}" CACHE PATH "Implicit linker search path detected for language <CXX>.")
+list(APPEND CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES "/usr/lib/gcc/x86_64-pc-msys/11.3.0")
+list(APPEND CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES "/usr/lib/w32api")
+list(APPEND CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES "/usr/x86_64-pc-msys/lib/ldscripts") # Hmm.... DSX dir??
+list(APPEND CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES "/usr/lib")
+set(CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES "${CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES}" CACHE PATH "Implicit linker search path detected for language <CXX>." FORCE)
 mark_as_advanced(CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES)
 
-set(CMAKE_CXX_IMPLICIT_LINK_FRAMEWORK_DIRECTORIES "" CACHE PATH "Implicit linker framework search path detected for language <CXX>.")
+set(CMAKE_CXX_IMPLICIT_LINK_FRAMEWORK_DIRECTORIES "" CACHE PATH "Implicit linker framework search path detected for language <CXX>." FORCE)
 mark_as_advanced(CMAKE_CXX_IMPLICIT_LINK_FRAMEWORK_DIRECTORIES)
 
-# set(CMAKE_CXX_IMPLICIT_LINK_LIBRARIES)
-# string(APPEND CMAKE_CXX_IMPLICIT_LINK_LIBRARIES "-stdc++" " ")
-# string(APPEND CMAKE_CXX_IMPLICIT_LINK_LIBRARIES "-mingw32" " ")
-# string(APPEND CMAKE_CXX_IMPLICIT_LINK_LIBRARIES "-gcc_s" " ")
-# string(APPEND CMAKE_CXX_IMPLICIT_LINK_LIBRARIES "-gcc" " ")
-# string(APPEND CMAKE_CXX_IMPLICIT_LINK_LIBRARIES "-moldname" " ")
-# string(APPEND CMAKE_CXX_IMPLICIT_LINK_LIBRARIES "-mingwex" " ")
-# string(APPEND CMAKE_CXX_IMPLICIT_LINK_LIBRARIES "-kernel32" " ")
-# string(APPEND CMAKE_CXX_IMPLICIT_LINK_LIBRARIES "-pthread" " ")
-# string(APPEND CMAKE_CXX_IMPLICIT_LINK_LIBRARIES "-advapi32" " ")
-# string(APPEND CMAKE_CXX_IMPLICIT_LINK_LIBRARIES "-shell32" " ")
-# string(APPEND CMAKE_CXX_IMPLICIT_LINK_LIBRARIES "-user32" " ")
-# string(STRIP "${CMAKE_CXX_IMPLICIT_LINK_LIBRARIES}" CMAKE_CXX_IMPLICIT_LINK_LIBRARIES)
-# set(CMAKE_CXX_IMPLICIT_LINK_LIBRARIES "${CMAKE_CXX_IMPLICIT_LINK_LIBRARIES}" CACHE STRING "Implicit link libraries and flags detected for language <CXX>.")
-# mark_as_advanced(CMAKE_CXX_IMPLICIT_LINK_LIBRARIES)
+set(CMAKE_CXX_IMPLICIT_LINK_LIBRARIES)
+list(APPEND CMAKE_CXX_IMPLICIT_LINK_LIBRARIES
+    "stdc++"
+    "mingw32"
+    "gcc_s"
+    "gcc"
+    "moldname"
+    "mingwex"
+    "kernel32"
+    "pthread"
+    "advapi32"
+    "shell32"
+    "user32"
+)
+set(CMAKE_CXX_IMPLICIT_LINK_LIBRARIES "${CMAKE_CXX_IMPLICIT_LINK_LIBRARIES}" CACHE STRING "Implicit link libraries and flags detected for language <CXX>." FORCE)
+mark_as_advanced(CMAKE_CXX_IMPLICIT_LINK_LIBRARIES)
 
 set(CMAKE_CXX_SOURCE_FILE_EXTENSIONS)
-list(APPEND CMAKE_CXX_SOURCE_FILE_EXTENSIONS "C")
-list(APPEND CMAKE_CXX_SOURCE_FILE_EXTENSIONS "M")
-list(APPEND CMAKE_CXX_SOURCE_FILE_EXTENSIONS "c++")
-list(APPEND CMAKE_CXX_SOURCE_FILE_EXTENSIONS "cc")
-list(APPEND CMAKE_CXX_SOURCE_FILE_EXTENSIONS "cpp")
-list(APPEND CMAKE_CXX_SOURCE_FILE_EXTENSIONS "cxx")
-list(APPEND CMAKE_CXX_SOURCE_FILE_EXTENSIONS "mm")
-list(APPEND CMAKE_CXX_SOURCE_FILE_EXTENSIONS "mpp")
-list(APPEND CMAKE_CXX_SOURCE_FILE_EXTENSIONS "CPP")
-list(APPEND CMAKE_CXX_SOURCE_FILE_EXTENSIONS "ixx")
-list(APPEND CMAKE_CXX_SOURCE_FILE_EXTENSIONS "cppm")
-set(CMAKE_CXX_SOURCE_FILE_EXTENSIONS "${CMAKE_CXX_SOURCE_FILE_EXTENSIONS}" CACHE STRING "Extensions of source files for the given language <CXX>.")
+list(APPEND CMAKE_CXX_SOURCE_FILE_EXTENSIONS
+    "C"
+    "M"
+    "c++"
+    "cc"
+    "cpp"
+    "cxx"
+    "mm"
+    "mpp"
+    "CPP"
+    "ixx"
+    "cppm"
+)
+set(CMAKE_CXX_SOURCE_FILE_EXTENSIONS "${CMAKE_CXX_SOURCE_FILE_EXTENSIONS}" CACHE STRING "Extensions of source files for the given language <CXX>." FORCE)
 mark_as_advanced(CMAKE_CXX_SOURCE_FILE_EXTENSIONS)
 
-find_program(CMAKE_CXX_COMPILER "/usr/bin/x86_64-pc-msys-g++.exe")
+find_program(CMAKE_CXX_COMPILER "x86_64-pc-msys-g++"
+    HINTS "/usr/bin"
+    #"${Z_MSYS2_ROOT_DIR}/usr/bin"
+    REQUIRED
+    NO_DEFAULT_PATH
+)
 mark_as_advanced(CMAKE_CXX_COMPILER)
 
 # find_program(CMAKE_Fortran_COMPILER "${Z_MSYS2_ROOT_DIR}/bin/x86_64-w64-mingw32-gfortran.exe")
@@ -193,14 +207,11 @@ mark_as_advanced(CMAKE_CXX_COMPILER)
 # endif()
 # mark_as_advanced(CMAKE_ASM_COMPILER)
 
-find_program(CMAKE_RC_COMPILER "${Z_MSYS2_ROOT_DIR}/bin/windres.exe")
+find_program(CMAKE_RC_COMPILER "windres"
+    HINTS "/usr/bin"
+    NO_DEFAULT_PATH
+)
 mark_as_advanced(CMAKE_RC_COMPILER)
-if(NOT CMAKE_RC_COMPILER)
-    find_program (CMAKE_RC_COMPILER "${Z_MSYS2_ROOT_DIR}/bin/windres" NO_CACHE)
-    if(NOT CMAKE_RC_COMPILER)
-        find_program(CMAKE_RC_COMPILER "windres" NO_CACHE)
-    endif()
-endif()
 
 
 get_property(_CMAKE_IN_TRY_COMPILE GLOBAL PROPERTY IN_TRY_COMPILE )
@@ -326,3 +337,30 @@ endif()
 message(STATUS "MSYS2 x64 toolchain loaded")
 
 endif()
+
+#[===[
+
+    ```
+    "C:/msys64/usr/include",
+    "C:/msys64/usr/include/cygwin",
+    "C:/msys64/usr/include/w32api",
+
+    "C:/msys64/usr/lib/gcc/x86_64-pc-msys/11.3.0/include",
+    "C:/msys64/usr/lib/gcc/x86_64-pc-msys/11.3.0/include-fixed",
+
+    "C:/msys64/usr/lib/gcc/x86_64-pc-msys/11.3.0/include/c++",
+    "C:/msys64/usr/lib/gcc/x86_64-pc-msys/11.3.0/include/c++/backward",
+    "C:/msys64/usr/lib/gcc/x86_64-pc-msys/11.3.0/include/c++/bits",
+    "C:/msys64/usr/lib/gcc/x86_64-pc-msys/11.3.0/include/c++/debug",
+    "C:/msys64/usr/lib/gcc/x86_64-pc-msys/11.3.0/include/c++/decimal",
+    "C:/msys64/usr/lib/gcc/x86_64-pc-msys/11.3.0/include/c++/experimental",
+    "C:/msys64/usr/lib/gcc/x86_64-pc-msys/11.3.0/include/c++/ext",
+    "C:/msys64/usr/lib/gcc/x86_64-pc-msys/11.3.0/include/c++/parallel",
+    "C:/msys64/usr/lib/gcc/x86_64-pc-msys/11.3.0/include/c++/pstl",
+    "C:/msys64/usr/lib/gcc/x86_64-pc-msys/11.3.0/include/c++/tr1",
+    "C:/msys64/usr/lib/gcc/x86_64-pc-msys/11.3.0/include/c++/tr2",
+
+    "C:/msys64/usr/lib/gcc/x86_64-pc-msys/11.3.0/include/c++/x86_64-pc-msys/bits",
+    "C:/msys64/usr/lib/gcc/x86_64-pc-msys/11.3.0/include/c++/x86_64-pc-msys/ext"
+    ```
+]===]
