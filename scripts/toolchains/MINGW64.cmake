@@ -39,6 +39,10 @@ while(NOT DEFINED Z_MINGW64_ROOT_DIR)
 endwhile()
 unset(Z_MINGW64_ROOT_DIR_CANDIDATE)
 
+set(CMAKE_SYSROOT "${Z_MINGW64_ROOT_DIR}" CACHE PATH "Path to pass to the compiler in the ``--sysroot`` flag." FORCE)
+set(CMAKE_SYSROOT_COMPILE "${Z_MINGW64_ROOT_DIR}" CACHE PATH "Path to pass to the compiler in the ``--sysroot`` flag when compiling source files." FORCE)
+set(CMAKE_SYSROOT_LINK "${Z_MINGW64_ROOT_DIR}" CACHE PATH "Path to pass to the compiler in the ``--sysroot`` flag when compiling source files." FORCE)
+
 ## Set Env vars
 set(ENV{CARCH} "x86_64")
 set(ENV{CHOST} "x86_64-w64-mingw32")
@@ -57,6 +61,8 @@ foreach(lang C CXX Fortran OBJC OBJCXX ASM)
     #set(CMAKE_USER_MAKE_RULES_OVERRIDE_${lang} Compiler/MINGW64-FindBinUtils)
 
 endforeach()
+
+add_definitions(-D__USE_MINGW_ANSI_STDIO)
 
 set(CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES)
 list(APPEND CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES "${Z_MINGW64_ROOT_DIR}/lib/gcc/x86_64-w64-mingw32/13.1.0/include")
@@ -145,17 +151,19 @@ set(CMAKE_CXX_IMPLICIT_LINK_LIBRARIES "${CMAKE_CXX_IMPLICIT_LINK_LIBRARIES}" CAC
 mark_as_advanced(CMAKE_CXX_IMPLICIT_LINK_LIBRARIES)
 
 set(CMAKE_CXX_SOURCE_FILE_EXTENSIONS)
-list(APPEND CMAKE_CXX_SOURCE_FILE_EXTENSIONS "C")
-list(APPEND CMAKE_CXX_SOURCE_FILE_EXTENSIONS "M")
-list(APPEND CMAKE_CXX_SOURCE_FILE_EXTENSIONS "c++")
-list(APPEND CMAKE_CXX_SOURCE_FILE_EXTENSIONS "cc")
-list(APPEND CMAKE_CXX_SOURCE_FILE_EXTENSIONS "cpp")
-list(APPEND CMAKE_CXX_SOURCE_FILE_EXTENSIONS "cxx")
-list(APPEND CMAKE_CXX_SOURCE_FILE_EXTENSIONS "mm")
-list(APPEND CMAKE_CXX_SOURCE_FILE_EXTENSIONS "mpp")
-list(APPEND CMAKE_CXX_SOURCE_FILE_EXTENSIONS "CPP")
-list(APPEND CMAKE_CXX_SOURCE_FILE_EXTENSIONS "ixx")
-list(APPEND CMAKE_CXX_SOURCE_FILE_EXTENSIONS "cppm")
+list(APPEND CMAKE_CXX_SOURCE_FILE_EXTENSIONS
+    "C"
+    "M"
+    "c++"
+    "cc"
+    "cpp"
+    "cxx"
+    "mm"
+    "mpp"
+    "CPP"
+    "ixx"
+    "cppm"
+)
 set(CMAKE_CXX_SOURCE_FILE_EXTENSIONS "${CMAKE_CXX_SOURCE_FILE_EXTENSIONS}" CACHE STRING "Extensions of source files for the given language <CXX>.")
 mark_as_advanced(CMAKE_CXX_SOURCE_FILE_EXTENSIONS)
 
