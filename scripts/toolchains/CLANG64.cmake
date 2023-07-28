@@ -39,6 +39,10 @@ while(NOT DEFINED Z_CLANG64_ROOT_DIR)
 endwhile()
 unset(Z_CLANG64_ROOT_DIR_CANDIDATE)
 
+set(CMAKE_SYSROOT "${Z_CLANG64_ROOT_DIR}" CACHE PATH "Path to pass to the compiler in the ``--sysroot`` flag." FORCE)
+set(CMAKE_SYSROOT_COMPILE "${Z_CLANG64_ROOT_DIR}" CACHE PATH "Path to pass to the compiler in the ``--sysroot`` flag when compiling source files." FORCE)
+set(CMAKE_SYSROOT_LINK "${Z_CLANG64_ROOT_DIR}" CACHE PATH "Path to pass to the compiler in the ``--sysroot`` flag when compiling source files." FORCE)
+
 
 foreach(lang C CXX Fortran OBJC OBJCXX ASM)
     ##-- CMakeCXXInformation: include(Compiler/<CMAKE_CXX_COMPILER_ID>-<LANG>)
