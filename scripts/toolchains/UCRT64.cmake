@@ -39,6 +39,10 @@ while(NOT DEFINED Z_UCRT64_ROOT_DIR)
 endwhile()
 unset(Z_UCRT64_ROOT_DIR_CANDIDATE)
 
+set(CMAKE_SYSROOT "${Z_UCRT64_ROOT_DIR}" CACHE PATH "Path to pass to the compiler in the ``--sysroot`` flag." FORCE)
+set(CMAKE_SYSROOT_COMPILE "${Z_UCRT64_ROOT_DIR}" CACHE PATH "Path to pass to the compiler in the ``--sysroot`` flag when compiling source files." FORCE)
+set(CMAKE_SYSROOT_LINK "${Z_UCRT64_ROOT_DIR}" CACHE PATH "Path to pass to the compiler in the ``--sysroot`` flag when compiling source files." FORCE)
+
 ## Set Env vars
 set(ENV{CARCH} "x86_64")
 set(ENV{CHOST} "x86_64-w64-mingw32")
@@ -50,6 +54,8 @@ set(ENV{CXXFLAGS} "-march=nocona -msahf -mtune=generic -O2 -pipe")
 set(ENV{LDFLAGS} "-pipe")
 set(ENV{DEBUG_CFLAGS} "-ggdb -Og")
 set(ENV{DEBUG_CXXFLAGS} "-ggdb -Og")
+
+add_definitions(-D__USE_MINGW_ANSI_STDIO=1)
 
 foreach(lang C CXX) # ASM Fortran OBJC OBJCXX
 
@@ -172,15 +178,17 @@ set(CMAKE_C_IMPLICIT_LINK_FRAMEWORK_DIRECTORIES "" CACHE PATH "Implicit linker f
 mark_as_advanced(CMAKE_C_IMPLICIT_LINK_FRAMEWORK_DIRECTORIES)
 
 set(CMAKE_C_IMPLICIT_LINK_LIBRARIES)
-string(APPEND CMAKE_C_IMPLICIT_LINK_LIBRARIES "mingw32" " ")
-string(APPEND CMAKE_C_IMPLICIT_LINK_LIBRARIES "gcc" " ")
-string(APPEND CMAKE_C_IMPLICIT_LINK_LIBRARIES "moldname" " ")
-string(APPEND CMAKE_C_IMPLICIT_LINK_LIBRARIES "mingwex" " ")
-string(APPEND CMAKE_C_IMPLICIT_LINK_LIBRARIES "kernel32" " ")
-string(APPEND CMAKE_C_IMPLICIT_LINK_LIBRARIES "pthread" " ")
-string(APPEND CMAKE_C_IMPLICIT_LINK_LIBRARIES "advapi32" " ")
-string(APPEND CMAKE_C_IMPLICIT_LINK_LIBRARIES "shell32" " ")
-string(APPEND CMAKE_C_IMPLICIT_LINK_LIBRARIES "user32" " ")
+list(APPEND CMAKE_C_IMPLICIT_LINK_LIBRARIES
+    "mingw32"
+    "gcc"
+    "moldname"
+    "mingwex"
+    "kernel32"
+    "pthread"
+    "advapi32"
+    "shell32"
+    "user32"
+)
 string(STRIP "${CMAKE_C_IMPLICIT_LINK_LIBRARIES}" CMAKE_C_IMPLICIT_LINK_LIBRARIES)
 set(CMAKE_C_IMPLICIT_LINK_LIBRARIES "${CMAKE_C_IMPLICIT_LINK_LIBRARIES}" CACHE STRING "Implicit link libraries and flags detected for language <C>.")
 mark_as_advanced(CMAKE_C_IMPLICIT_LINK_LIBRARIES)
