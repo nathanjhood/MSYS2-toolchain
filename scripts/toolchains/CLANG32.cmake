@@ -39,6 +39,10 @@ while(NOT DEFINED Z_CLANG32_ROOT_DIR)
 endwhile()
 unset(Z_CLANG32_ROOT_DIR_CANDIDATE)
 
+set(CMAKE_SYSROOT "${Z_CLANG32_ROOT_DIR}" CACHE PATH "Path to pass to the compiler in the ``--sysroot`` flag." FORCE)
+set(CMAKE_SYSROOT_COMPILE "${Z_CLANG32_ROOT_DIR}" CACHE PATH "Path to pass to the compiler in the ``--sysroot`` flag when compiling source files." FORCE)
+set(CMAKE_SYSROOT_LINK "${Z_CLANG32_ROOT_DIR}" CACHE PATH "Path to pass to the compiler in the ``--sysroot`` flag when compiling source files." FORCE)
+
 foreach(lang C CXX ASM Fortran OBJC OBJCXX)
 
     set(CMAKE_${lang}_COMPILER_TARGET "i686-w64-mingw32" CACHE STRING "The target for cross-compiling, if supported. '--target=i686-w64-mingw32'")
