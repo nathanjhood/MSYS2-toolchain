@@ -102,6 +102,12 @@ set(TMP "${Z_MSYS_ROOT_DIR}/tmp")
 set(TEMP "${Z_MSYS_ROOT_DIR}/tmp")
 
 if(MSYSTEM STREQUAL "MSYS2")
+
+    if(CMAKE_CROSSCOMPILING AND NOT CMAKE_HOST_SYSTEM_NAME MATCHES "Windows")
+        # MinGW (useful when cross compiling from linux with CMAKE_FIND_ROOT_PATH set)
+        list(APPEND CMAKE_SYSTEM_PREFIX_PATH /)
+    endif()
+
     include(Platform/MSYS)
 
     # set(CMAKE_EXTRA_GENERATOR "MSYS Makefiles" CACHE STRING "The extra generator used to build the project." FORCE)
