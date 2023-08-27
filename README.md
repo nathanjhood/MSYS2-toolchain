@@ -4,6 +4,8 @@ Full CMake build support for all <a href="msys2.org">Msys64</a> sub-systems, wit
 
 Currently being developed in tandem with my specialized fork of <a href="https://github.com/StoneyDSP/msys2-pacman.git">MSYS2-Pacman</a>, with the aim of bringing the building of package binaries from hosted source repositories to msys2 environments for Windows.
 
+As a means of thoroughly testing the toolchains, I have simultaneously developed several small projects that require a more extensive usage of the libraries and headers available in each subsystem; A <a href="https://github.com/StoneyDSP/CMakeProject1.git">simple CMake application</a> suitable for templating new projects, a specialized fork of <a href="https://github.com/StoneyDSP/msys2-pacman.git">MSYS2-Pacman</a> for package management, and a <a href="https://github.com/StoneyDSP/CxxWin.git">native windowed application using the Win32 API and Direct2D graphics</a>.
+
 # <b>Usage</b>
 
 Simply pass the <a href="">scripts/buildsystems/MSYS2.cmake</a> file as your "<b>CMAKE_TOOLCHAIN_FILE</b>", along with a desired "<b>MSYSTEM</b>".
@@ -196,55 +198,7 @@ Accepts a Boolean value. Defaults to "<b>OFF</b>".
 
 Also very much worth noting is that several sub-systems offer "DSX-compatibility" GNU Bin Utils, located various differently-named directories here and there. It seems at least a fun idea to leverage a ```cmake_option(OPTION_USE_DSX_BINUTILS)``` or similar, which likewise would favour these directories during file lookups for the tools in question. Again, this is actually all *pretty much* made possible, in fact quite easy, in CMake's design. Currently there are so very many features, permutations, varieties across the entire project that this concept hasn't yet been explored further, but stay tuned.
 
-## <b>OPTION_STRIP_BINARIES</b>
-
-Appends <i>'<b>--strip-all</b>'</i> to "<b>CMAKE_EXE_LINKER_FLAGS</b>".
-
-Accepts a Boolean value. Defaults to "<b>ON</b>".
-
-## <b>OPTION_STRIP_SHARED</b>
-
-Appends <i>'<b>--strip-unneeded</b>'</i> to "<b>CMAKE_SHARED_LINKER_FLAGS</b>"
-
-Accepts a Boolean value. Defaults to "<b>ON</b>".
-
-## OPTION_STRIP_STATIC
-
-Appends <i>'<b>--strip-debug</b>'</i> to "<b>CMAKE_STATIC_LINKER_FLAGS</b>"
-
-Accepts a Boolean value. Defaults to "<b>ON</b>".
-
-
-</br>
-</br>
-
-# <b>Development</b>
-
-</br>
-
-The main files at the core of the project are:
-
-</br>
-
-* 'scripts/buildsystems/MSYS2.cmake'
-
-* 'scripts/toolchains/\<MSYSTEM\>.cmake'
-
-* 'scripts/cmake/Modules/Platform/MSYSTEM.cmake'
-
-* 'scripts/cmake/Modules/Platform/MSYSTEM-initialize.cmake'
-
-* 'scripts/cmake/Modules/Platform/MSYSTEM-\<COMPILER_ID\>.cmake'
-
-</br>
-
-It should be noted that the first file, the 'buildsystem' file, actually contains and 'include()' directive for the second file - the 'toolchain' file, where the sub-system's toolchain is specified. This inclusion happens as a result of comparing the "<b>MSYSTEM</b>" variable against their usual shell names.
-
-It is well worth noting that both files are pretty much direct clones of corresponding files found in <a href="https://github.com/microsoft/vcpkg.git">microsoft's excellent vcpkg package manager</a>.
-
-Please be aware that a prefix of just "MSYS_" is referring to vars coming from the 'buildsystem' file, if loaded. The vars with prefix of "MSYS<u>2</u>_" refer to what you would usually get from Msys64 if entering the "MSYS2" subsystem. It's a close call, but I think it's ok!?
-
-</br>
+# Stay tuned for further development!
 
 # Thanks for reading!
 
